@@ -1,0 +1,14 @@
+optimization parameters:
+
+finger length
+joint position
+joint orientation
+finger relative position
+
+
+
+#############################
+optimization methods:
+
+Particle Swarm Optimization
+Genetic Algorithms
