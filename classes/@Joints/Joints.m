@@ -26,13 +26,14 @@ classdef Joints
             obj.momentarm_limits = [0.02, 0.05];
             obj.w_p = [0,0,0]';
             obj.w_R = eye(3);
+            obj.fixed = 0;
         end
         
-%         function outputArg = method1(obj,inputArg)
-%             %METHOD1 Summary of this method goes here
-%             %   Detailed explanation goes here
-%             outputArg = obj.Property1 + inputArg;
-%         end
+        function set_fixed(obj)
+            %METHOD1 Summary of this method goes here
+            %   Detailed explanation goes here
+            obj.fixed = 1;
+        end
     end
 end
 
