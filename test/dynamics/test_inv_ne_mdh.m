@@ -55,7 +55,7 @@ mdh_ne = [mdh_base;mdh_ne_link];
 mdh_rst = [mdh_ne(:,2),mdh_ne(:,1),mdh_ne(:,4),mdh_ne(:,3)];% change the sequence of the mdh format for rst tree
 
 
-%%  Robot system toolbox
+%%  Robotic system toolbox
 
 robot = rigidBodyTree;
 robot.DataFormat = 'column';

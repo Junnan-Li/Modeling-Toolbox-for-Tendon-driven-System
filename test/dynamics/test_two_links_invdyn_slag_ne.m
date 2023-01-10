@@ -39,7 +39,6 @@ qDD = 5*rand(2,1);
 mdh_par = [0,0,0,0;...
     l1,0,0,0;...
     l2,0,0,0];
-q = [0,0]';
        
 robot = rigidBodyTree;
 robot.DataFormat = 'column';
@@ -78,7 +77,7 @@ T_rst = inverseDynamics(robot,q,qD,qDD)
 % centerOfMass(robot)
 robot.show(q,'Collisions','on','Visuals','on');
 
-%% Lagrandian method
+%% Lagrangian method
 
 % each terms of matrix
 M_lag = MassMatrix_twolinks(m1,m2,Izz1,Izz2,l1,l2,la1,la2, q);
