@@ -4,7 +4,7 @@
 %     q,qD,qDD:         [n_qx1] joint states
 %     mdh:              [n_q+1x4] in sequence of [alpha,a,theta,d] 
 %     Mass:             [n_q+1] mass vector. the first mass is the base 
-%     X_base：           [6x1] eulerxyz
+%     X_base:           [6x1] eulerxyz
 %     XD_base:          [6x1] translational and angular velocity
 %     F_ext:            [6x1] force/moment that exerted by the environment to the endeffector frame. 
 %     CoM:              [3xn_q+1] in local frame; last column is endeffector
