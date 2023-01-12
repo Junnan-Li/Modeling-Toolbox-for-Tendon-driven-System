@@ -1,7 +1,10 @@
 % Geometric Jacobian of the end-effector based on the jonit cofiguration
 % reference coordinate: CS base of the finger
 % 
-% Output:
+% input:
+%           q: 
+% 
+% output:
 %           J: [6xobj.nja] geometric jacobian
 % 
 % Source: 
@@ -9,7 +12,7 @@
 % 
 % Note: to be tested and debugged
 
-function J = Jacobian_geom_end(obj,q)
+function J = Jacobian_geom_b_end(obj,q)
 
 if nargin == 1
     q = obj.q;
@@ -27,7 +30,7 @@ for i = 1:num_active_joint
     
     base_T_i = T_mdh_multi(mdh(1:i,:));
     b_R_i = base_T_i(1:3,1:3);
-    i_T_end = inv(base_T_i)*base_T_end;
+    i_T_end = base_T_i\base_T_end;
     i_p_end = i_T_end(1:3,4);
     J_tmp_p = cross(b_R_i*[0;0;1],b_R_i*i_p_end);
     J_tmp_w = b_R_i*[0;0;1];

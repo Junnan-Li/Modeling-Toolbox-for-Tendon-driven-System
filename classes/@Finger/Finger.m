@@ -6,11 +6,11 @@
 %           finger_name: [char]           
 %           finger_type: 
 %               'RRRR': general finger with four joints(Ab/duction, MCP, PIP, DIP)
-%               'RRRp': planar finger with three joints(MCP, PIP, DIP)
-%               'RRRs': spatial finger with three joints(Ab/duction, MCP, PIP, DIP)
+%               'RRRp': planar finger with three joints(MCP, PIP, DIP; ABD joint is fixed)
+%               'RRRs': spatial finger with three joints(Ab/duction, MCP, PIP; DIP joint is fixed)
 %           link_len_vector:
 %               vector of the length of the links that match the number
-%               the finger_type
+%               the finger_type (mdh: a)
 %
 %       Coordinates:   
 %           Coord. World: (w) world coordinate. symmetrical for all classes
@@ -18,6 +18,12 @@
 %                         Tranformation information regarding w: w_p_base & w_R_base
 %           Coord. jonts: mdh related 
 %           
+
+% TODO: 
+%       1. [01/23]: integrate transformation from W to Base in properties
+%       and Jacobian.
+%       
+% 
 
 
 
@@ -86,6 +92,7 @@ classdef Finger < handle
             obj.list_links = [PP;MP;DP];
             
             % create joints
+            % all the finger has 4 joints 
             ABD = Joints('ABD',1);
             MCP = Joints('MCP',2);
             PIP = Joints('PIP',3);
@@ -163,16 +170,17 @@ classdef Finger < handle
         end
         
         function [mdh_reduced,mdh_all] = get_finger_mdh(obj, q_a)
+            % get mdh parameter from the given joint angle
             % update mhl parameters and par_kin, opt_pkin, ...
+            % TODO: [01/23] only theta is updated, others are fixed in some
+            % sense.
             assert(length(q_a)== obj.nja, 'dimension of joint vector is incorrect!')
             
             q_a = reshape(q_a,[obj.nja,1]);
             q_all = obj.q;
             q_all(obj.joint_act) = q_a;
-            
-            
+
             % update mdh parameters 
-            
             mdh_all = struct;
             mdh_all.alpha = [0;-pi/2;0;0;0];
             mdh_all.a = [0;0;obj.list_links(1).Length;obj.list_links(2).Length;obj.list_links(3).Length];
@@ -194,6 +202,19 @@ classdef Finger < handle
             mdh_reduced = mdh_tmp;
         end
         
+        function set_base(obj, w_p_base, w_R_base)
+            % set the position and orientation of the base in the world
+            % frame
+            obj.w_p_base = w_p_base;
+            obj.w_R_base = w_R_base;
+            obj.update_finger(obj.q_a);
+            
+        end
+        
+        function W_T_b = get_W_T_B(obj)
+            % get the homogeneous transformation matrix from Base to W
+            W_T_b = [obj.w_R_base,obj.w_p_base; 0 0 0 1];
+        end
         
         function update_rst_model(obj)
             % build/update the rst model of the finger based on the mdh
@@ -209,11 +230,12 @@ classdef Finger < handle
             rst_model_tmp.DataFormat = 'column';
             
             % virtual first body:  from CS.base to CS.1
-            bodyname = 'virtual_body';
+            bodyname = 'virtual_Base';
             body1 = rigidBody(bodyname);
-            jointname = 'Joint1';
+            jointname = 'WtoBase';
             jnt1 = rigidBodyJoint(jointname,'revolute');          
-            setFixedTransform(jnt1,mdh_matrix(1,:),'mdh');
+            W_T_base = obj.get_W_T_B(); % World to Base 
+            setFixedTransform(jnt1,W_T_base);
             body1.Joint = jnt1;
             addBody(rst_model_tmp,body1,'base');
             bodyname_last = bodyname;
@@ -233,7 +255,7 @@ classdef Finger < handle
             bodyname = 'endeffector';
             body1 = rigidBody(bodyname);
             jointname = 'Virtual_fingertip';
-            jnt1 = rigidBodyJoint(jointname,'revolute');          
+            jnt1 = rigidBodyJoint(jointname,'fixed');          
             setFixedTransform(jnt1,mdh_matrix(end,:),'mdh');
             body1.Joint = jnt1;
             addBody(rst_model_tmp,body1,bodyname_last);
@@ -257,7 +279,6 @@ classdef Finger < handle
         
         function print_contact(obj)
             % plot 3d contact points
-            
             for i = 1:obj.nl
                 contact_pos = finger_1.list_links(i).contacts(1).base_p;
                 plot3(contact_pos(1),contact_pos(2),contact_pos(3),'*','Color', 'r', 'MarkerSize',10)

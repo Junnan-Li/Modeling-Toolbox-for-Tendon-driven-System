@@ -22,8 +22,8 @@ classdef Links < handle
     end
     properties (SetAccess = private)
         index  
-        base_p
-        base_R
+        base_p            % [3x1] b_p_i: position of the frame with respect to Finger base frame. 
+        base_R            % [3x3] b_R_i: position of the frame with respect to Finger base frame. 
     end
     
     methods
