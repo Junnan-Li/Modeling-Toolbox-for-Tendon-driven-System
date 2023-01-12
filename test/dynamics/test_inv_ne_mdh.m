@@ -5,10 +5,11 @@
 
 %% setting
 show_robot = 0;
-
-%% random configurations
 % number of joints
 n_q = 5; 
+
+%% random configurations
+
 % random robot states
 q = pi*rand(n_q,1);
 qD = 5*rand(n_q,1);
@@ -25,6 +26,7 @@ XDD_base = zeros(6,1);
 
 % random external force/moment 
 F_ext_ne = 5*rand(6,1);
+% F_ext_ne = zeros(6,1);
 
 % random link inertia of robot with respect to the Center of Mass for ne
 % method
@@ -105,22 +107,88 @@ end
 [Tau_ne,F,W_T_allframe] = invdyn_ne_mdh(q,qD,qDD,mdh_ne, Mass,...
              X_base, XD_base, XDD_base, F_ext_ne, CoM_ne, I_ne, g);
 
+
+%% Forward dynamic 
+% given q, qD, tau  --> qDD
+
+Tau = Tau_ne;
+
+J_geom = geometricJacobian(robot,q,'endeff');
+
+%%%%%%%%% rst model
+
+M_rst = massMatrix(robot,q);
+C_rst = velocityProduct(robot,q,qD);
+G_rst = gravityTorque(robot,q);
+qDD_rst = forwardDynamics(robot,q,qD,Tau,F_ext_rst);
+
+%%%%%%%% Newton Euler Method 
+% gravity term 
+
+G_ne_fd = invdyn_ne_mdh(q,zeros(n_q,1),zeros(n_q,1),mdh_ne, Mass,...
+             X_base, XD_base, XDD_base, zeros(6,1), CoM_ne, I_ne, g);
+
+% C term
+C_ne_fd = invdyn_ne_mdh(q,qD,zeros(n_q,1),mdh_ne, Mass,...
+             X_base, XD_base, XDD_base, zeros(6,1), CoM_ne, I_ne, g);
+C_ne_fd = C_ne_fd - G_ne_fd;
+
+% M term
+M_ne_fd = [];
+
+for i = 1:n_q
+    qDD_ne_M = zeros(n_q,1);
+    qDD_ne_M(i) = 1;
+    M_ne_fd(:,i) = invdyn_ne_mdh(q,zeros(n_q,1),qDD_ne_M,mdh_ne, Mass,...
+        X_base, XD_base, XDD_base, zeros(6,1), CoM_ne, I_ne, g);
+    M_ne_fd(:,i) = M_ne_fd(:,i) - G_ne_fd;
+end
+J_ne = [J_geom(4:6,:);J_geom(1:3,:)];
+qDD_ne_est = (M_ne_fd)\(Tau + J_ne'*F_ext_ne - G_ne_fd - C_ne_fd);
+
+
 %% Validation
 
-% Torque
+% Inverse dynamic Mass matrix
+M_error = M_rst - M_ne_fd;
+if max(abs(M_error(:))) > 1e-8
+    fprintf('Inverse dynamic test (NE Mass Matrix): failed! \n')
+else
+    fprintf('Inverse dynamic test (NE Mass Matrix): pass! \n')
+end
+
+% Inverse dynamic Velocity-dependnet torque 
+C_error = C_rst - C_ne_fd;
+if max(abs(C_error(:))) > 1e-8
+    fprintf('Inverse dynamic test (NE C torque): failed! \n')
+else
+    fprintf('Inverse dynamic test (NE C torque): pass! \n')
+end
+
+% Inverse dynamic gravity term 
+G_error = G_rst - G_ne_fd;
+if max(abs(G_error(:))) > 1e-8
+    fprintf('Inverse dynamic test (NE C gravity): failed! \n')
+else
+    fprintf('Inverse dynamic test (NE C gravity): pass! \n')
+end
+
+% Inverse dynamic Torque
 T_error = Tau_rst - Tau_ne;
 % assert(max(M_e(:))<1e-8,'Mass matrix test: failed!')
 if max(abs(T_error(:))) > 1e-8
-    fprintf('Newton-Euler: Torque test: failed! \n')
+    fprintf('Inverse dynamic test (NE Torque): failed! \n')
 else
-    fprintf('Newton-Euler:Torque test: pass! \n')
+    fprintf('Inverse dynamic test (NE Torque): pass! \n')
 end
 
-
-
-
-
-
-
+% forward dynamic qDD
+qDD_error = qDD_rst - qDD_ne_est;
+% assert(max(M_e(:))<1e-8,'Mass matrix test: failed!')
+if max(abs(qDD_error(:))) > 1e-8
+    fprintf('Forward dynamic test (NE qDD): failed! \n')
+else
+    fprintf('Forward dynamic test (NE qDD): pass! \n')
+end
 
 
