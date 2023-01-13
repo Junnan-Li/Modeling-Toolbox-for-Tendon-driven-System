@@ -114,9 +114,14 @@ classdef Finger < handle
             end
             
             % init list of contact and tendon
+            % default contacts in the middle of each links
             obj.nc = 0;
-            obj.nt = 0;
+%             for i = 1:obj.nl
+%                 new_contact = obj.list_links(i).add_contact([obj.list_links(i).Length/2 0 0]')
+%             end
             obj.list_contacts = [];
+            
+            obj.nt = 0;
             obj.list_tendons = [];
             
             % init finger base position and orientation
@@ -263,25 +268,33 @@ classdef Finger < handle
             obj.rst_model = rst_model_tmp;
         end
         
-        function update_all_contacts(obj)
+        function update_list_contacts(obj)
             % update the Link Class property: Links.nc 
-            
+            % TODO: change name of the function
+            %       update all link contact (optional)
+            obj.list_contacts = []; % init list_contacts
             num_contact = 0;
             if obj.nl 
                 for i = 1:obj.nl
-                    num_contact = num_contact + obj.list_links(i).nc;
+                    num_contact_link_i =  obj.list_links(i).nc;
+                    num_contact = num_contact + num_contact_link_i;
+                    if num_contact_link_i ~= 0
+                        for j = 1:num_contact_link_i
+                            obj.list_contacts = [obj.list_contacts;obj.list_links(i).contacts(j)];
+                        end
+                    end
                 end
             end
             obj.nc = num_contact;
-            
         end
         
         
         function print_contact(obj)
-            % plot 3d contact points
+            % plot 3d contact points 
             for i = 1:obj.nl
-                contact_pos = finger_1.list_links(i).contacts(1).base_p;
+                contact_pos = obj.list_links(i).contacts(1).base_p;
                 plot3(contact_pos(1),contact_pos(2),contact_pos(3),'*','Color', 'r', 'MarkerSize',10)
+                hold on
             end
             
         end

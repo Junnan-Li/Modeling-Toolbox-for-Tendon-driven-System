@@ -127,26 +127,49 @@ else
     fprintf('Test 3 (Frame position): pass! \n')
 end
 
-return
+% return
 %% Test 4: Geometric Jacobian of contact test
-
-disp('Test start: link kinematic test')
-
-q_r = rand(4,1)*pi;
+% set the contact point at the end of the link (next frame)
+% then compare the J_frame (rst) to the J_contact
 
 for i = 1:finger_r.nl
-    finger_r.list_links(i).add_contact([finger_r.list_links(i).Length/2 0 0]')
+%     finger_r.list_links(i).add_contact([finger_r.list_links(i).Length/2 0 0]');
+    finger_r.list_links(i).add_contact([finger_r.list_links(i).Length 0 0]');
 end
-finger_r.update_all_contacts;
-J_c = [];
+finger_r.update_list_contacts;
+W_R_b = finger_r.w_R_base();
+J_class_contacts = [];
 
 for i = 1:finger_r.nl
     if finger_r.list_links(i).nc
         for j = 1:finger_r.list_links(i).nc
-            J_c = [J_c;finger_r.Jacobian_geom_contact(q_r,finger_r.list_links(i).contacts(j))];
+            b_J_c_i = finger_r.Jacobian_geom_contact(q_r,finger_r.list_links(i).contacts(j));
+            J_class_contacts = [J_class_contacts;blkdiag(W_R_b,W_R_b)*b_J_c_i];
         end
     end
 end
 
+J_rst_frame = [];
 
-disp('Test pass!')
+for i = 1:finger_r.nl
+    J_rst_frame_i = geometricJacobian(rst_model,q_r,rst_model.BodyNames{i+2});
+    J_rst_frame_i = [J_rst_frame_i(4:6,:);J_rst_frame_i(1:3,:)];
+    J_rst_frame_i(:,i+2:end) = 0; % the contact is not influenced by the next joint 
+    J_rst_frame = [J_rst_frame;J_rst_frame_i];
+end
+
+
+J_contact_error = abs(J_class_contacts-J_rst_frame);
+
+if max(J_contact_error(:)) > 1e-10
+    fprintf('Test 4 (contacts Jacobian): failed! \n')
+else
+    fprintf('Test 4 (contacts Jacobian): pass! \n')
+end
+
+%% Test 5: 
+
+
+
+
+

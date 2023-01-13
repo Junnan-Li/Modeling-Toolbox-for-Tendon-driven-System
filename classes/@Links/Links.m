@@ -53,11 +53,13 @@ classdef Links < handle
 %             assert(size(base_R) == 3, 'Function error: input dimension of link position is incorrect');           
             obj.base_p = reshape(base_p,[3,1]);
             obj.base_R = base_R;
-            obj.update_all_contacts
+            obj.update_link_contacts
         end
         
-        function add_contact(obj,link_p)
+        function new_contact = add_contact(obj,link_p)
             %add contact point on the link
+            % link_p: 
+            %       local position of the contact point 
             assert(length(link_p) == 3, 'Function error: input dimension of contact position is incorrect');
             link_p = reshape(link_p,[3,1]); % columewise
             
@@ -66,11 +68,12 @@ classdef Links < handle
             
             obj.contacts = [obj.contacts;new_contact];
             obj.nc = length(obj.contacts);      
-            obj.update_all_contacts;
+            obj.update_link_contacts; % 
         end
         
-        function update_all_contacts(obj)
-            % update the Link Class property: Links.nc 
+        function update_link_contacts(obj)
+            % update Link.Contact.base_R & base_p
+
             if obj.nc ~=0
                 for i = 1:obj.nc
                     obj.contacts(i).update_contact_pose(obj.base_p,obj.base_R)

@@ -30,7 +30,7 @@ classdef Contacts < handle
             obj.name = name;
             obj.link_index = link_index;
             obj.link_p = link_p;
-            obj.link_R = euler2R_XYZ([-pi/2 0 0]);
+            obj.link_R = euler2R_XYZ([-pi/2 0 0]); % default frame is z axis point to the environment 
             obj.base_p = [];
             obj.base_R = eye(3);
             obj.type_friction = 'hard';
