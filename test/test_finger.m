@@ -18,37 +18,33 @@ clc
 
 
 % define different types of fingers
-finger_r = Finger('Index', 'RRRR', [0.5 0.3 0.2]);
-finger_s = Finger('Index', 'RRRs', rand(1,3));
-finger_p = Finger('Index', 'RRRp', rand(1,3));
 
-finger_list = {finger_r,finger_s,finger_p};
+finger_r = Finger('Index', 'RRRR', 3*rand(1,3)); % random link length
+% finger_s = Finger('Index', 'RRRs', rand(1,3));
+% finger_p = Finger('Index', 'RRRp', rand(1,3));
 
-finger_r.w_p_base = [1,0,0]';
-finger_r.w_R_base = euler2R_XYZ([0 0 pi/2]);
+% finger_list = {finger_r,finger_s,finger_p};
+
+
+%% set random states
+% set random base position and orientation
+finger_r.w_p_base = 4*rand(3,1);
+finger_r.w_R_base = euler2R_XYZ(rand(1,3));
 
 % joint configurations
-% q = [45,0,0]'*pi/180;
 q_r = rand(4,1);
-% q_r = [pi/4<,pi/3,0,0]';
-q_s = rand(4,1)*pi;
-q_p = rand(4,1)*pi;
+
 
 % udpate finger with given joint configurations
 finger_r.update_finger(q_r);
-% finger_r.update_rst_model;
 
 % load rst model from finger class
 rst_model = finger_r.rst_model;
 
 % plot rst model
-show(rst_model,q_r,'Collisions','on','Visuals','off');
+% show(rst_model,q_r,'Collisions','on','Visuals','off');
 
-% return
-
-%% Test 1:  mdh parameters test
-% disp('Test start: Transformation matrix test')
-
+%% Test 1:  Transformation matrix test with respect to mdh parameters 
 % mdh parameter from class properties
 mdh = mdh_struct_to_matrix(finger_r.mdh,1);
 b_T_class = T_mdh_multi(mdh);
@@ -56,11 +52,10 @@ W_T_b = finger_r.get_W_T_B();
 T_class = W_T_b * b_T_class;
 
 % mdh parameters from rst model
-T_rst = getTransform(rst_model,[q_r],'endeffector');
+T_rst = getTransform(rst_model,q_r,'endeffector');
 
-
+% validaiton
 T_error = abs(T_class-T_rst);
-% assert(max(T_error(:)) < 1e-12, 'Class Error: Transformation matrix from mdh parameters do not match!')
 if max(T_error(:)) > 1e-10
     fprintf('Test 1 (Transformation matrix): failed! \n')
 else
@@ -68,29 +63,30 @@ else
 end
 
 %% Test 2: geometric Jacobian test
+% test the geometric Jacobian matrix of the endeffector
+% Jacobian_geom_b_end.m
 
 % number of active joints
 num_nja = finger_r.nja;
 
 % geometric Jacobian computed by the class function 'Jacobian_geom_end'
-J_class_b = finger_r.Jacobian_geom_b_end(q_r);
+J_class_b = finger_r.Jacobian_geom_b_end(q_r);% with respect to the base frame
 W_R_b = finger_r.w_R_base();
-J_class = [W_R_b*J_class_b(1:3,:);W_R_b*J_class_b(4:6,:)];
-
+J_class = blkdiag(W_R_b,W_R_b)*J_class_b;
 
 % geometric Jacobian computed by the rst toolbox
 J_rst = geometricJacobian(rst_model,q_r,'endeffector'); % J_rst = [omega_x omega_y omega_z v_x v_y v_z]' 
 J_rst = [J_rst(4:6,1:num_nja);J_rst(1:3,1:num_nja)]; % J_rst = [v_x v_y v_z omega_x omega_y omega_z]'
 
+% validaiton
 J_error = abs(J_class-J_rst);
-
 if max(J_error(:)) > 1e-10
     fprintf('Test 2 (geometric Jacobian): failed! \n')
 else
     fprintf('Test 2 (geometric Jacobian): pass! \n')
 end
 %% Test 3: Frame position test
-% Links.base_p & Links.base_R
+% test properties: link.base_p & link.base_R
 
 % Base to World frame transformation of class model 
 W_p_b = finger_r.w_p_base();
@@ -101,49 +97,50 @@ test_3_error = 0;
 for i = 1:finger_r.nl
     % rsi model: frame position & orientation in world frame
     T_rst_link_i = getTransform(finger_r.rst_model,q_r,finger_r.list_links(i).name);
-    base_p_rsi = T_rst_link_i(1:3,4);
-    base_R_rsi = T_rst_link_i(1:3,1:3);
+    W_base_p_rsi = T_rst_link_i(1:3,4);
+    W_base_R_rsi = T_rst_link_i(1:3,1:3);
     
     % class model: frame position & orientation in world frame
-    base_p_class = W_R_b * finger_r.list_links(i).base_p + W_p_b;
-    base_R_class = W_R_b* finger_r.list_links(i).base_R;
+    W_base_p_class = W_R_b * finger_r.list_links(i).base_p + W_p_b;
+    W_base_R_class = W_R_b* finger_r.list_links(i).base_R;
     
-    base_p_error = abs(base_p_class-base_p_rsi);
-    base_R_error = abs(base_R_class-base_R_rsi);
+    base_p_error = abs(W_base_p_class-W_base_p_rsi);
+    base_R_error = abs(W_base_R_class-W_base_R_rsi);
     
     
     if max(base_p_error(:)) > 1e-10 || max(base_R_error(:)) > 1e-10
         test_3_error = 1;
     end
-
-%     assert(max(base_p_error(:)) < 1e-12, 'Class Error: link position do not match!')
-%     assert(max(base_R_error(:)) < 1e-12, 'Class Error: link rotation do not match!')
-
 end
 
+% validaiton
 if test_3_error == 1
     fprintf('Test 3 (Frame position): failed! \n')
 else
     fprintf('Test 3 (Frame position): pass! \n')
 end
 
-% return
-%% Test 4: Geometric Jacobian of contact test
+
+%% Test 4: Contact test
 % set the contact point at the end of the link (next frame)
 % then compare the J_frame (rst) to the J_contact
+% test: add_contact & Jacobian_geom_b_contact.m
 
+% set contact point at the end of each link
 for i = 1:finger_r.nl
-%     finger_r.list_links(i).add_contact([finger_r.list_links(i).Length/2 0 0]');
     finger_r.list_links(i).add_contact([finger_r.list_links(i).Length 0 0]');
 end
-finger_r.update_list_contacts;
+finger_r.update_list_contacts; % update link
+
+
+% Test 4-1 geometric Jacobian test
 W_R_b = finger_r.w_R_base();
 J_class_contacts = [];
 
 for i = 1:finger_r.nl
     if finger_r.list_links(i).nc
         for j = 1:finger_r.list_links(i).nc
-            b_J_c_i = finger_r.Jacobian_geom_contact(q_r,finger_r.list_links(i).contacts(j));
+            b_J_c_i = finger_r.Jacobian_geom_b_contact(q_r,finger_r.list_links(i).contacts(j));
             J_class_contacts = [J_class_contacts;blkdiag(W_R_b,W_R_b)*b_J_c_i];
         end
     end
@@ -162,14 +159,53 @@ end
 J_contact_error = abs(J_class_contacts-J_rst_frame);
 
 if max(J_contact_error(:)) > 1e-10
-    fprintf('Test 4 (contacts Jacobian): failed! \n')
+    fprintf('Test 4-1 (contacts Jacobian): failed! \n')
 else
-    fprintf('Test 4 (contacts Jacobian): pass! \n')
+    fprintf('Test 4-1 (contacts Jacobian): pass! \n')
 end
 
-%% Test 5: 
+
+show(rst_model,q_r,'Collisions','on','Visuals','off');
+hold on
+finger_r.print_contact()
 
 
 
+% Test 4-2 delete all contacts
+% delete_all_contacts()
+
+
+% finger_r.delete_all_contacts();
+
+
+% return
+%% Test 5 inverse dynamic test
+
+% random states
+q_rD = rand(size(q_r));
+q_rDD = rand(size(q_r));
+F_ext = rand(6,1);
+
+
+Tau_class = finger_r.invdyn_ne_w_end(q_r,q_rD,q_rDD,F_ext);
+
+
+% transfer the external force exerting on the 
+transform = getTransform(rst_model,q_r,'endeffector');
+W_R_end = transform(1:3,1:3);
+F_ext_rst = externalForce(rst_model,'endeffector',[W_R_end'*F_ext(4:6);W_R_end'*F_ext(1:3)],q_r);
+Tau_rst = inverseDynamics(rst_model, q_r,q_rD,q_rDD, F_ext_rst);
+
+
+Tau_error = abs(Tau_class-Tau_rst);
+
+if max(Tau_error(:)) > 1e-10
+    fprintf('Test 5 (inverse dynamic): failed! \n')
+else
+    fprintf('Test 5 (inverse dynamic): pass! \n')
+end
+
+
+%% Test 6
 
 

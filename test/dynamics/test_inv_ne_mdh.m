@@ -20,7 +20,8 @@ g = [0 0 -9.81]';
 % random robot link mass
 Mass = [0;rand(n_q,1)]; % first term is the base mass
 
-X_base = zeros(6,1);
+% random base position
+X_base = rand(6,1);
 XD_base = zeros(6,1);
 XDD_base = zeros(6,1);
 
@@ -68,7 +69,12 @@ for i = 1:n_q
     bodyi = rigidBody(link_i_name);
     joint_i_name = char("jnt"+num2str(i));
     jnt_i = rigidBodyJoint(joint_i_name,'revolute');
-    setFixedTransform(jnt_i,mdh_rst(i,:),'mdh');
+    if i == 1
+        W_T_base = [euler2R_XYZ(X_base(4:6)),X_base(1:3); 0 0 0 1];
+        setFixedTransform(jnt_i,W_T_base); % frame 1 position from X_base
+    else
+        setFixedTransform(jnt_i,mdh_rst(i,:),'mdh');
+    end
     bodyi.Joint = jnt_i;
     bodyi.Mass = Mass(i+1);
     bodyi.Inertia = I_rst(:,i+1);
@@ -168,9 +174,9 @@ end
 % Inverse dynamic gravity term 
 G_error = G_rst - G_ne_fd;
 if max(abs(G_error(:))) > 1e-8
-    fprintf('Inverse dynamic test (NE C gravity): failed! \n')
+    fprintf('Inverse dynamic test (NE gravity): failed! \n')
 else
-    fprintf('Inverse dynamic test (NE C gravity): pass! \n')
+    fprintf('Inverse dynamic test (NE gravity): pass! \n')
 end
 
 % Inverse dynamic Torque
