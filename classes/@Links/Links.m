@@ -13,7 +13,7 @@ classdef Links < handle
         Length
         Width
         Thick
-        par_dyn             % mass, center of mass, inertia
+        par_dyn             % [1] mass, [3x1] center of mass, [6x1] inertia
         stiffness
         nc
         contacts
@@ -36,8 +36,8 @@ classdef Links < handle
             obj.Thick = 0.03;
             obj.par_dyn = struct;
             obj.par_dyn.mass = 1;
-            obj.par_dyn.com = 1/2 * [obj.Length,obj.Thick,obj.Width];
-            obj.par_dyn.inertia = [1,1,1,0,0,0]; % [xx yy zz xy xz yz];
+            obj.par_dyn.com = 1/2 * [obj.Length,0,0]'; % middle point of the links
+            obj.par_dyn.inertia = [1,1,1,0,0,0]'; % [xx yy zz yz xz xy];
             obj.stiffness = 1;
             obj.index = index; 
             obj.contacts = [];
@@ -71,14 +71,49 @@ classdef Links < handle
             obj.update_link_contacts; % 
         end
         
+        function delete_all_contacts_link(obj)
+            % delete all contacts of the link
+            obj.contacts = [];
+            obj.update_link_contacts();
+        end
+        
+        function delete_one_contact(obj,index)
+            % delete all contacts of the finger
+            num_c = obj.nc;
+            if index < num_c
+                obj.contacts(index) = [];
+            else
+                disp('Can not delete the Contact: the index is out of the range')
+            end
+            obj.update_list_contacts;
+        end
+        
         function update_link_contacts(obj)
-            % update Link.Contact.base_R & base_p
-
+            % update obj.nc link.Contact.base_R & base_p
+            
+            obj.nc = length(obj.contacts);
             if obj.nc ~=0
                 for i = 1:obj.nc
                     obj.contacts(i).update_contact_pose(obj.base_p,obj.base_R)
                 end
             end
+        end
+        
+        function set_mass(obj, mass)
+            % set dynamic parameters
+            obj.par_dyn.mass = mass;
+        end
+        
+        function set_inertia(obj, inertia)
+            % set dynamic parameters
+            assert(length(inertia) == 6,'Input error: inertia tensor size is wrong')
+            obj.par_dyn.inertia = reshape(inertia,6,1);
+        end
+        
+        function set_com(obj, com)
+            % set dynamic parameters
+            assert(length(com) == 3,'Input error: CoM size is wrong')
+            obj.par_dyn.com = reshape(com,3,1);
         end
         
         

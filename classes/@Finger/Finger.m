@@ -62,6 +62,7 @@ classdef Finger < handle
         rst_model           % robotic system toolbox model based on mdh. Default: colume Dataformat
         q_a                 % [njax1]
         q                   % [njx1]
+        par_dyn_f           
     end
     
     methods
@@ -116,9 +117,6 @@ classdef Finger < handle
             % init list of contact and tendon
             % default contacts in the middle of each links
             obj.nc = 0;
-%             for i = 1:obj.nl
-%                 new_contact = obj.list_links(i).add_contact([obj.list_links(i).Length/2 0 0]')
-%             end
             obj.list_contacts = [];
             
             obj.nt = 0;
@@ -130,8 +128,13 @@ classdef Finger < handle
             obj.q_a = zeros(obj.nja,1);
             obj.q = zeros(obj.nj,1);
             % update mdh parameters
+            obj.par_dyn_f = struct();
+            obj.par_dyn_f.g = [0;0;-9.81];
             
             obj.update_finger(obj.q_a);
+            
+            % update dynamic parameters
+            
             
         end
         
@@ -139,6 +142,8 @@ classdef Finger < handle
             % check if all the properties of the Finger class are in the
             % correct form
             % TODO 
+            
+            
             
         end
         
@@ -166,11 +171,31 @@ classdef Finger < handle
                 obj.list_links(i).update(base_p_link_i,base_R_link_i);
             end
             
+            % update dynamic parameters
+            obj.update_finger_par_dyn;     
             % update rsi model
             obj.update_rst_model;
             
-            % update 
             
+        end
+        
+        function update_finger_par_dyn(obj)
+            % update the finger dynamic parameters
+            % TODO: finalize for all types
+            
+            mass_all = zeros(obj.nja+1,1); % first is base
+            com_all = zeros(3,obj.nja+1);
+            inertia_all = zeros(6,obj.nja+1);
+            if strcmp(obj.type,'RRRR')
+                for i = 2:1:obj.nja
+                    mass_all(i+1) = obj.list_links(i-1).par_dyn.mass;
+                    com_all(:,i+1) = obj.list_links(i-1).par_dyn.com;
+                    inertia_all(:,i+1) = obj.list_links(i-1).par_dyn.inertia;
+                end
+            end
+            obj.par_dyn_f.mass_all = mass_all;
+            obj.par_dyn_f.com_all = com_all;
+            obj.par_dyn_f.inertia_all = inertia_all;
             
         end
         
@@ -233,15 +258,32 @@ classdef Finger < handle
             % create rigid body tree
             rst_model_tmp = rigidBodyTree;
             rst_model_tmp.DataFormat = 'column';
+            rst_model_tmp.Gravity = obj.par_dyn_f.g;
             
+            % convert inertia format to rst format
+            
+            inertia_all = obj.par_dyn_f.inertia_all;
+            mass_all = obj.par_dyn_f.mass_all;
+            com_all = obj.par_dyn_f.com_all;
+            
+            inertia_all_rst = zeros(size(obj.par_dyn_f.inertia_all)); % [xx yy zz yz xz xy]
+            for i = 1:obj.nj
+                inertia_all_rst(:,i+1) = inertia_all(:,i+1) + ...
+                    mass_all(i+1)*[com_all(2,i+1).^2+com_all(3,i+1).^2;com_all(1,i+1).^2+com_all(3,i+1).^2;com_all(1,i+1).^2+com_all(2,i+1).^2;...
+                    -com_all(2,i+1)*com_all(3,i+1);-com_all(1,i+1)*com_all(3,i+1);-com_all(1,i+1)*com_all(2,i+1)];
+            end
+
             % virtual first body:  from CS.base to CS.1
             bodyname = 'virtual_Base';
             body1 = rigidBody(bodyname);
-            jointname = 'WtoBase';
+            jointname = 'MCP_abd';
             jnt1 = rigidBodyJoint(jointname,'revolute');          
             W_T_base = obj.get_W_T_B(); % World to Base 
             setFixedTransform(jnt1,W_T_base);
             body1.Joint = jnt1;
+            body1.Mass = mass_all(2); % first body (virtual)
+            body1.Inertia = inertia_all_rst(:,2);
+            body1.CenterOfMass = com_all(:,2);          
             addBody(rst_model_tmp,body1,'base');
             bodyname_last = bodyname;
             
@@ -252,6 +294,9 @@ classdef Finger < handle
                 jnt1 = rigidBodyJoint(jointname,'revolute');
                 setFixedTransform(jnt1,mdh_matrix(j+1,:),'mdh');
                 body1.Joint = jnt1;
+                body1.Mass = mass_all(j+2); % first body (virtual)
+                body1.Inertia = inertia_all_rst(:,j+2);
+                body1.CenterOfMass = com_all(:,j+2);
                 addBody(rst_model_tmp,body1,bodyname_last);
                 bodyname_last = bodyname;
             end
@@ -263,9 +308,22 @@ classdef Finger < handle
             jnt1 = rigidBodyJoint(jointname,'fixed');          
             setFixedTransform(jnt1,mdh_matrix(end,:),'mdh');
             body1.Joint = jnt1;
+            body1.Mass = 0;
+            body1.Inertia = [0,0,0,0,0,0];
+            body1.CenterOfMass = [0,0,0];
             addBody(rst_model_tmp,body1,bodyname_last);
             
             obj.rst_model = rst_model_tmp;
+        end
+        
+        function delete_all_contacts(obj)
+            % delete all contacts of the finger
+            if obj.nl 
+                for i = 1:obj.nl
+                    obj.list_links(i).delete_all_contacts_link();
+                end
+            end
+            obj.update_list_contacts;
         end
         
         function update_list_contacts(obj)
@@ -293,7 +351,8 @@ classdef Finger < handle
             % plot 3d contact points 
             for i = 1:obj.nl
                 contact_pos = obj.list_links(i).contacts(1).base_p;
-                plot3(contact_pos(1),contact_pos(2),contact_pos(3),'*','Color', 'r', 'MarkerSize',10)
+                W_contact_pos = obj.w_R_base*contact_pos + obj.w_p_base;
+                plot3(W_contact_pos(1),W_contact_pos(2),W_contact_pos(3),'*','Color', 'r', 'MarkerSize',10)
                 hold on
             end
             

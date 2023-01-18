@@ -2,7 +2,8 @@
 % parameters
 % Input:
 %     q,qD,qDD:         [n_qx1] joint states
-%     mdh:              [n_q+1x4] in sequence of [alpha,a,theta,d] 
+%     mdh:              [n_q+1x4] in sequence of [alpha,a,theta,d] To be
+%                       noted that the theta should exclude from mdh parameters 
 %     Mass:             [n_q+1] mass vector. the first mass is the base 
 %     X_base:           [6x1] eulerxyz
 %     XD_base:          [6x1] translational and angular velocity
@@ -56,7 +57,7 @@ VD(:,1) = XDD_base;
 VD_c = VD;
 % 
 W_T_allframe = zeros(4,4,n_f-1);
-mdh(1:n_q,3) = mdh(1:n_q,3)+q;
+mdh(1:n_q,3) = mdh(1:n_q,3)+q; % update mdh parameters with the current q
 % homogeneous transformation from Base to World frame
 W_T_allframe(:,:,1) = [euler2R_XYZ(X_base(4:6)),X_base(1:3);...
                 0 0 0 1];
