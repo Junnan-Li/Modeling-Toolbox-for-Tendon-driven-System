@@ -9,7 +9,7 @@
 % 
 % Note: to be tested and debugged
 
-function J = Jacobian_geom_contact(obj,q, contacts)
+function J = Jacobian_geom_b_contact(obj,q, contacts)
 
 % if nargin == 1
 %     q = obj.q;

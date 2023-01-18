@@ -38,7 +38,7 @@ classdef Contacts < handle
             obj.par = struct;      
         end
         
-        function   update_contact_pose(obj,base_p_link,base_R_link)
+        function update_contact_pose(obj,base_p_link,base_R_link)
             
             base_p_link = reshape(base_p_link,[3,1]);
             base_T_contact = [base_R_link,base_p_link;0 0 0 1];
