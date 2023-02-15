@@ -1,12 +1,13 @@
 % test script: inverse dynamic of serial robots with revolute joints 
 % comparing results to the robot system toolbox of MATLAB
-
+% 
+% random joint states, X_base, external force, mass, inertia, com, 
 
 
 %% setting
 show_robot = 0;
 % number of joints
-n_q = 5; 
+n_q = 4; 
 
 %% random configurations
 
@@ -109,10 +110,17 @@ if show_robot
 end
 
 %% Newton-Euler inverse dynamic (ne method)
-
+tic;
 [Tau_ne,F,W_T_allframe] = invdyn_ne_mdh(q,qD,qDD,mdh_ne, Mass,...
              X_base, XD_base, XDD_base, F_ext_ne, CoM_ne, I_ne, g);
+t_stop = toc;
+fprintf('inverse dynamic computation cost: %f \n', t_stop);
 
+tic;
+[Tau_ne,F,W_T_allframe] = invdyn_ne_mdh_mex(q,qD,qDD,mdh_ne, Mass,...
+             X_base, XD_base, XDD_base, F_ext_ne, CoM_ne, I_ne, g);
+t_stop = toc;
+fprintf('mex inverse dynamic computation cost: %f \n', t_stop);
 
 %% Forward dynamic 
 % given q, qD, tau  --> qDD
@@ -129,28 +137,25 @@ G_rst = gravityTorque(robot,q);
 qDD_rst = forwardDynamics(robot,q,qD,Tau,F_ext_rst);
 
 %%%%%%%% Newton Euler Method 
-% gravity term 
+tic;
+[qDD_ne_est,M_ne_fd,C_ne_fd,G_ne_fd] = fordyn_ne_mdh(q,qD,Tau,mdh_ne, Mass,...
+             X_base, XD_base, XDD_base, F_ext_ne, CoM_ne, I_ne, g, 0);
+t_stop = toc;
+fprintf('forward dynamic computation cost: %f \n', t_stop);
 
-G_ne_fd = invdyn_ne_mdh(q,zeros(n_q,1),zeros(n_q,1),mdh_ne, Mass,...
-             X_base, XD_base, XDD_base, zeros(6,1), CoM_ne, I_ne, g);
+tic;
+[qDD_ne_est,M_ne_fd,C_ne_fd,G_ne_fd] = fordyn_ne_mdh(q,qD,Tau,mdh_ne, Mass,...
+             X_base, XD_base, XDD_base, F_ext_ne, CoM_ne, I_ne, g);
+t_stop = toc;
+fprintf('mex forward dynamic computation cost: %f \n\n', t_stop);
 
-% C term
-C_ne_fd = invdyn_ne_mdh(q,qD,zeros(n_q,1),mdh_ne, Mass,...
-             X_base, XD_base, XDD_base, zeros(6,1), CoM_ne, I_ne, g);
-C_ne_fd = C_ne_fd - G_ne_fd;
+% Geometry Jacobian of the endeffector
+J_rst = [J_geom(4:6,:);J_geom(1:3,:)];
+% use Jacobian_geom_mdh.m to calculate geometric Jacobian
+w_R_b = euler2R_XYZ(X_base(4:6));
+b_J_ne = Jacobian_geom_mdh(mdh_ne,q);
+J_ne = blkdiag(w_R_b,w_R_b)*b_J_ne;
 
-% M term
-M_ne_fd = [];
-
-for i = 1:n_q
-    qDD_ne_M = zeros(n_q,1);
-    qDD_ne_M(i) = 1;
-    M_ne_fd(:,i) = invdyn_ne_mdh(q,zeros(n_q,1),qDD_ne_M,mdh_ne, Mass,...
-        X_base, XD_base, XDD_base, zeros(6,1), CoM_ne, I_ne, g);
-    M_ne_fd(:,i) = M_ne_fd(:,i) - G_ne_fd;
-end
-J_ne = [J_geom(4:6,:);J_geom(1:3,:)];
-qDD_ne_est = (M_ne_fd)\(Tau + J_ne'*F_ext_ne - G_ne_fd - C_ne_fd);
 
 
 %% Validation
@@ -186,6 +191,15 @@ if max(abs(T_error(:))) > 1e-8
     fprintf('Inverse dynamic test (NE Torque): failed! \n')
 else
     fprintf('Inverse dynamic test (NE Torque): pass! \n')
+end
+
+% Goemetric Jacobian J
+J_error = J_rst - J_ne;
+% assert(max(M_e(:))<1e-8,'Mass matrix test: failed!')
+if max(abs(J_error(:))) > 1e-8
+    fprintf('Goemetric Jacobian test (NE qDD): failed! \n')
+else
+    fprintf('Goemetric Jacobian test (NE qDD): pass! \n')
 end
 
 % forward dynamic qDD

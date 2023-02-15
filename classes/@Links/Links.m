@@ -10,9 +10,9 @@ classdef Links < handle
     
     properties (Access = public)
         name
-        Length
-        Width
-        Thick
+        Length              % [1] Length in m
+        Width               % [1] Width in m
+        Thick               % [1] Thick in m
         par_dyn             % [1] mass, [3x1] center of mass, [6x1] inertia
         stiffness
         nc

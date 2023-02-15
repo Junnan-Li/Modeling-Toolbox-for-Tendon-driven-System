@@ -10,7 +10,7 @@
 % Source: 
 %   "Robotics: Modeling, Planning, and Control" P111 - P113
 % 
-% Note: to be tested and debugged
+% Note: the same as J = Jacobian_geom_mdh(mdh,q)
 
 function J = Jacobian_geom_b_end(obj,q)
 

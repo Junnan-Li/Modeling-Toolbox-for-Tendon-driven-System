@@ -11,6 +11,9 @@ classdef Joints
     properties
         name
         momentarm_limits
+        q_limits             %[2x1]: [min,max] joint angle
+        qd_limits             %[2x1]: [min,max] joint angle
+        qdd_limits             %[2x1]: [min,max] joint angle
         w_p
         w_R
     end
@@ -26,6 +29,9 @@ classdef Joints
             obj.momentarm_limits = [0.02, 0.05];
             obj.w_p = [0,0,0]';
             obj.w_R = eye(3);
+            obj.q_limits = [-10,100]*pi/180;
+            obj.qd_limits = [-90,90]*pi/180;
+            obj.qdd_limits = [-90,90]*pi/180;
             obj.fixed = 0;
         end
         

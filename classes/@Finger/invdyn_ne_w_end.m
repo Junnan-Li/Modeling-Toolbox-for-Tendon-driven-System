@@ -19,8 +19,8 @@ assert(length(q)== obj.nj, 'dimension of joint vector is incorrect!')
 assert(length(qD)== obj.nj, 'dimension of joint vector is incorrect!')
 assert(length(qDD)== obj.nj, 'dimension of joint vector is incorrect!')
 
-mdh_ne = mdh_struct_to_matrix(obj.mdh_all, 1);
-mdh_ne(1:obj.nj,3) = mdh_ne(1:obj.nj,3) - q;
+mdh_ne = mdh_struct_to_matrix(obj.mdh_ori, 1);
+mdh_ne(1:obj.nj,3) = mdh_ne(1:obj.nj,3);
 Mass = obj.par_dyn_f.mass_all;
 X_base = zeros(6,1);
 X_base(1:3) = obj.w_p_base;

@@ -33,6 +33,10 @@ q = pi*rand(2,1);
 qD = 5*rand(2,1);
 qDD = 5*rand(2,1);
 
+q = [5;4];
+qD = [3;2];
+qDD = [1;5];
+
 %%  Robot system toolbox
 
 % mdh parameters
@@ -75,7 +79,7 @@ M_rst = massMatrix(robot,q);
 G_rst = gravityTorque(robot,q);
 T_rst = inverseDynamics(robot,q,qD,qDD)
 % centerOfMass(robot)
-robot.show(q,'Collisions','on','Visuals','on');
+% robot.show(q,'Collisions','on','Visuals','on');
 
 %% Lagrangian method
 

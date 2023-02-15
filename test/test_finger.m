@@ -32,11 +32,13 @@ finger_r.w_p_base = 4*rand(3,1);
 finger_r.w_R_base = euler2R_XYZ(rand(1,3));
 
 % joint configurations
-q_r = rand(4,1);
 
+q_r = rand(4,1);
 
 % udpate finger with given joint configurations
 finger_r.update_finger(q_r);
+% finger_r.update_finger([0;0;0;0]);
+
 
 % load rst model from finger class
 rst_model = finger_r.rst_model;
@@ -127,8 +129,10 @@ end
 % test: add_contact & Jacobian_geom_b_contact.m
 
 % set contact point at the end of each link
-for i = 1:finger_r.nl
-    finger_r.list_links(i).add_contact([finger_r.list_links(i).Length 0 0]');
+if finger_r.nc == 0
+    for i = 1:finger_r.nl
+        finger_r.list_links(i).add_contact([finger_r.list_links(i).Length 0 0]');
+    end
 end
 finger_r.update_list_contacts; % update link
 
@@ -205,7 +209,49 @@ else
     fprintf('Test 5 (inverse dynamic): pass! \n')
 end
 
+%% Test 6 Forward dynamic test
 
-%% Test 6
+% random states
+q_rD = rand(size(q_r));
+tau = rand(size(q_r));
+F_ext = rand(6,1);
 
 
+qDD_class = finger_r.fordyn_ne_w_end(q_r,q_rD,tau,F_ext);
+
+
+% transfer the external force exerting on the 
+transform = getTransform(rst_model,q_r,'endeffector');
+W_R_end = transform(1:3,1:3);
+F_ext_rst = externalForce(rst_model,'endeffector',[W_R_end'*F_ext(4:6);W_R_end'*F_ext(1:3)],q_r);
+qDD_rst = forwardDynamics(rst_model,q_r,q_rD,tau,F_ext_rst);
+
+qDD_error = abs(qDD_class-qDD_rst);
+
+if max(qDD_error(:)) > 1e-10
+    fprintf('Test 6 (forward dynamic): failed! \n')
+else
+    fprintf('Test 6 (forward dynamic): pass! \n')
+end
+
+
+
+
+%% Test 7 Tendon moment arm properties
+% poly 3 function: MA = ax^3+bx^2+cx+d
+
+if finger_r.nt == 0
+    finger_r.add_tendon('Flex_1', [1,1,1,1]);
+    finger_r.add_tendon('Flex_2', [1,1,1,0]);
+    finger_r.add_tendon('Flex_3', [1,1,0,0]);
+    finger_r.add_tendon('Ext_1', [-1,-1,-1,-1]);
+end
+q_r = rand(4,1);
+finger_r.update_finger(q_r);
+finger_r.M_coupling;
+finger_r.set_tendon_par_MA_poly3(3,1,[0,0,0,0.03]);
+finger_r.set_tendon_par_MA_poly3(3,2,[0,0,0,0.035]);
+finger_r.M_coupling;
+
+
+%% 

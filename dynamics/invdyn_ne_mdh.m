@@ -36,6 +36,7 @@
 
 
 function [Tau,F,W_T_allframe] = invdyn_ne_mdh(q,qD,qDD,mdh, Mass, X_base, XD_base,XDD_base, F_ext, CoM, I, g)
+%#codegen
 
 % test input dimension
 n_q = length(q);

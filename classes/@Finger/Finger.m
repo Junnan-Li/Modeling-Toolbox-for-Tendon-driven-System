@@ -25,8 +25,20 @@
 %       
 % 
 
-
-
+%   functions:
+%       obj.update_finger(q_a): 
+%           obj.mdh_all, obj.mdh, obj.M_coupling, rst_model 
+%       obj.update_finger_par_dyn:
+%           obj.par_dyn_f
+%       obj.update_list_contacts
+%       obj.update_list_tendons
+%       obj.update_rst_model
+%   tendon related: 
+%       add_tendon();
+%       update_M_coupling()
+%       set_tendon_par_MA_poly3(obj, tendon_index, joint_index, par)
+%       
+%       
 
 classdef Finger < handle
     %FINGER Summary of this class goes here
@@ -45,7 +57,8 @@ classdef Finger < handle
         list_contacts       % [ncx1] list of all contacts
         list_tendons        % [ntx1] list of all tendons
         joint_act           % [njx1] logical vector: 1: active joint; 0: fixed joint 
-
+        limits_q            % [njx6] min,max values of q,qd,qdd
+        limits_ft           % [ntx2] min,max values of tendon forces
         par_kin             % all kinematic parameters
         opt_pkin            % kinematic parameters for optimization
         
@@ -57,12 +70,14 @@ classdef Finger < handle
     end
     
     properties (SetAccess = private)
-        mdh                 % mdh parameters: alpha, a theta, d
+        mdh                 % mdh parameters: alpha, a theta, d (with q)
         mdh_all
+        mdh_ori             % mdh parameters: alpha, a theta, d (without q)
         rst_model           % robotic system toolbox model based on mdh. Default: colume Dataformat
-        q_a                 % [njax1]
-        q                   % [njx1]
+        q_a                 % [njax1] unit rad
+        q                   % [njx1] unit rad
         par_dyn_f           
+        M_coupling          % [njxnt] coupling matrix of the finger
     end
     
     methods
@@ -122,6 +137,8 @@ classdef Finger < handle
             obj.nt = 0;
             obj.list_tendons = [];
             
+            
+            obj.limits_q = zeros(obj.nj,6);
             % init finger base position and orientation
             obj.w_p_base = [0;0;0];
             obj.w_R_base = eye(3);
@@ -131,9 +148,13 @@ classdef Finger < handle
             obj.par_dyn_f = struct();
             obj.par_dyn_f.g = [0;0;-9.81];
             
-            obj.update_finger(obj.q_a);
             
             % update dynamic parameters
+            obj.update_finger_par_dyn;
+            
+            % update parameters w.r.t. joint angles
+            obj.update_finger(obj.q_a);
+            
             
             
         end
@@ -157,12 +178,11 @@ classdef Finger < handle
             obj.q(obj.joint_act) = q_a; % update joint angle
             
             % update mdh parameters
-            [obj.mdh,obj.mdh_all] = get_finger_mdh(obj, obj.q_a);
+            [obj.mdh,obj.mdh_all, obj.mdh_ori] = get_finger_mdh(obj, obj.q_a);
             
             % update par_kin 
             
             % update all link properties
-            % TODO
             for i = 1:obj.nl
                 mdh_all_matrix = mdh_struct_to_matrix(obj.mdh_all, 1);
                 b_T_i = T_mdh_multi(mdh_all_matrix(1:i+1,:));
@@ -171,13 +191,49 @@ classdef Finger < handle
                 obj.list_links(i).update(base_p_link_i,base_R_link_i);
             end
             
+            % update joints info
+            obj.update_joints_info;
+            % update the list of tendons
+            obj.update_M_coupling(obj.q_a); 
+            
+            % update tendon force limits
+            obj.update_tendon_force_limits;
             % update dynamic parameters
-            obj.update_finger_par_dyn;     
+%             obj.update_finger_par_dyn;    
+            
+            
             % update rsi model
             obj.update_rst_model;
+        end
+        
+        % joint related functinos
+        function update_joints_info(obj)
+            % update joint information
+            %   1. limits_q
+            for i = 1:obj.nj
+               obj.limits_q(i,1:2) = obj.list_joints(i).q_limits;
+               obj.limits_q(i,3:4) = obj.list_joints(i).qd_limits;
+               obj.limits_q(i,5:6) = obj.list_joints(i).qdd_limits;
+            end 
+        end
+        
+        function [q_sat, qd_sat, qdd_sat] = check_joints_limits(obj, q, qd, qdd)
             
+            assert(length(q)== obj.nja, 'dimension of joint vector is incorrect!')
+            assert(length(qd)== obj.nja, 'dimension of joint vector is incorrect!')
+            assert(length(qdd)== obj.nja, 'dimension of joint vector is incorrect!')
+            q_sat = q;
+            q_sat(q < obj.limits_q(:,1)) = obj.limits_q(q < obj.limits_q(:,1),1);
+            q_sat(q > obj.limits_q(:,2)) = obj.limits_q(q > obj.limits_q(:,2),2);
+            qd_sat = qd;
+            qd_sat(qd < obj.limits_q(:,3)) = obj.limits_q(qd < obj.limits_q(:,3),3);
+            qd_sat(qd > obj.limits_q(:,4)) = obj.limits_q(qd > obj.limits_q(:,4),4);
+            qdd_sat = qdd;
+            qdd_sat(qdd < obj.limits_q(:,5)) = obj.limits_q(qdd < obj.limits_q(:,5),5);
+            qdd_sat(qdd > obj.limits_q(:,6)) = obj.limits_q(qdd > obj.limits_q(:,6),6);
             
         end
+        
         
         function update_finger_par_dyn(obj)
             % update the finger dynamic parameters
@@ -196,10 +252,9 @@ classdef Finger < handle
             obj.par_dyn_f.mass_all = mass_all;
             obj.par_dyn_f.com_all = com_all;
             obj.par_dyn_f.inertia_all = inertia_all;
-            
         end
         
-        function [mdh_reduced,mdh_all] = get_finger_mdh(obj, q_a)
+        function [mdh_reduced,mdh_all,mdh_ori] = get_finger_mdh(obj, q_a)
             % get mdh parameter from the given joint angle
             % update mhl parameters and par_kin, opt_pkin, ...
             % TODO: [01/23] only theta is updated, others are fixed in some
@@ -230,6 +285,9 @@ classdef Finger < handle
                 end
             end
             mdh_reduced = mdh_tmp;
+            mdh_ori = mdh_all;
+            mdh_ori.theta = [0;0;0;0;0];
+            
         end
         
         function set_base(obj, w_p_base, w_R_base)
@@ -358,7 +416,61 @@ classdef Finger < handle
             
         end
         
+        % tendon related:
+        function add_tendon(obj, name, routing)
+            % add tendon to class
+            % TODO: partition q & qa (current version: using q_a)
+            tendon_tmp = Tendons(name, routing, obj.nt+1);
+            tendon_tmp.init_tendon_par(obj.nj, obj.q_a)
+            obj.nt = obj.nt + 1;
+            obj.list_tendons = [obj.list_tendons;tendon_tmp];
+            obj.update_M_coupling(obj.q_a);
+            
+        end
         
+        function set_tendon_par_MA_poly3(obj, tendon_index, joint_index, par)
+            
+            assert(length(par)== 4, 'dimension of par_MA_poly3 is incorrect!')
+            assert(tendon_index <= obj.nt, 'index of tendon is incorrect!')
+            assert(joint_index <= obj.list_tendons(tendon_index).j_index, 'index of joint is incorrect!')
+            obj.list_tendons(tendon_index).set_par_MA_poly3(joint_index, par, obj.q_a);
+            obj.update_M_coupling(obj.q_a);
+            
+        end
+        
+        function M_coupling = update_M_coupling(obj, q)
+            % update M_coupling matrix w.r.t. current configuration
+            % TODO: moment arm value as a function of q
+            M_coupling_tmp = zeros(obj.nj,obj.nt);
+            for i = 1:obj.nt
+                obj.list_tendons(i).update_momentarm(q);
+                M_coupling_tmp(:,i) = obj.list_tendons(i).moment_arm;
+            end
+            obj.M_coupling = M_coupling_tmp;
+            obj.moment_arm_limit;
+            M_coupling = obj.M_coupling;
+        end
+        
+        function moment_arm_limit(obj)
+            % saturate the moment arm limits w.r.t. joint properties
+            % called in update_M_coupling.m
+            for i = 1:obj.nj
+                ma_max_i = obj.list_joints(i).momentarm_limits(2);
+                ma_min_i = obj.list_joints(i).momentarm_limits(1);
+                M_coupling_i = abs(obj.M_coupling(i,:));
+                M_coupling_i(M_coupling_i>ma_max_i) = ma_max_i;
+                M_coupling_i(M_coupling_i<ma_min_i) = ma_min_i;
+                obj.M_coupling(i,:) = sign(obj.M_coupling(i,:)).*M_coupling_i;
+            end
+        end
+        
+        function update_tendon_force_limits(obj)
+            % update tendon force limits
+            %   1. limits_q
+            for i = 1:obj.nt
+               obj.limits_ft(i,:) = obj.list_tendons(i).f_limits;
+            end 
+        end
         
     end
 end
