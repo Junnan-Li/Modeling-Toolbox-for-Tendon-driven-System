@@ -1,4 +1,4 @@
-function yout =  rungekutta4(fun,dt,t0,y0)
+function [yout,ydout] =  rungekutta4(fun,dt,t0,y0)
 
 
 f1 = fun(t0,y0);
@@ -9,3 +9,4 @@ f3 = fun(t0+dt/2,y0+(dt/2)*f2);
 f4 = fun(t0+dt,y0+dt*f3);
 
 yout = y0 + (dt/6)*(f1+2*f2+2*f3+f4);
+ydout = (dt/6)*(f1+2*f2+2*f3+f4);
