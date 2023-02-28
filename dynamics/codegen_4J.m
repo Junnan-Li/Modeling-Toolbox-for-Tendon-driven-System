@@ -11,4 +11,4 @@
 %     zeros(n_q+1,1),zeros(6,1),zeros(6,1),zeros(6,1),zeros(6,1),zeros(3,n_q+1),...
 %     zeros(6,n_q+1),zeros(3,1)};
 
-codegen invdyn_ne_mdh.m -args {zeros(4,1),zeros(4,1),zeros(4,1),zeros(5,4),zeros(5,1),zeros(6,1),zeros(6,1),zeros(6,1),zeros(6,1),zeros(3,5),zeros(6,5),zeros(3,1)}
+codegen invdyn_ne_mdh_all_fext.m -args {zeros(4,1),zeros(4,1),zeros(4,1),zeros(5,4),zeros(5,1),zeros(6,1),zeros(6,1),zeros(6,1),zeros(6,6),zeros(3,5),zeros(6,5),zeros(3,1)}

@@ -11,6 +11,8 @@
 %   "Robotics: Modeling, Planning, and Control" P111 - P113
 % 
 % Note: the same as J = Jacobian_geom_mdh(mdh,q)
+% 
+% Junnan Li, junnan.li@tum.de, 01.2023
 
 function J = Jacobian_geom_b_end(obj,q)
 
@@ -23,7 +25,7 @@ q = reshape(q,[obj.nja,1]);
 num_active_joint = obj.nja;
 % mdh_struct = obj.get_finger_mdh(q);
 mdh = mdh_struct_to_matrix(obj.mdh,1);
-
+J = zeros(6,num_active_joint);
 base_T_end = T_mdh_multi(mdh);
 
 for i = 1:num_active_joint

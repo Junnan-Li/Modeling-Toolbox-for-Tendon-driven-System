@@ -59,6 +59,7 @@ classdef Finger < handle
         joint_act           % [njx1] logical vector: 1: active joint; 0: fixed joint 
         limits_q            % [njx6] min,max values of q,qd,qdd
         limits_ft           % [ntx2] min,max values of tendon forces
+        limits_t_ma         % [ntx..] min,max values of tendon forces
         par_kin             % all kinematic parameters
         opt_pkin            % kinematic parameters for optimization
         
@@ -102,6 +103,8 @@ classdef Finger < handle
             obj.nl = 3;
             
             % create links
+%             PP_abd = Links('PP_abd',link_len_vector(1), 1);
+            
             PP = Links('PP',link_len_vector(1), 1);
             MP = Links('MP',link_len_vector(2), 2);
             DP = Links('DP',link_len_vector(3), 3);
@@ -136,6 +139,7 @@ classdef Finger < handle
             
             obj.nt = 0;
             obj.list_tendons = [];
+            obj.limits_t_ma = [];
             
             
             obj.limits_q = zeros(obj.nj,6);
@@ -210,10 +214,14 @@ classdef Finger < handle
         function update_joints_info(obj)
             % update joint information
             %   1. limits_q
+            
+%             q = obj.q_a;
             for i = 1:obj.nj
                obj.limits_q(i,1:2) = obj.list_joints(i).q_limits;
                obj.limits_q(i,3:4) = obj.list_joints(i).qd_limits;
                obj.limits_q(i,5:6) = obj.list_joints(i).qdd_limits;
+               
+               
             end 
         end
         
@@ -404,6 +412,21 @@ classdef Finger < handle
             obj.nc = num_contact;
         end
         
+        function [p_link_all_w,p_link_all_b] = get_p_all_links(obj)
+            % plot 3d contact points
+            w_R_b = obj.w_R_base; 
+            p_link_all_b = zeros(3,obj.nl+1);
+            p_link_all_w = zeros(3,obj.nl+1);
+            for i = 1:obj.nl
+                p_link_all_b(:,i) = obj.list_links(i).base_p;
+                p_link_all_w(:,i) = w_R_b * p_link_all_b(:,i);
+            end
+            % fingertip position
+            mdh_all_matrix = mdh_struct_to_matrix(obj.mdh_all, 1);
+            b_T_i = T_mdh_multi(mdh_all_matrix);
+            p_link_all_b(:,end) = b_T_i(1:3,4);
+            p_link_all_w(:,end) = w_R_b * b_T_i(1:3,4);
+        end
         
         function print_contact(obj)
             % plot 3d contact points 
@@ -413,7 +436,6 @@ classdef Finger < handle
                 plot3(W_contact_pos(1),W_contact_pos(2),W_contact_pos(3),'*','Color', 'r', 'MarkerSize',10)
                 hold on
             end
-            
         end
         
         % tendon related:
@@ -424,9 +446,11 @@ classdef Finger < handle
             tendon_tmp.init_tendon_par(obj.nj, obj.q_a)
             obj.nt = obj.nt + 1;
             obj.list_tendons = [obj.list_tendons;tendon_tmp];
+            obj.update_tendon_ma_limits_from_joints;
             obj.update_M_coupling(obj.q_a);
-            
         end
+        
+        
         
         function set_tendon_par_MA_poly3(obj, tendon_index, joint_index, par)
             
@@ -438,13 +462,25 @@ classdef Finger < handle
             
         end
         
+        function update_tendon_ma_limits_from_joints(obj)
+            for i = 1:obj.nt
+                tendon_j_index_i = obj.list_tendons(i).j_index;
+                ma_limits_i = zeros(tendon_j_index_i,2);
+                for j = 1:tendon_j_index_i
+                    ma_limits_i(j,:) = obj.list_tendons(i).routing(j)*obj.list_joints(j).momentarm_limits;
+                    obj.list_tendons(i).update_ma_limits(j,ma_limits_i(j,:))
+                    obj.limits_t_ma(i,2*j-1:2*j) = ma_limits_i(j,:);
+                end
+            end
+        end
+        
         function M_coupling = update_M_coupling(obj, q)
             % update M_coupling matrix w.r.t. current configuration
             % TODO: moment arm value as a function of q
             M_coupling_tmp = zeros(obj.nj,obj.nt);
             for i = 1:obj.nt
                 obj.list_tendons(i).update_momentarm(q);
-                M_coupling_tmp(:,i) = obj.list_tendons(i).moment_arm;
+                M_coupling_tmp(:,i) = obj.list_tendons(i).routing.*obj.list_tendons(i).moment_arm_abs;
             end
             obj.M_coupling = M_coupling_tmp;
             obj.moment_arm_limit;

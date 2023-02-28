@@ -26,7 +26,7 @@ classdef Joints
             %JOINTS Construct an instance of this class
             obj.name = name;
             obj.index = index;
-            obj.momentarm_limits = [0.02, 0.05];
+            obj.momentarm_limits = [0.005, 0.02];
             obj.w_p = [0,0,0]';
             obj.w_R = eye(3);
             obj.q_limits = [-10,100]*pi/180;
