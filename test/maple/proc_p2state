@@ -1,0 +1,5 @@
+state := proc (p) 
+  local state; 
+  state[]
+  return state 
+end proc;

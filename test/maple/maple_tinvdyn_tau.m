@@ -1,0 +1,15 @@
+t1 = q1 + q2;
+t2 = cos(t1);
+t3 = cos(q1);
+t1 = sin(t1);
+t4 = sin(q1);
+t5 = qD1 ^ 2;
+t6 = qDD1 * t4 + t3 * t5;
+t7 = qD2 ^ 2 + t5;
+t8 = qDD1 + qDD2;
+t9 = -0.2e1 * com2_x * qD1 * qD2;
+t10 = M2 * (-a2 * t6 - (t1 * t8 + t2 * t7) * com2_x + t9 * t2);
+t5 = qDD1 * t3 - t4 * t5;
+t7 = M2 * (a2 * t5 + (-t1 * t7 + t2 * t8) * com2_x + t9 * t1);
+t1 = (-t1 * t10 + t2 * t7) * com2_x;
+res = [0.981e1 * t3 * (com1_x * M1 + a2 * M2) + I2_zz * qDD2 + a2 * (-t10 * t4 + t3 * t7) + (-t3 * M1 * (-com1_x * t5) + t4 * M1 * com1_x * t6) * com1_x + (I1_zz + I2_zz) * qDD1 + t1 + 0.9810000000e1 * com2_x * M2 * t2 0.981e1 * com2_x * M2 * t2 + I2_zz * t8 + t1];

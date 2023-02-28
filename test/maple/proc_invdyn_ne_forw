@@ -1,0 +1,9 @@
+global_test := proc(a,b)
+  local res, res_tmp;
+  res := 0:
+  for i to nq do 
+    res_tmp := a + b:
+	res := res + res_tmp:
+  end do; 
+  return res, res_tmp:
+end proc:

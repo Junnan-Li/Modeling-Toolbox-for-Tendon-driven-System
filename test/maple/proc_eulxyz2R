@@ -1,0 +1,8 @@
+eulxyz2R := proc (X) 
+  local R,phix, phiy, phiz;
+  phix := X[1]:
+  phiy := X[2];
+  phiz := X[3];  
+  R := Matrix(3,3,[[cos(phiy)*cos(phiz), -cos(phiy)*sin(phiz),  sin(phiy)], [cos(phix)*sin(phiz)+cos(phiz)*sin(phix)*sin(phiy), cos(phix)*cos(phiz)-sin(phiz)*sin(phix)*sin(phiy), -cos(phiy)*sin(phix)], [sin(phix)*sin(phiz)-cos(phiz)*cos(phix)*sin(phiy), sin(phix)*cos(phiz)+sin(phiz)*cos(phix)*sin(phiy), cos(phiy)*cos(phix)]]); 
+  return R 
+end proc;
