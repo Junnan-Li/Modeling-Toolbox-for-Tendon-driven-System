@@ -5,7 +5,8 @@
 %           q:   [n_q]
 % Output:
 %           J: [6xn_q] Transformation matrix {i}^T_{j}
-
+% 
+% Junnan Li, junnan.li@tum.de, 02.2023
 
 
 function J = Jacobian_geom_mdh(mdh,q)

@@ -64,7 +64,7 @@ else
     fprintf('Test 1 (Transformation matrix): pass! \n')
 end
 
-%% Test 2: geometric Jacobian test
+%% Test 2: Jacobian test
 % test the geometric Jacobian matrix of the endeffector
 % Jacobian_geom_b_end.m
 
@@ -76,17 +76,32 @@ J_class_b = finger_r.Jacobian_geom_b_end(q_r);% with respect to the base frame
 W_R_b = finger_r.w_R_base();
 J_class = blkdiag(W_R_b,W_R_b)*J_class_b;
 
+% geometrical Jacobian using Jacobian_geom_mdh.m function
+J_geom_func_b = Jacobian_geom_mdh(mdh_struct_to_matrix(finger_r.mdh_ori,1),q_r);
+J_geom_func = blkdiag(W_R_b,W_R_b)*J_geom_func_b;
+
 % geometric Jacobian computed by the rst toolbox
 J_rst = geometricJacobian(rst_model,q_r,'endeffector'); % J_rst = [omega_x omega_y omega_z v_x v_y v_z]' 
 J_rst = [J_rst(4:6,1:num_nja);J_rst(1:3,1:num_nja)]; % J_rst = [v_x v_y v_z omega_x omega_y omega_z]'
 
 % validaiton
 J_error = abs(J_class-J_rst);
-if max(J_error(:)) > 1e-10
+J_error_2 = abs(J_geom_func-J_rst);
+if max([J_error(:),J_error_2(:)]) > 1e-10
     fprintf('Test 2 (geometric Jacobian): failed! \n')
 else
     fprintf('Test 2 (geometric Jacobian): pass! \n')
 end
+
+% analytical Jacobian
+J_analytic_end_b = finger_r.Jacobian_analytic_b_end(q_r);
+J_analytic_end = blkdiag(W_R_b,W_R_b)*J_analytic_end_b;
+
+J_analytic_func_b = Jacobian_analytic_mdh(mdh_struct_to_matrix(finger_r.mdh_ori,1),q_r);
+J_analytic_func = blkdiag(W_R_b,W_R_b)*J_analytic_func_b;
+
+
+
 %% Test 3: Frame position test
 % test properties: link.base_p & link.base_R
 
@@ -214,7 +229,7 @@ end
 % random states
 q_rD = rand(size(q_r));
 tau = rand(size(q_r));
-F_ext = rand(6,1);
+F_ext = [zeros(6,finger_r.nj+1),rand(6,1)];
 
 
 qDD_class = finger_r.fordyn_ne_w_end(q_r,q_rD,tau,F_ext);
@@ -223,7 +238,7 @@ qDD_class = finger_r.fordyn_ne_w_end(q_r,q_rD,tau,F_ext);
 % transfer the external force exerting on the 
 transform = getTransform(rst_model,q_r,'endeffector');
 W_R_end = transform(1:3,1:3);
-F_ext_rst = externalForce(rst_model,'endeffector',[W_R_end'*F_ext(4:6);W_R_end'*F_ext(1:3)],q_r);
+F_ext_rst = externalForce(rst_model,'endeffector',[W_R_end'*F_ext(4:6,end);W_R_end'*F_ext(1:3,end)],q_r);
 qDD_rst = forwardDynamics(rst_model,q_r,q_rD,tau,F_ext_rst);
 
 qDD_error = abs(qDD_class-qDD_rst);

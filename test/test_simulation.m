@@ -46,7 +46,7 @@ end_time = 1*60; % unit s
 tSpan = 0:delta_t:end_time;
 step = length(tSpan); 
 initialState = [q_0;zeros(4,1)]; % [q;qd]
-F_ext = zeros(6,1);
+F_ext = zeros(6,n_q+2);
 % controller parameters
 P = [2;70;40;5];
 D = [2;1;1;5];
@@ -99,6 +99,8 @@ for i = 1:step
 end
 
 fprintf('average computation cost each step: %f \n', mean(T));
+
+% return
 %% Simulink Simscape model
 
 SInput.time = 0 + delta_t*(0:step-1)';

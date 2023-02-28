@@ -1,4 +1,5 @@
 % Path Initializing
+%   Junnan Li, junnan.li@tum.de, MIRMI, 02.2023
 
 clear all
 close all
@@ -13,8 +14,10 @@ current_path = pwd;
 
 % mpt3-toolbox is added to the path automatically (check the document of the mpt3)
 
+% tbxmanager restorepath
 
 
 % add path 
 addpath(genpath(current_path));
 % addpath(genpath(petercorke))
+% tbxmanager restorepath
