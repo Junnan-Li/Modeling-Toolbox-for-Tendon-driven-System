@@ -1,0 +1,41 @@
+12 + 26 + 42 + 12 + 26 + 42 + 12
+
+
+right shoulder (12)
+
+
+10. forearm pronation
+11. wrist flex
+12. wrist abd (pinky finger side)
+###########################
+right hand (26)
+1. CMC1 abd
+2. CMC1 ext
+3. MCP1 abd
+4. MCP1 flex
+5. IP abd
+6. IP ext
+
+7. MCP2 abd (pinky finger side)
+8. MCP2 flex
+9. PIP2 flex
+10. DIP2 flex
+
+11. MCP3 abd (pinky finger side)
+12. MCP3 flex
+13. PIP3 flex
+14. DIP3 flex
+
+15. CMC4 abd (pinky finger side)
+16. CMC4 flex
+17. MCP4 abd (pinky finger side)
+18. MCP4 flex
+19. PIP4 flex
+20. DIP4 flex
+
+15. CMC5 abd (lateral side)
+16. CMC5 flex
+17. MCP5 abd (lateral side)
+18. MCP5 flex
+19. PIP5 flex
+20. DIP5 flex
