@@ -1,0 +1,23 @@
+
+
+Classes:
+1. finger add CMC joints
+2. example script for multi-finger
+3. 
+
+
+Dynamics:
+1. floating base inverse dynamic 
+2. Mass matric, C torque 
+3. symbolic inverse dynamics
+4. regressor form for identification
+
+Optimization:
+1. metrics
+2. optimization framework example
+
+Interface:
+1. Mujoco model output
+
+
+

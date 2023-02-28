@@ -1,0 +1,40 @@
+Classes:
+
+*Hand
+  Finger
+    links
+    joints
+    tendons
+    contacts
+
+Functionalities:
+
+kinematics
+  geometric/analytical Jacobian of endeffector(fingertip)
+  geometric/analytical Jacobian of contacts
+  *inverse kinematic algorithm
+
+
+dynamics:
+  inverse dynamic with floating base (recursive NE)
+  forward dynamic (based on the inverse dynamic)
+  maple symbolic representation via NE
+  *symbolic representation via Lagrangian
+  *regressor form 
+  
+Simulation:
+  simulation via Matlab code
+  simulation in Simulink using forward dynamic 
+  *friction 
+  *identification framework
+
+Interface:
+  Unity visualization
+  *MuJoCo model output
+
+Optimization:
+  metric 
+  particle swarm optimization
+  *optimization with multi-finger
+   
+     
