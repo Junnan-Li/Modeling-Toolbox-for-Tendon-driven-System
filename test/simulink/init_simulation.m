@@ -5,7 +5,8 @@
 
 
 
-run create_hand.m
+run create_finger.m
+
 n_q = finger_r.nj;
 % finger object: finger_r
 q_init = [0;0;0;0]*pi/180;
@@ -20,7 +21,9 @@ mdh_ne(1:finger_r.nj,3) = mdh_ne(1:finger_r.nj,3);
 
 q_desired = [1,1,1,1]';
 
-sim('./test/simulink/finger_simulink.slx');
+%
+paramStruct.StopTime = string(5);
+sim('./test/simulink/finger_simulink.slx',paramStruct);
 
 return
 
@@ -31,7 +34,7 @@ qd_desired = zeros(4,1);
 qdd_desired = zeros(4,1);
 
 delta_t = 0.001; % unit s
-end_time = 1*60; % unit s
+end_time = 1*5; % unit s
 tSpan = 0:delta_t:end_time;
 step = length(tSpan); 
 initialState = [q_init;qD_init]; % [q;qd]

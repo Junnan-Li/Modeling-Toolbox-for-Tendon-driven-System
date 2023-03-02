@@ -19,18 +19,26 @@ clc
 
 % define different types of fingers
 
-finger_r = Finger('Index', 'RRRR', 3*rand(1,3)); % random link length
-% finger_s = Finger('Index', 'RRRs', rand(1,3));
-% finger_p = Finger('Index', 'RRRp', rand(1,3));
-
 % finger_list = {finger_r,finger_s,finger_p};
 
+% finger_r = Finger('Index', 'type','R_RRRR', 'l_links',rand(1,4));
 
+% use mdh to create finger
+mdh_parameter = rand(5,4);
+mdh_parameter(:,3) = 0;
+mdh_parameter(1,1:4) = 0;
+mdh_struct = mdh_matrix_to_struct(mdh_parameter, 1);
+finger_r = Finger('Index', 'mdh',mdh_struct );
+
+mdh_default_struct = finger_r.mdh_ori;
+mdh_matrix = mdh_struct_to_matrix(mdh_default_struct, 1);
+mdh_matrix(2,1) = -pi/2;
+finger_r.set_mdh_parameters(mdh_matrix);
 %% set random states
 % set random base position and orientation
 finger_r.w_p_base = 4*rand(3,1);
 finger_r.w_R_base = euler2R_XYZ(rand(1,3));
-
+finger_r.update_rst_model;
 % joint configurations
 
 q_r = rand(4,1);
@@ -44,7 +52,7 @@ finger_r.update_finger(q_r);
 rst_model = finger_r.rst_model;
 
 % plot rst model
-% show(rst_model,q_r,'Collisions','on','Visuals','off');
+show(rst_model,q_r,'Collisions','on','Visuals','off');
 
 %% Test 1:  Transformation matrix test with respect to mdh parameters 
 % mdh parameter from class properties
@@ -144,10 +152,18 @@ end
 % test: add_contact & Jacobian_geom_b_contact.m
 
 % set contact point at the end of each link
+
 if finger_r.nc == 0
-    for i = 1:finger_r.nl
-        finger_r.list_links(i).add_contact([finger_r.list_links(i).Length 0 0]');
+    for i = 1:finger_r.nl-1
+        b_R_i = finger_r.list_links(i).base_R;
+        b_p_i1 = finger_r.list_links(i+1).base_p;
+        b_p_i = finger_r.list_links(i).base_p;
+        finger_r.list_links(i).add_contact(b_R_i'*(b_p_i1-b_p_i));
+%         finger_r.list_links(i).add_contact([finger_r.list_links(i).Length 0 0]');
     end
+    mdh_ori = mdh_struct_to_matrix(finger_r.mdh_ori(end,:), 1);
+    T_end = T_mdh_multi(mdh_ori(end,:));
+    finger_r.list_links(finger_r.nl).add_contact(T_end(1:3,4));
 end
 finger_r.update_list_contacts; % update link
 
@@ -168,7 +184,7 @@ end
 J_rst_frame = [];
 
 for i = 1:finger_r.nl
-    J_rst_frame_i = geometricJacobian(rst_model,q_r,rst_model.BodyNames{i+2});
+    J_rst_frame_i = geometricJacobian(rst_model,q_r,rst_model.BodyNames{i+1});
     J_rst_frame_i = [J_rst_frame_i(4:6,:);J_rst_frame_i(1:3,:)];
     J_rst_frame_i(:,i+2:end) = 0; % the contact is not influenced by the next joint 
     J_rst_frame = [J_rst_frame;J_rst_frame_i];

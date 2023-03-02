@@ -11,9 +11,15 @@ clc
 
 
 % define a finger
-finger_dimension = [0.005,0.003,0.002]; % in meter
+finger_dimension = [0,0.005,0.003,0.002]; % in meter
 
-finger_r = Finger('Index', 'RRRR', finger_dimension); 
+finger_r = Finger('Index', 'type','R_RRRR', 'l_links',finger_dimension); 
+
+mdh_default_struct = finger_r.mdh_ori;
+mdh_matrix = mdh_struct_to_matrix(mdh_default_struct, 1);
+mdh_matrix(2,1) = -pi/2;
+% mdh_matrix(2,4) = 1;
+finger_r.set_mdh_parameters(mdh_matrix);
 %% set states
 % set base position and orientation
 finger_r.w_p_base = 4*zeros(3,1);
@@ -24,9 +30,6 @@ q_0 = [0;0.1;0.1;0.1];
 
 % udpate finger with given joint configurations
 finger_r.update_finger(q_0);
-% load rst model from finger class
-rst_model = finger_r.rst_model;
-% rst_model.show(q_0)
 
 %% set dynamic parameters
 % link index:
@@ -34,14 +37,18 @@ rst_model = finger_r.rst_model;
 %   2: MP
 %   3: DP
 
-finger_r.list_links(1).set_mass(0.05); % in kg
-finger_r.list_links(1).set_inertia([0.5,0.2,0.2,0,0,0]); 
+finger_r.list_links(1).set_mass(0); % in kg
+finger_r.list_links(1).set_inertia([0,0,0,0,0,0]); 
 
 finger_r.list_links(2).set_mass(0.03); % in kg
 finger_r.list_links(2).set_inertia([0.5,0.2,0.2,0,0,0]); 
 
 finger_r.list_links(3).set_mass(0.03); % in kg
 finger_r.list_links(3).set_inertia([0.5,0.2,0.2,0,0,0]); 
+
+
+finger_r.list_links(4).set_mass(0.03); % in kg
+finger_r.list_links(4).set_inertia([0.5,0.2,0.2,0,0,0]); 
 
 % update dynamic parameters
 finger_r.update_finger_par_dyn;
@@ -93,7 +100,7 @@ end_time = 1*5; % unit s
 tSpan = delta_t .* [0:end_time/delta_t];
 step = length(tSpan); 
 initialState = [q_0;zeros(4,1)]; % [q;qd]
-F_ext = zeros(6,1);
+F_ext = zeros(6,n_q+2);
 
 % controller parameters
 P = [1;1;1;1];
@@ -104,7 +111,7 @@ gravity_com = 1;
 % if use mex function
 mex = 1;
 % 
-customized_solver = 1;
+customized_solver = 0;
 opts = odeset('InitialStep',1e-3);
 
 %% Simulation

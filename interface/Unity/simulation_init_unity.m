@@ -14,7 +14,16 @@ clc
 % define a finger
 finger_dimension = [0.05,0.03,0.02]; % in meter
 
-finger_r = Finger('Index', 'RRRR', finger_dimension); 
+% finger_r = Finger('Index', 'RRRR', finger_dimension); 
+
+finger_dimension = [0,0.05,0.03,0.02]; % in meter
+
+finger_r = Finger('Index', 'type','R_RRRR', 'l_links',finger_dimension); 
+
+mdh_default_struct = finger_r.mdh_ori;
+mdh_matrix = mdh_struct_to_matrix(mdh_default_struct, 1);
+mdh_matrix(2,1) = -pi/2;
+finger_r.set_mdh_parameters(mdh_matrix);
 %% set states
 % set base position and orientation
 finger_r.w_p_base = 4*zeros(3,1);

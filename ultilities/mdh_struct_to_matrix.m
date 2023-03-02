@@ -38,14 +38,7 @@ switch order
         end
     otherwise
         error('func "mdh_struct_to_matrix" error: variable order not defined! \n')
-
 end
-        
-        
-
-
-
-
 end
 
 

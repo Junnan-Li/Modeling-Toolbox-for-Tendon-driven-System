@@ -83,54 +83,79 @@ classdef Finger < handle
     
     methods
         function obj = Finger(name, varargin)
-            % finger_type: 'RRRR', 'RRRs', 'RRRp'
-            assert(nargin>3 || ischar(name), 'Finger class input not correct!')
+            % input syntax with priority:
+            %   1. mdh struct: [alpha, a theta, d] without q
+            %   2. finger_type: 
+            %
             
-            if nargin == 3
-                obj.type = varargin{1};
-                link_len_vector = varargin{2};
-            elseif nargin == 2
-                obj.type = varargin{1};
-                link_len_vector = 0.05 * ones(count(obj.type,'R'),1);
-            elseif  nargin == 1
-                obj.type = 'RRRR';
-                link_len_vector = 0.05 * ones(count(obj.type,'R'),1);
-            end
             
             obj.name = name;
-            %             obj.nj = count(obj.type,'R');
-            obj.nj = 4; % default 4 joints
-            obj.nl = 3;
+            obj.mdh_ori = [];
             
-            % create links
-%             PP_abd = Links('PP_abd',link_len_vector(1), 1);
+            % Finger constructor input
+            ip = inputParser;
+            %    validScalarPosNum = @(x) isnumeric(x) && isscalar(x) && (x > 0);
+            ip.addParameter('mdh',[]);
+            ip.addParameter('type',[]);
+            ip.addParameter('l_links',[]);
+            parse(ip,varargin{:});
+            p = ip.Results;
             
-            PP = Links('PP',link_len_vector(1), 1);
-            MP = Links('MP',link_len_vector(2), 2);
-            DP = Links('DP',link_len_vector(3), 3);
-            obj.list_links = [PP;MP;DP];
-            
-            % create joints
-            % all the finger has 4 joints 
-            ABD = Joints('ABD',1);
-            MCP = Joints('MCP',2);
-            PIP = Joints('PIP',3);
-            DIP = Joints('DIP',4);
-            obj.list_joints = [ABD;MCP;PIP;DIP];
-            obj.joint_act = [];
-            
-            if strcmp(obj.type,'RRRR') 
-                obj.joint_act = logical([1,1,1,1]');
-                obj.nja = 4;
-            elseif strcmp(obj.type,'RRRp') 
-                obj.joint_act = logical([0,1,1,1]');
-                obj.list_joints(1).set_fixed;
-                obj.nja = 3;
-            elseif strcmp(obj.type,'RRRs')
-                obj.joint_act = logical([1,1,1,0]');
-                obj.list_joints(4).set_fixed;
-                obj.nja = 3;
+            if ~isempty(p.mdh)
+                obj.type = 'customized';
+                obj.mdh_ori = p.mdh;
+                obj.nj = length(obj.mdh_ori.a)-1; %
+                obj.nl = obj.nj;
+                link_len_input = obj.mdh_ori.d;
+            elseif ~isempty(p.type)
+                type_input_split = split(p.type,'_');
+                if strcmp(type_input_split{1},'R')
+                    obj.type = p.type;
+                    obj.mdh_ori = p.mdh; % empty 
+                    link_len_input = p.l_links;
+                    obj.nj = count(type_input_split{2},'R');
+                    obj.nl = obj.nj;
+                elseif strcmp(type_input_split{1},'H') % TODO
+                    obj.type = p.type;
+                    obj.mdh_ori = p.mdh;
+                    link_len_input = p.l_links;
+                    obj.nj = 4;
+                    obj.nl = 4;
+                end
             end
+            
+            % for R_... type
+            % generate links
+            list_links = [];
+            for i = 1:obj.nl
+                link_name_i = strcat('Link',num2str(i));
+                Link_new = Links(link_name_i,link_len_input(i), i);
+                list_links = [list_links;Link_new];
+            end
+            obj.list_links = list_links;
+            
+            % generate joints 
+            % TODO 
+            list_joints = [];
+            for i = 1:obj.nj
+                Joint_name_i = strcat('Joints',num2str(i));
+                Joint_new = Joints(Joint_name_i,i);
+                list_joints = [list_joints;Joint_new];
+            end
+            obj.list_joints = list_joints;
+            obj.nja = obj.nj;
+            obj.joint_act = ones(obj.nj,1);% TODO:passive joints
+            
+            
+            % update mdh_ori
+            if isempty(obj.mdh_ori)
+                obj.mdh_ori = obj.get_finger_mdh_ori;       
+            end
+            
+            obj.mdh = obj.mdh_ori;
+            obj.mdh_all = obj.mdh_ori;
+            
+
             
             % init list of contact and tendon
             % default contacts in the middle of each links
@@ -153,13 +178,16 @@ classdef Finger < handle
             obj.par_dyn_f.g = [0;0;-9.81];
             
             
+            % set mdh parameters
+%             obj.set_mdh_parameters(mdh_matrix)
+            
             % update dynamic parameters
             obj.update_finger_par_dyn;
-            
+            obj.update_joints_info;
             % update parameters w.r.t. joint angles
             obj.update_finger(obj.q_a);
             
-            
+            obj.update_rst_model;
             
         end
         
@@ -167,47 +195,87 @@ classdef Finger < handle
             % check if all the properties of the Finger class are in the
             % correct form
             % TODO 
-            
-            
-            
+           
         end
+        
+        function set_mdh_parameters(obj, mdh_matrix)
+            % set the mdh parameters with the given values 
+            % sequence: alpha, a theta, d
+            assert(size(mdh_matrix,1)== obj.nj+1, 'dimension of mdh_matrix is incorrect!')
+            assert(size(mdh_matrix,2)== 4, 'dimension of mdh_matrix is incorrect!')
+            mdh_ori_new = struct();
+            mdh_ori_new.alpha = mdh_matrix(:,1);
+            mdh_ori_new.a = mdh_matrix(:,2);
+            mdh_ori_new.theta = mdh_matrix(:,3);
+            mdh_ori_new.d = mdh_matrix(:,4);
+            mdh_ori_new.theta(:) = 0;
+            obj.mdh_ori = mdh_ori_new;
+            for i = obj.nl
+                obj.list_links(i).Length = mdh_ori_new.a(i+1);
+            end
+            % with q
+            mdh_new = mdh_ori_new;
+            mdh_new.theta = [obj.q;0];
+            obj.mdh = mdh_new;
+            obj.mdh_all = mdh_new;
+            
+            % update rsi model
+%             obj.update_rst_model;
+        end
+        
+        function mdh_ori = get_finger_mdh_ori(obj)
+            % get mdh parameter from the given joint angle
+            % update mhl parameters and par_kin, opt_pkin, ...
+
+            % update mdh parameters 
+            
+            mdh_ori = struct;
+            mdh_ori.alpha = zeros(obj.nj+1,1);
+            mdh_ori.a = zeros(obj.nj+1,1);% [0;0;obj.list_links(1).Length;obj.list_links(2).Length;obj.list_links(3).Length];
+            mdh_ori.theta = zeros(obj.nj+1,1); % 
+            mdh_ori.d = zeros(obj.nj+1,1);
+            for i = 1:obj.nj
+                mdh_ori.a(i+1) = obj.list_links(i).Length;
+            end
+        end
+        
+        
         
         function update_finger(obj, q_a)
             % update mhl parameters and par_kin, opt_pkin, ...
             assert(length(q_a)== obj.nja, 'dimension of joint vector is incorrect!')
             
-            q_a = reshape(q_a,[obj.nja,1]);
-            
-            obj.q_a = q_a; % update joint angle
-            obj.q(obj.joint_act) = q_a; % update joint angle
+            q_a = reshape(q_a,[obj.nj,1]);
+            obj.q = q_a; % update joint angle
+            obj.q_a = q_a;
+%             obj.q(obj.joint_act) = q_a; % update joint angle
             
             % update mdh parameters
-            [obj.mdh,obj.mdh_all, obj.mdh_ori] = get_finger_mdh(obj, obj.q_a);
-            
+%             [obj.mdh,obj.mdh_all, obj.mdh_ori] = get_finger_mdh(obj, obj.q_a);
+            obj.mdh_all.theta = [obj.q;0];
+            obj.mdh = obj.mdh_all;
             % update par_kin 
             
             % update all link properties
             for i = 1:obj.nl
                 mdh_all_matrix = mdh_struct_to_matrix(obj.mdh_all, 1);
-                b_T_i = T_mdh_multi(mdh_all_matrix(1:i+1,:));
+                b_T_i = T_mdh_multi(mdh_all_matrix(1:i,:));
                 base_p_link_i = b_T_i(1:3,4);
                 base_R_link_i = b_T_i(1:3,1:3);
                 obj.list_links(i).update(base_p_link_i,base_R_link_i);
             end
             
             % update joints info
-            obj.update_joints_info;
+%             obj.update_joints_info;
             % update the list of tendons
             obj.update_M_coupling(obj.q_a); 
             
             % update tendon force limits
-            obj.update_tendon_force_limits;
+%             obj.update_tendon_force_limits;
             % update dynamic parameters
 %             obj.update_finger_par_dyn;    
-            
-            
             % update rsi model
-            obj.update_rst_model;
+%             obj.update_rst_model;
         end
         
         % joint related functinos
@@ -250,53 +318,52 @@ classdef Finger < handle
             mass_all = zeros(obj.nja+1,1); % first is base
             com_all = zeros(3,obj.nja+1);
             inertia_all = zeros(6,obj.nja+1);
-            if strcmp(obj.type,'RRRR')
-                for i = 2:1:obj.nja
-                    mass_all(i+1) = obj.list_links(i-1).par_dyn.mass;
-                    com_all(:,i+1) = obj.list_links(i-1).par_dyn.com;
-                    inertia_all(:,i+1) = obj.list_links(i-1).par_dyn.inertia;
-                end
+            
+            for i = 1:obj.nl
+                mass_all(i+1) = obj.list_links(i).par_dyn.mass;
+                com_all(:,i+1) = obj.list_links(i).par_dyn.com;
+                inertia_all(:,i+1) = obj.list_links(i).par_dyn.inertia;
             end
             obj.par_dyn_f.mass_all = mass_all;
             obj.par_dyn_f.com_all = com_all;
             obj.par_dyn_f.inertia_all = inertia_all;
         end
         
-        function [mdh_reduced,mdh_all,mdh_ori] = get_finger_mdh(obj, q_a)
-            % get mdh parameter from the given joint angle
-            % update mhl parameters and par_kin, opt_pkin, ...
-            % TODO: [01/23] only theta is updated, others are fixed in some
-            % sense.
-            assert(length(q_a)== obj.nja, 'dimension of joint vector is incorrect!')
-            
-            q_a = reshape(q_a,[obj.nja,1]);
-            q_all = obj.q;
-            q_all(obj.joint_act) = q_a;
-
-            % update mdh parameters 
-            mdh_all = struct;
-            mdh_all.alpha = [0;-pi/2;0;0;0];
-            mdh_all.a = [0;0;obj.list_links(1).Length;obj.list_links(2).Length;obj.list_links(3).Length];
-            mdh_all.theta = [q_all(1);q_all(2);q_all(3);q_all(4);0]; % 
-            mdh_all.d = [0;0;0;0;0];
-            mdh_tmp = mdh_all;
-            fieldname_mdh = fieldnames(mdh_tmp);
-            if strcmp(obj.type,'RRRR') 
-                
-            elseif strcmp(obj.type,'RRRp') 
-                for i = 1:length(fieldname_mdh)
-                    mdh_tmp.(fieldname_mdh{i}) = mdh_tmp.(fieldname_mdh{i})(2:end);  
-                end
-            elseif strcmp(obj.type,'RRRs')
-                for i = 1:length(fieldname_mdh)
-                    mdh_tmp.(fieldname_mdh{i}) = mdh_tmp.(fieldname_mdh{i})(1:end-1);  
-                end
-            end
-            mdh_reduced = mdh_tmp;
-            mdh_ori = mdh_all;
-            mdh_ori.theta = [0;0;0;0;0];
-            
-        end
+        % to be replaced
+%         function [mdh_reduced,mdh_all,mdh_ori] = get_finger_mdh(obj, q_a)
+%             % get mdh parameter from the given joint angle
+%             % update mhl parameters and par_kin, opt_pkin, ...
+%             % TODO: [01/23] only theta is updated, others are fixed in some
+%             % sense.
+%             assert(length(q_a)== obj.nja, 'dimension of joint vector is incorrect!')
+%             
+%             q_a = reshape(q_a,[obj.nja,1]);
+%             q_all = obj.q;
+%             q_all(obj.joint_act) = q_a;
+% 
+%             % update mdh parameters 
+%             mdh_all = struct;
+%             mdh_all.alpha = [0;-pi/2;0;0;0];
+%             mdh_all.a = [0;0;obj.list_links(1).Length;obj.list_links(2).Length;obj.list_links(3).Length];
+%             mdh_all.theta = [q_all(1);q_all(2);q_all(3);q_all(4);0]; % 
+%             mdh_all.d = [0;0;0;0;0];
+%             mdh_tmp = mdh_all;
+%             fieldname_mdh = fieldnames(mdh_tmp);
+%             if strcmp(obj.type,'RRRR') 
+%                 
+%             elseif strcmp(obj.type,'RRRp') 
+%                 for i = 1:length(fieldname_mdh)
+%                     mdh_tmp.(fieldname_mdh{i}) = mdh_tmp.(fieldname_mdh{i})(2:end);  
+%                 end
+%             elseif strcmp(obj.type,'RRRs')
+%                 for i = 1:length(fieldname_mdh)
+%                     mdh_tmp.(fieldname_mdh{i}) = mdh_tmp.(fieldname_mdh{i})(1:end-1);  
+%                 end
+%             end
+%             mdh_reduced = mdh_tmp;
+%             mdh_ori = mdh_all;
+%             mdh_ori.theta = [0;0;0;0;0];
+%         end
         
         function set_base(obj, w_p_base, w_R_base)
             % set the position and orientation of the base in the world
@@ -319,8 +386,8 @@ classdef Finger < handle
             % TODO: integrate the dynamic parameters of the links into
             % model
              
-            mdh_matrix = mdh_struct_to_matrix(obj.mdh,2); % mdh order: a,alpha,d,theta
-            
+            mdh_matrix = mdh_struct_to_matrix(obj.mdh_ori,2); % mdh order: a,alpha,d,theta
+%             mdh_matrix_order_1 = mdh_struct_to_matrix(obj.mdh_ori,1);
             % create rigid body tree
             rst_model_tmp = rigidBodyTree;
             rst_model_tmp.DataFormat = 'column';
@@ -340,11 +407,12 @@ classdef Finger < handle
             end
 
             % virtual first body:  from CS.base to CS.1
-            bodyname = 'virtual_Base';
+            bodyname = obj.list_links(1).name;
             body1 = rigidBody(bodyname);
-            jointname = 'MCP_abd';
+            jointname = 'virtual_Base_joints';
             jnt1 = rigidBodyJoint(jointname,'revolute');          
             W_T_base = obj.get_W_T_B(); % World to Base 
+%             T = T_mdh_multi(mdh_matrix_order_1(1,:));
             setFixedTransform(jnt1,W_T_base);
             body1.Joint = jnt1;
             body1.Mass = mass_all(2); % first body (virtual)
@@ -352,17 +420,17 @@ classdef Finger < handle
             body1.CenterOfMass = com_all(:,2);          
             addBody(rst_model_tmp,body1,'base');
             bodyname_last = bodyname;
-            
-            for j = 1:obj.nl
+%             bodyname_last = 'base';
+            for j = 2:obj.nl
                 bodyname = obj.list_links(j).name;
                 body1 = rigidBody(bodyname);
-                jointname = obj.list_joints(j+1).name;
+                jointname = obj.list_joints(j).name;
                 jnt1 = rigidBodyJoint(jointname,'revolute');
-                setFixedTransform(jnt1,mdh_matrix(j+1,:),'mdh');
+                setFixedTransform(jnt1,mdh_matrix(j,:),'mdh');
                 body1.Joint = jnt1;
-                body1.Mass = mass_all(j+2); % first body (virtual)
-                body1.Inertia = inertia_all_rst(:,j+2);
-                body1.CenterOfMass = com_all(:,j+2);
+                body1.Mass = mass_all(j+1); % first body (virtual)
+                body1.Inertia = inertia_all_rst(:,j+1);
+                body1.CenterOfMass = com_all(:,j+1);
                 addBody(rst_model_tmp,body1,bodyname_last);
                 bodyname_last = bodyname;
             end
@@ -415,20 +483,38 @@ classdef Finger < handle
         function [p_link_all_w,p_link_all_b] = get_p_all_links(obj)
             % plot 3d contact points
             w_R_b = obj.w_R_base; 
+            w_p_b = obj.w_p_base;
+%             w_T_b = get_W_T_B(obj);
             p_link_all_b = zeros(3,obj.nl+1);
             p_link_all_w = zeros(3,obj.nl+1);
             for i = 1:obj.nl
                 p_link_all_b(:,i) = obj.list_links(i).base_p;
-                p_link_all_w(:,i) = w_R_b * p_link_all_b(:,i);
+                p_link_all_w(:,i) = w_R_b * p_link_all_b(:,i) + w_p_b;
             end
             % fingertip position
             mdh_all_matrix = mdh_struct_to_matrix(obj.mdh_all, 1);
             b_T_i = T_mdh_multi(mdh_all_matrix);
             p_link_all_b(:,end) = b_T_i(1:3,4);
-            p_link_all_w(:,end) = w_R_b * b_T_i(1:3,4);
+            p_link_all_w(:,end) = w_p_b + w_R_b * b_T_i(1:3,4);
         end
         
-        function print_contact(obj)
+        
+        function [w_p_contacts_all,b_p_contacts_all] = get_p_all_contacts(obj)
+            % plot 3d contact points
+            w_R_b = obj.w_R_base;
+            w_p_b = obj.w_p_base;
+            %             w_T_b = get_W_T_B(obj);
+            b_p_contacts_all = zeros(3,obj.nc);
+            w_p_contacts_all = zeros(3,obj.nc);
+            for i = 1:obj.nc
+                contact_pos_i = obj.list_contacts(i).base_p;
+                w_contact_pos = w_R_b * contact_pos_i + w_p_b;
+                b_p_contacts_all(:,i) = contact_pos_i;
+                w_p_contacts_all(:,i) = w_contact_pos;
+            end
+        end
+        
+        function print_contact(obj) % UNUSED
             % plot 3d contact points 
             for i = 1:obj.nl
                 contact_pos = obj.list_links(i).contacts(1).base_p;
@@ -448,6 +534,7 @@ classdef Finger < handle
             obj.list_tendons = [obj.list_tendons;tendon_tmp];
             obj.update_tendon_ma_limits_from_joints;
             obj.update_M_coupling(obj.q_a);
+            obj.update_tendon_force_limits;
         end
         
         

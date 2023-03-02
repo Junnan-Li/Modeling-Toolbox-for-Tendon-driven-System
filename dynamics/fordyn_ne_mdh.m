@@ -8,7 +8,7 @@
 %     Mass:             [n_q+1] mass vector. the first mass is the base 
 %     X_base:           [6x1] eulerxyz
 %     XD_base:          [6x1] translational and angular velocity
-%     F_ext:            [6xxn_q+2] force/moment that exerted by the environment to the endeffector frame. 
+%     F_ext:            [6xn_q+2] force/moment that exerted by the environment to the endeffector frame. 
 %     CoM:              [3xn_q+1] in local frame; last column is endeffector
 %     I:                [6xn_q+1] in local frame with respect to center of mass. in sequence of [xx yy zz yz xz xy]
 %     g:                [3x1] gravity term
