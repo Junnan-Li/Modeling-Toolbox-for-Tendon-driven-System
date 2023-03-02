@@ -169,7 +169,7 @@ set(gca,'FontSize',25,'FontName','Arial')
 a = get(gca,'XTickLabel');
 set(gca,'XTickLabel',a,'FontName','Arial','fontsize',25)
     
-nvar = length(opt_var);
+nvar = 40;
 C = [];
 for result_index = 1:5
     if opt_fitness_optinos.opt_routing

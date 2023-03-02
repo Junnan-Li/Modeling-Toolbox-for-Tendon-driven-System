@@ -17,48 +17,57 @@ finger_urdf.DataFormat = "column";
 
 % config = homeConfiguration(finger);
 config = [pi/4 pi/5 pi/5 0]';
-config = [0 0 0 0]';
-
-show(finger_urdf,config,'visuals','on','collision','off','Frames', 'off');
+% config = [0 0 0 0]';
 
 
 
-return
+% return
+%%
 
-%% define a finger
-finger_dimension = [0.05,0.03,0.02]; % in meter
+%% rigidbodytree model to mdh
 
-finger_r = Finger('Index', 'RRRR', finger_dimension); 
-finger_t = Finger('thumb', 'RRRR'); 
+w_p_base = 4*zeros(3,1);
+w_R_base = euler2R_XYZ(zeros(1,3));
+nj = length(finger_urdf.Bodies);
+mdh_finger = zeros(nj+1,4);
+mdh_finger(1,:) = [0,0,0,0]; % base
+for i = 1:nj
+    
+    T_i = finger_urdf.Bodies{i}.Joint.JointToParentTransform;
+    phi_i = R2euler_XYZ(T_i(1:3,1:3));
+    p_i = T_i(1:3,4);
+    mdh_finger(i+1,:) = [-phi_i(1),p_i(1),0,p_i(3)];
+end
 
-%% set states
+
+%% define a finger with conventianal configuration
+
+mdh_struct = mdh_matrix_to_struct(mdh_finger, 1);
+finger_handone = Finger('handone', 'mdh',mdh_struct );
+% set states
 % set base position and orientation
-finger_r.w_p_base = 4*zeros(3,1);
-finger_r.w_R_base = euler2R_XYZ(zeros(1,3));
+finger_handone.w_p_base = 4*zeros(3,1);
+finger_handone.w_R_base = euler2R_XYZ(zeros(1,3));
 
-finger_t.w_p_base = 4*zeros(3,1);
-finger_t.w_R_base = euler2R_XYZ([pi,-pi/2,0]);
 % init joint configurations
 q_0 = [0;0.1;0.1;0.1];
 
 % udpate finger with given joint configurations
-finger_r.update_finger(q_0);
-finger_t.update_finger(q_0);
+finger_handone.update_finger(config);
+
 % load rst model from finger class
-rst_model_r = finger_r.rst_model;
-rst_model_t = finger_t.rst_model;
+rst_model_r = finger_handone.rst_model;
 
 % plot 2 fingers
-p_link_all_w_r = finger_r.get_p_all_links;
-p_link_all_w_t = finger_t.get_p_all_links;
+p_link_all_w_r = finger_handone.get_p_all_links;
+p_link_all_w_t = finger_handone.get_p_all_links;
 figure(1)
-
+show(finger_urdf,config,'visuals','on','collision','off','Frames', 'off');
+hold on
 plot3(p_link_all_w_r(1,:)',p_link_all_w_r(2,:)',p_link_all_w_r(3,:)','o-','Color','r');
 hold on
-plot3(p_link_all_w_t(1,:)',p_link_all_w_t(2,:)',p_link_all_w_t(3,:)','o-','Color','b');
-grid on
 axis equal
-
+return
 %% set dynamic parameters
 % link index:
 %   1: PP
