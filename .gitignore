@@ -1,6 +1,6 @@
 
 
-
+*.fig
 *.asv
 *.slxc
 slprj/
