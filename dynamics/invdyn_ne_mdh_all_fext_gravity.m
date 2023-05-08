@@ -1,5 +1,4 @@
-
-% recursive Newton-Euler method to compute inverse dynamic with mdh
+% recursive Newton-Euler method to compute inverse dynamic (gravity torque only) with mdh
 % parameters
 % Input:
 %     q,qD,qDD:         [n_qx1] joint states

@@ -32,7 +32,7 @@
 % source:
 %   [1] B. Siciliano, L. Sciavicco, L. Villani, and G. Oriolo, Robotics: Modeling, Planning, and Control, vol. 16, no. 4. 2009.
 % 
-% 
+% Comment: [04/23] XDbase not updated (VD_c)
 
 
 function [Tau,F,W_T_allframe] = invdyn_ne_mdh(q,qD,qDD,mdh, Mass, X_base, XD_base,XDD_base, F_ext, CoM, I, g)

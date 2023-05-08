@@ -10,7 +10,7 @@ clc
 % four joints
 finger_dimension = [1,5,3,2]; % in meter
 finger_r = Finger('Index', 'type','R_RRRR', 'l_links',finger_dimension); 
-finger_r = Finger('hand_one','mdh',)
+% finger_r = Finger('hand_one','mdh',)
 mdh_default_struct = finger_r.mdh_ori;
 mdh_matrix = mdh_struct_to_matrix(mdh_default_struct, 1);
 mdh_matrix(2,1) = -pi/2;

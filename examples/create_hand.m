@@ -16,7 +16,7 @@ mdh_default_struct = finger_r.mdh_ori;
 mdh_matrix = mdh_struct_to_matrix(mdh_default_struct, 1);
 mdh_matrix(2,1) = -pi/2;
 finger_r.set_mdh_parameters(mdh_matrix);
-
+finger_t.set_mdh_parameters(mdh_matrix);
 
 % return
 %% set states
@@ -24,10 +24,10 @@ finger_r.set_mdh_parameters(mdh_matrix);
 finger_r.w_p_base = 4*zeros(3,1);
 finger_r.w_R_base = euler2R_XYZ(zeros(1,3));
 
-finger_t.w_p_base = 4*zeros(3,1);
-finger_t.w_R_base = euler2R_XYZ([pi,-pi/2,0]);
+finger_t.w_p_base = [0;0;-0.08];
+finger_t.w_R_base = euler2R_XYZ([pi,0,0]);
 % init joint configurations
-q_0 = [0;0.1;0.1;0.1];
+q_0 = [0;0;0;0.1];
 
 % udpate finger with given joint configurations
 finger_r.update_finger(q_0);
@@ -46,6 +46,9 @@ hold on
 plot3(p_link_all_w_t(1,:)',p_link_all_w_t(2,:)',p_link_all_w_t(3,:)','o-','Color','b');
 grid on
 axis equal
+xlabel('x')
+ylabel('y')
+zlabel('z')
 
 %% set dynamic parameters
 % link index:
@@ -70,8 +73,8 @@ finger_r.update_finger_par_dyn;
 
 if finger_r.nt == 0
     finger_r.add_tendon('Flex_1', [1,1,1,1]);
-    finger_r.add_tendon('Flex_2', [1,1,1,0]);
-    finger_r.add_tendon('Flex_3', [1,1,0,0]);
+%     finger_r.add_tendon('Flex_2', [1,1,1,0]);
+%     finger_r.add_tendon('Flex_3', [1,1,0,0]);
     finger_r.add_tendon('Flex_4', [1,0,0,0]);
     finger_r.add_tendon('Ext_1', [-1,-1,-1,-1]);
     finger_r.add_tendon('Ext_2', [-1,-1,-1,0]);

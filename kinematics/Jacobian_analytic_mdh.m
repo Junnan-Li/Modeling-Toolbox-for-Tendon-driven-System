@@ -4,7 +4,7 @@
 %           mdh: [(n_q+1)x4] in the order: alpha,a,theta,d
 %           q:   [n_q]
 % Output:
-%           J: [6xn_q] Transformation matrix {i}^T_{j}
+%           J: [6xn_q] Jacobian matrix 
 % 
 % Junnan Li, junnan.li@tum.de, 02.2023
 

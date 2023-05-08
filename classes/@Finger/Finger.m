@@ -523,6 +523,17 @@ classdef Finger < handle
                 hold on
             end
         end
+        function print_finger(obj,varargin) % UNUSED
+            % plot 3d contact points 
+            if nargin == 1
+                color = 'r';
+            else 
+                color = varargin{1};
+            end
+            p_link_all_w_r = obj.get_p_all_links;
+            plot3(p_link_all_w_r(1,:)',p_link_all_w_r(2,:)',p_link_all_w_r(3,:)','o-','Color',color,'LineWidth',5);
+            hold on
+        end
         
         % tendon related:
         function add_tendon(obj, name, routing)
