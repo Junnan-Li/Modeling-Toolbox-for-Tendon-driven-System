@@ -285,4 +285,61 @@ finger_r.set_tendon_par_MA_poly3(3,2,[0,0,0,0.035]);
 finger_r.M_coupling;
 
 
-%% 
+%% inverse kinematic
+
+p_link_all_w_r = finger_r.get_p_all_links;
+figure(1)
+plot3(finger_r.w_p_base(1),finger_r.w_p_base(2),finger_r.w_p_base(3),'x','MarkerSize',15);
+hold on
+plot3(p_link_all_w_r(1,:)',p_link_all_w_r(2,:)',p_link_all_w_r(3,:)','o-','Color','r');
+hold on
+grid on
+axis equal
+
+
+x_init = p_link_all_w_r(:,end);
+x_des = x_init - 0.5*rand(3,1);
+plot3(x_des(1),x_des(2),x_des(3),'*','Color','b','MarkerSize',20);
+hold on
+
+
+iter_max = 100;
+alpha = 0.9;
+color_plot = [1,0,0];
+tol = 1e-9;
+[q,q_all,x_res,phi_x,iter] = finger_r.invkin_trans_numeric(x_des,iter_max,tol,alpha);
+
+p_link_all_w_r = finger_r.get_p_all_links;
+plot3(p_link_all_w_r(1,:)',p_link_all_w_r(2,:)',p_link_all_w_r(3,:)','o-','Color','c');
+
+
+
+%% Workspace
+
+
+q_limit = rand(finger_r.nja,2);
+q_limit(:,1) = - q_limit(:,1);
+
+[q1,q2,q3,q4] = ndgrid(q_limit(1,1):0.05:q_limit(1,2),...
+    q_limit(2,1):0.3:q_limit(2,2),...
+    q_limit(3,1):0.3:q_limit(3,2),...
+    q_limit(4,1):0.3:q_limit(4,2));
+
+figure(2)
+for i = 1:size(q1,1)
+    for j = 1:size(q1,2)
+        for k = 1:size(q1,3)
+            for h = 1:size(q1,4)
+                q_i = [q1(i,j,k,h);q2(i,j,k,h);q3(i,j,k,h);q4(i,j,k,h)];
+                finger_r.update_finger(q_i);
+                p_link_all_w_r = finger_r.get_p_all_links;
+                plot3(p_link_all_w_r(1,end),p_link_all_w_r(2,end),p_link_all_w_r(3,end),'.','Color','r');
+                hold on
+                
+            end
+         end
+    end
+end
+
+grid on
+axis equal

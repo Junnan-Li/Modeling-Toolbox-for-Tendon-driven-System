@@ -161,6 +161,11 @@ tic;
 [Tau_ne_end_fext,F,W_T_allframe] = invdyn_ne_mdh_mex(q,qD,qDD,mdh_ne, Mass,...
              X_base, XD_base, XDD_base, F_ext_ne, CoM_ne, I_ne, g);
 t_stop = toc;
+
+[Tau_ne_all_fext,F,W_T_allframe] = invdyn_ne_mdh_all_fext(q,qD,qDD,mdh_ne, Mass,...
+    X_base, XD_base, XDD_base, [zeros(6,n_q+1),F_ext_ne], CoM_ne, I_ne, g);
+
+
 if show_time_cost
     fprintf('mex inverse dynamic computation cost: %f \n', t_stop);
 end
