@@ -481,7 +481,7 @@ classdef Finger < handle
         end
         
         function [p_link_all_w,p_link_all_b] = get_p_all_links(obj)
-            % plot 3d contact points
+            % get the Cartesian position of the base and link ends
             w_R_b = obj.w_R_base; 
             w_p_b = obj.w_p_base;
 %             w_T_b = get_W_T_B(obj);
