@@ -531,7 +531,7 @@ classdef Finger < handle
                 color = varargin{1};
             end
             p_link_all_w_r = obj.get_p_all_links;
-            plot3(p_link_all_w_r(1,:)',p_link_all_w_r(2,:)',p_link_all_w_r(3,:)','o-','Color',color,'LineWidth',5,'MarkerSize',10);
+            plot3(p_link_all_w_r(1,:)',p_link_all_w_r(2,:)',p_link_all_w_r(3,:)','o-','Color',color,'LineWidth',5,'MarkerSize',15);
             hold on
         end
         
