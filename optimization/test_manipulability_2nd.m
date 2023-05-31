@@ -11,77 +11,33 @@ close all
 clc
 
 
-%%
-% create the index finger and thumb
+%% 
+% create the index finger and thumb 
 run opt_create_thumb_index.m
 
 close all
 
 %%%%% test poses
-% q = [-15;0;0;0]*pi/180;
-% q_t = [0;0;0;0]*pi/180;
-% finger_index.update_finger(q);
-% finger_thumb.update_finger(q_t);
-% finger_index.update_list_contacts;
-% figure(2)
-% finger_index.print_finger
-% % finger_thumb.print_finger
-% q = [15;0;0;0]*pi/180;
-% finger_index.update_finger(q);
-% finger_index.print_finger
-% grid on
-% axis equal
-% xlabel('x')
-% ylabel('y')
-% zlabel('z')
+q = [-15;0;0;0]*pi/180;
+q_t = [0;0;0;0]*pi/180;
+finger_index.update_finger(q);
+finger_thumb.update_finger(q_t);
+finger_index.update_list_contacts;
+figure(2)
+finger_index.print_finger
+% finger_thumb.print_finger
+q = [15;0;0;0]*pi/180;
+finger_index.update_finger(q);
+finger_index.print_finger
+grid on
+axis equal
+xlabel('x')
+ylabel('y')
+zlabel('z')
 %%%%
-%
-
-
-%% inverse kinematic test
-% customized jonit limits
-
-% q_limit = [-15,15;0,80;0,80;0,70];
-% for i = 1:finger_index.nj
-%     finger_index.list_joints(i).q_limits = q_limit(i,:)*pi/180;
-% end
-% finger_index.update_joints_info;
-%
-% q = [0;0;0;0]*pi/180;
-% finger_index.update_finger(q);
-% q1 = [10;70;0;70]*pi/180;
-% finger_index.update_finger(q1);
-%
-% p_link_all_w_r = finger_index.get_p_all_links;
-% x_end_d = p_link_all_w_r(:,end);
-% %%%%% test poses
-%
-% figure(1)
-% plot3(finger_index.w_p_base(1),finger_index.w_p_base(2),finger_index.w_p_base(3),'x','MarkerSize',15);
-% hold on
-% plot3(p_link_all_w_r(1,:)',p_link_all_w_r(2,:)',p_link_all_w_r(3,:)','o-','Color','r');
-% hold on
-%
-% finger_index.update_finger(q);
-% iter_max = 100;
-% alpha = 0.8;
-% color_plot = [1,0,0];
-% tol = 1e-9;
-% [q,q_all,x_res,phi_x,iter] = finger_index.invkin_trans_numeric_joint_limits(x_end_d,iter_max,tol,alpha);
-%
-%
-% finger_index.update_finger(q);
-% p_link_all_w_r = finger_index.get_p_all_links;
-% plot3(p_link_all_w_r(1,:)',p_link_all_w_r(2,:)',p_link_all_w_r(3,:)','o-','Color','b');
-% hold on
-%
-% grid on
-% axis equal
-% xlabel('x')
-% ylabel('y')
-% zlabel('z')
-
+% 
 return
+
 %% get finger information
 
 nj = finger_index.nja;
@@ -100,48 +56,16 @@ for i = 1:nj
 end
 finger_index.update_joints_info;
 
-% get cartesian workspace cube
+
 % voxelize the joint space
-finger_len = sum(finger_index.mdh_ori.a);
-p_base = finger_index.w_p_base;
-workspace_cube_ori = p_base - finger_len;
-% size of the voxel
-voxel_length = 0.004;
+[q1,q2,q3,q4] = ndgrid(q_limit(1,1):3:q_limit(1,2),...
+    q_limit(2,1):5:q_limit(2,2),...
+    q_limit(3,1):5:q_limit(3,2),...
+    q_limit(4,1):5:q_limit(4,2));
+% number of the voxels
+n_sample = size(q1,1)*size(q1,2)*size(q1,3)*size(q1,4);
 
-
-[x_voxel,y_voxel,z_voxel] = ndgrid(workspace_cube_ori(1):voxel_length:workspace_cube_ori(1)+2*finger_len,...
-    workspace_cube_ori(2):voxel_length:workspace_cube_ori(2)+2*finger_len,...
-    workspace_cube_ori(3):voxel_length:workspace_cube_ori(3)+2*finger_len);
-
-n_sample = size(x_voxel,1)*size(y_voxel,2)*size(z_voxel,3);
-
-
-%% force direction definition of index finger
-% directions: 5
-% Ae_all [2*5x3], the vectors that are orthogonal to the direction vectors
-SQ2 = sqrt(2)/2;
-Ae_all = [1 0 0;...
-    0 1 0;...
-    SQ2 0 SQ2;...
-    0 1 0;...
-    SQ2 0 -SQ2;...
-    0 1 0;...
-    1 0 0;...
-    0 SQ2 SQ2;...
-    1 0 0;...
-    0 SQ2 -SQ2];
-be_all = zeros(10,1);
-
-% 5 direction vectors
-direction_vec = [0 0 -1;...
-    SQ2 0 -SQ2;...
-    -SQ2 0 -SQ2;...
-    0 SQ2 -SQ2;...
-    0 -SQ2 -SQ2];
-
-
-%% init variables
-% create variables for the results
+% create variables for the results 
 force_index = zeros(n_sample,5);
 acc_index = zeros(n_sample,5);
 pos_sample_r = zeros(n_sample,3);
@@ -153,14 +77,13 @@ cond_JM = zeros(n_sample,1);
 cond_J = zeros(n_sample,1);
 
 states_sample = zeros(n_sample,1);
-% states: 1: normal, 2:
-%       10: no ik solution
+% states: 1: normal, 2: 
 %       11: Jacobian deficient
 %       21: acceleration polytope volume too large
 %       29: unable to get acceleration volume
 %       39: unable to get force volume
 
-% struct for saving the results
+% struct for saving the results 
 opt_act_method = struct();
 opt_act_method.Metric_force = zeros(n_sample,5); % force index
 opt_act_method.Metric_acc = zeros(n_sample,5); % unused
@@ -172,131 +95,135 @@ opt_act_method.r_acc = zeros(n_sample,1);
 opt_act_method.cond_JM = zeros(n_sample,1);
 opt_act_method.cond_J = zeros(n_sample,1);
 opt_act_method.states_sample = zeros(n_sample,1);
-%
+% 
 
 index = 1;
+%% force direction definition of index finger
+% directions: 5
+% Ae_all [2*5x3], the vectors that are orthogonal to the direction vectors
+SQ2 = sqrt(2)/2;
+Ae_all = [1 0 0;...
+          0 1 0;...
+          SQ2 0 SQ2;...
+          0 1 0;...
+          SQ2 0 -SQ2;...
+          0 1 0;...
+          1 0 0;...
+          0 SQ2 SQ2;...
+          1 0 0;...
+          0 SQ2 -SQ2];
+be_all = zeros(10,1);
 
-% parameters of inverse kinematic
-iter_max = 100;
-alpha = 0.8;
-color_plot = [1,0,0];
-tol = 1e-9;
-
+% 5 direction vectors
+direction_vec = [0 0 -1;...
+    SQ2 0 -SQ2;...
+    -SQ2 0 -SQ2;...
+    0 SQ2 -SQ2;...
+    0 -SQ2 -SQ2];
 %%
 
 figure(3)
 grid on
 axis equal
-for i = 1:size(x_voxel,1)
-    for j = 1: size(y_voxel,2)
-        for k = 1:size(z_voxel,3)
+for i = 1:size(q1,1)
+    for j = 1: size(q1,2)
+        for k = 1:size(q1,3)
+            for h = 1:size(q1,4)
+                % update the current q
+                q_i = [q1(i,j,k,h);q2(i,j,k,h);q3(i,j,k,h);q4(i,j,k,h)]*pi/180;
+                finger_index.update_finger(q_i); 
+                % print the finger in the plot
+                finger_index.print_finger;
+                hold off
+                drawnow
+                
+                % get the joint position
+                pos_i = finger_index.get_p_all_links;
+                % update the variables
+                pos_sample_r(index,:) = pos_i(:,end)';
+                q_sample_r(index,:) = q_i';
 
-            x_cube_i = [x_voxel(i,j,k);y_voxel(i,j,k);z_voxel(i,j,k)]
-            x_i = x_cube_i + voxel_length/2; % middle ofeach voxel
-            % update the current q
+                % calculate the index
+                % get Jacobian
+                J_index = finger_index.Jacobian_analytic_b_end;
+                % get reduced Jacobian only with translational terms
+                J_index_red = finger_index.w_R_base * J_index(1:3,:);
+                
+                % check the Singularity of Jacobian
+                if rank(J_index_red) < 3
+                    force_index(index,:) = -1*ones(1,5);
+                    acc_index(index) = -1;
+                    vol_sample_force(index) = -1;
+                    vol_sample_acc(index) = -1;
+                    r_sample_acc(index) = -1;
+                    index = index + 1;
+                    states_sample(index) = 11;
+                    continue
+                end
 
-            [q_i,~,x_res,phi_x,iter] = finger_index.invkin_trans_numeric_joint_limits(x_i,iter_max,tol,alpha);
-            pos_sample_r(index,:) = x_i';
-            q_sample_r(index,:) = q_i';
+                % calculate the Mass matrix 
+                [~,M_r,~,~] = finger_index.fordyn_ne_w_end(q_i, zeros(4,1), zeros(4,1), zeros(6,6));
+                % calculate the Cartesian acceleration polytope
+                P_acc = J_index_red * inv(M_r) * P_tau;
+                
+                % check condition number of J*M-1
+                cond_JM(index) = cond(J_index_red * inv(M_r));
+                cond_J(index) = cond(J_index_red);
+                % calculate the volume of the acceleration polytope
+                try
+                    vol_sample_acc(index) = P_acc.volume;
+                    r_sample_acc(index) = largest_minimum_radius_P_input(P_acc, [0,0,0]');
+                    if P_acc.volume < 0.005
+                        fprintf('asd\n')
+                    elseif P_acc.volume > 100
+                        states_sample(index) = 21;
+                    end
 
-            if max(abs(phi_x)) > 1e-5
-                force_index(index,:) = -1*ones(1,5);
-                acc_index(index) = -1;
-                vol_sample_force(index) = -1;
-                vol_sample_acc(index) = -1;
-                r_sample_acc(index) = -1; 
-                states_sample(index) = 10;
-                cond_JM(index) = -1;
-                cond_J(index) = -1;
+                catch
+                    vol_sample_acc(index) = 0;
+                    r_sample_acc(index) = 0;
+                    states_sample(index) = 29;
+                end
+                
+                % calculate the force polytope
+                P_ee = polytope_fingertip_3d(M_coupling, J_index_red,force_limits); % force polytope but not acceleration
+                
+                try
+                    vol_sample_force(index) = P_ee.volume;
+                catch
+                    % warning('Problem using function.  Assigning a value of 0.');
+                    vol_sample_force(index) = 0;
+                    states_sample(index) = 39;
+                end
+                
+                % calculate the force polytope
+                for mi = 1:5 % direction index
+                    % reduce the dimension from 3 to 1 along the direction
+                    % vector
+                    p_tmp_force = Polyhedron('A', P_ee.A, 'b', P_ee.b, 'Ae',Ae_all(2*mi-1:2*mi,:) ,'be', zeros(2,1));
+                    Vertex_f_i = p_tmp_force.V;
+                    max_pos_f_Ver_i = max(Vertex_f_i(:,3)); % vextex of the 1-dimension polytope
+                    if max_pos_f_Ver_i < 0
+                        force_index(index,mi) = -1;
+                    else
+                        force_index(index,mi) = max_pos_f_Ver_i;
+                    end
+                    % acceleration along the axis
+                    p_tmp_acc = Polyhedron('A', P_acc.A, 'b', P_acc.b, 'Ae',Ae_all(2*mi-1:2*mi,:) ,'be', zeros(2,1));
+                    Vertex_acc_i = p_tmp_acc.V;
+                    max_pos_acc_Ver_i = max(Vertex_acc_i(:,3)); % vextex of the 1-dimension polytope
+                    if max_pos_acc_Ver_i < 0
+                        acc_index(index,mi) = -1;
+                    else
+                        acc_index(index,mi) = max_pos_acc_Ver_i;
+                    end
+                   
+                end
+                % test(10,J_index_red,P_ee,P_tau,p_tmp,finger_index); % test use
+                fprintf('processing: %d of %d \n',index, n_sample)
                 index = index + 1;
-                continue
-            end
-            finger_index.update_finger(q_i);
-            % print the finger in the plot
-            finger_index.print_finger;
-            hold off
-            drawnow
-
-            % calculate the index
-            % get Jacobian
-            J_index = finger_index.Jacobian_analytic_b_end;
-            % get reduced Jacobian only with translational terms
-            J_index_red = finger_index.w_R_base * J_index(1:3,:);
-
-            % check the Singularity of Jacobian
-            if rank(J_index_red) < 3
-                force_index(index,:) = -1*ones(1,5);
-                acc_index(index) = -1;
-                vol_sample_force(index) = -1;
-                vol_sample_acc(index) = -1;
-                r_sample_acc(index) = -1;
-                index = index + 1;
-                states_sample(index) = 11;
-                continue
-            end
-
-            % calculate the Mass matrix
-            [~,M_r,~,~] = finger_index.fordyn_ne_w_end(q_i, zeros(4,1), zeros(4,1), zeros(6,6));
-            % calculate the Cartesian acceleration polytope
-            P_acc = J_index_red * inv(M_r) * P_tau;
-
-            % check condition number of J*M-1
-            cond_JM(index) = cond(J_index_red * inv(M_r));
-            cond_J(index) = cond(J_index_red);
-            % calculate the volume of the acceleration polytope
-            try
-                vol_sample_acc(index) = P_acc.volume;
-                r_sample_acc(index) = largest_minimum_radius_P_input(P_acc, [0,0,0]');
-                if P_acc.volume < 0.005
-                    fprintf('asd\n')
-                elseif P_acc.volume > 100
-                    states_sample(index) = 21;
-                end
-
-            catch
-                vol_sample_acc(index) = 0;
-                r_sample_acc(index) = 0;
-                states_sample(index) = 29;
-            end
-
-            % calculate the force polytope
-            P_ee = polytope_fingertip_3d(M_coupling, J_index_red,force_limits); % force polytope but not acceleration
-
-            try
-                vol_sample_force(index) = P_ee.volume;
-            catch
-                % warning('Problem using function.  Assigning a value of 0.');
-                vol_sample_force(index) = 0;
-                states_sample(index) = 39;
-            end
-
-            % calculate the force polytope
-            for mi = 1:5 % direction index
-                % reduce the dimension from 3 to 1 along the direction
-                % vector
-                p_tmp_force = Polyhedron('A', P_ee.A, 'b', P_ee.b, 'Ae',Ae_all(2*mi-1:2*mi,:) ,'be', zeros(2,1));
-                Vertex_f_i = p_tmp_force.V;
-                max_pos_f_Ver_i = max(Vertex_f_i(:,3)); % vextex of the 1-dimension polytope
-                if max_pos_f_Ver_i < 0
-                    force_index(index,mi) = -1;
-                else
-                    force_index(index,mi) = max_pos_f_Ver_i;
-                end
-                % acceleration along the axis
-                p_tmp_acc = Polyhedron('A', P_acc.A, 'b', P_acc.b, 'Ae',Ae_all(2*mi-1:2*mi,:) ,'be', zeros(2,1));
-                Vertex_acc_i = p_tmp_acc.V;
-                max_pos_acc_Ver_i = max(Vertex_acc_i(:,3)); % vextex of the 1-dimension polytope
-                if max_pos_acc_Ver_i < 0
-                    acc_index(index,mi) = -1;
-                else
-                    acc_index(index,mi) = max_pos_acc_Ver_i;
-                end
 
             end
-            % test(10,J_index_red,P_ee,P_tau,p_tmp,finger_index); % test use
-            fprintf('processing: %d of %d \n',index, n_sample)
-            index = index + 1;
-
         end
     end
 end
@@ -313,7 +240,7 @@ opt_act_method.cond_J = cond_J;
 opt_act_method.states_sample = states_sample;
 
 %%% save data
-save('./optimization/results/workspace_3105_x_4mm.mat');
+% save('./test/optimization/workspace_2305_5deg.mat');
 
 
 return
@@ -341,16 +268,16 @@ q_limit_upper = q_limit(:,2);
 mani_q = q_sample_r*180/pi;
 mani_q_normalized = (mani_q - q_limit_low')./(q_limit_upper'-q_limit_low');
 
-% use sin wave for joint limits
+% use sin wave for joint limits 
 joint_limits_index_sin = sin(mani_q_normalized*2*pi-pi/2)+2;
 joint_limits_index = (joint_limits_index_sin(:,1).*joint_limits_index_sin(:,2).*...
-    joint_limits_index_sin(:,3).*joint_limits_index_sin(:,4));
+                    joint_limits_index_sin(:,3).*joint_limits_index_sin(:,4));
 
 joint_limits_index_normalized = (joint_limits_index-min(joint_limits_index))/...
-    (max(joint_limits_index)-min(joint_limits_index));
+                                (max(joint_limits_index)-min(joint_limits_index));
 
-
-% metric value
+                            
+% metric value 
 metric_value = zeros(size(mani_force_polytope));
 metric_normalized = zeros(size(mani_force_polytope));
 
@@ -361,18 +288,18 @@ for j = 1:5
     index_min_force_pol = min(mani_force_polytope(:,j));
     %
     mani_index_plot_j = mani_force_polytope(:,j);
-
+    
     force_pol_index_normalized = (mani_index_plot_j - index_min_force_pol)/(index_max_force_pol-index_min_force_pol);
-
+    
     metric_j = joint_limits_index_normalized .* acc_r_index_normalized.* ...
-        acc_v_index_normalized.* force_pol_index_normalized;
+               acc_v_index_normalized.* force_pol_index_normalized;
 
-    metric_value(:,j) = metric_j;
+    metric_value(:,j) = metric_j;  
     % normalized
     metric_j_max = max(metric_j);
     metric_j_min = min(metric_j);
     metric_j_normalized = (metric_j-metric_j_min)/(metric_j_max-metric_j_min);
-
+    
     metric_normalized(:,j) = metric_j_normalized;
 end
 
@@ -418,15 +345,15 @@ title('all directions')
 C_min = min(pos_sample_r);
 C_max = max(pos_sample_r);
 voxel_length = 0.003;
-dim_Car = floor((C_max-C_min)/voxel_length); % 0.01m
+dim_Car = floor((C_max-C_min)/voxel_length); % 0.01m 
 
 voxel_min = floor(C_min/voxel_length);
 
 Pos_Car_occupied = zeros(dim_Car+2);
 
 
-h = figure(15);
-set(0,'defaultfigurecolor','w')
+h = figure(15);  
+set(0,'defaultfigurecolor','w') 
 set(groot,'defaulttextinterpreter','none');
 set(h,'units','normalized','outerposition',[0 0 1 1])
 set(h, 'Units', 'centimeters')
@@ -439,13 +366,13 @@ set(groot, 'defaultLegendInterpreter','latex');
 
 
 for subplot_i = 1:5
-
+    
     Pos_Car_occupied = zeros(dim_Car+2);
     subplot(2,3,subplot_i)
-
+    
     finger_index.update_finger([0,0,0,0]')
     finger_index.print_finger('g')
-
+    
     switch subplot_i
         case 1
             metric_term = joint_limits_index_normalized;
@@ -465,25 +392,25 @@ for subplot_i = 1:5
         otherwise
             disp('other value')
     end
-
-
+    
+    
     for i = 1:size(pos_sample_r,1)
         pos_i = pos_sample_r(i,:);
         index_i = floor(pos_i/voxel_length)- voxel_min + 1;
-
+        
         %         metric_i_m = metric_j_normalized(i);
         %         metric_i_jl = joint_limits_index_normalized(i);
         %         metric_i_accr = acc_r_index_normalized(i);
         %         metric_i_accp = acc_pol_index_normalized(i);
         %         metric_i_fp = force_pol_index_normalized(i);
         metric_i = metric_term(i);
-
+        
         metric_i_ori = Pos_Car_occupied(index_i(1),index_i(2),index_i(3));
         if metric_i > metric_i_ori
             Pos_Car_occupied(index_i(1),index_i(2),index_i(3)) = metric_i;
         end
     end
-
+    
     for i_x = 1:size(Pos_Car_occupied,1)
         for i_y = 1:size(Pos_Car_occupied,2)
             for i_z = 1:size(Pos_Car_occupied,3)
@@ -497,7 +424,7 @@ for subplot_i = 1:5
                         [1 0 -1]*voxel_i_occupied + [0 0 1],'MarkerSize',10);
                     hold on
                 end
-
+                
             end
         end
     end
@@ -505,13 +432,13 @@ for subplot_i = 1:5
     q_i = q_sample_r(I,:)';
     finger_index.update_finger(q_i);
     finger_index.print_finger();
-
+    
     axis equal
     xlabel('x')
     ylabel('y')
     zlabel('z')
     title(title_plot)
-
+    
 end
 
 %% debug
@@ -550,18 +477,18 @@ for mi = 1:5
     vec_tmp_acc = p_tmp_acc.distance(1000*direction_vec(mi,:)').y;
     dist_tmp_acc = p_tmp_acc.distance(1000*direction_vec(mi,:)').dist;
     %     if dist_tmp_force >= 1000
-    %         mani_index_r(index,mi) = 0;
-    %     else
-    %         mani_index_r(index,mi) = sqrt(vec_tmp_force'*vec_tmp_force);
-    %     end
-    %     if dist_tmp_acc >= 1000
-    %         mani_index_r_acc(index,mi) = 0;
-    %     else
-    %         mani_index_r_acc(index,mi) = sqrt(vec_tmp_acc'*vec_tmp_acc);
-    %     end
+%         mani_index_r(index,mi) = 0;
+%     else
+%         mani_index_r(index,mi) = sqrt(vec_tmp_force'*vec_tmp_force);
+%     end
+%     if dist_tmp_acc >= 1000
+%         mani_index_r_acc(index,mi) = 0;
+%     else
+%         mani_index_r_acc(index,mi) = sqrt(vec_tmp_acc'*vec_tmp_acc);
+%     end
 end
 
-%
+% 
 % figure(101)
 % hold on
 % quiver3(zeros(5,1),zeros(5,1),zeros(5,1),30*direction_vec(:,1),30*direction_vec(:,2),30*direction_vec(:,3),'LineWidth',3)
@@ -575,7 +502,7 @@ finger_index.update_finger([0,.5,0.2,0.5]')
 q_res2 = finger_index.invkin_trans_numeric_joint_limits(x,1000,1e-5,0.1)
 
 %% local functions
-%
+% 
 
 function status = test(i,J_index_red,P_ee,P_tau,p_tmp,finger_index)
 % close all

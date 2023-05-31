@@ -312,7 +312,46 @@ tol = 1e-9;
 p_link_all_w_r = finger_r.get_p_all_links;
 plot3(p_link_all_w_r(1,:)',p_link_all_w_r(2,:)',p_link_all_w_r(3,:)','o-','Color','c');
 
+%% inverse kinematic with joint limits
 
+
+
+finger_r.w_p_base = 0*rand(3,1);
+finger_r.w_R_base = euler2R_XYZ(zeros(1,3));
+finger_r.update_finger([0,0,0,0]');
+
+p_link_all_w_r = finger_r.get_p_all_links;
+figure(1)
+plot3(finger_r.w_p_base(1),finger_r.w_p_base(2),finger_r.w_p_base(3),'x','MarkerSize',15);
+hold on
+plot3(p_link_all_w_r(1,:)',p_link_all_w_r(2,:)',p_link_all_w_r(3,:)','o-','Color','r');
+hold on
+grid on
+axis equal
+
+% update joint limits
+q_limit = [-15,15;0,80;0,80;0,50]*pi/180;
+for i = 1:finger_r.nj
+    finger_r.list_joints(i).q_limits = q_limit(i,:);
+end
+finger_r.update_joints_info;
+
+
+
+x_init = p_link_all_w_r(:,end);
+x_des = x_init - 0.5*rand(3,1);
+plot3(x_des(1),x_des(2),x_des(3),'*','Color','b','MarkerSize',20);
+hold on
+
+
+iter_max = 1000;
+alpha = 0.1;
+color_plot = [1,0,0];
+tol = 1e-9;
+[q,q_all,x_res,phi_x,iter] = finger_r.invkin_trans_numeric_joint_limits(x_des,iter_max,tol,alpha);
+
+p_link_all_w_r = finger_r.get_p_all_links;
+plot3(p_link_all_w_r(1,:)',p_link_all_w_r(2,:)',p_link_all_w_r(3,:)','o-','Color','c');
 
 %% Workspace
 

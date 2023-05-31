@@ -46,22 +46,24 @@ for i = 1:iter_max
     q_all(i,:) = q_i;
     x_i = p_link_all_w_r(:,end);
     delta_x_i = x_des - x_i;
+    
     if abs(delta_x_i) < tol
         break
     end
     J = obj.Jacobian_analytic_b_end;
     J_trans = obj.w_R_base*J(1:3,:);
     
-    for j = 1:obj.nja
-       dH(j) = (q_i(j)-a(j))/((a(j)-q_limits(j,2))^2); 
-    end
-    
-    % joint limits 
-    NJ = -0.1*(eye(obj.nja)-pinv(J_trans)*J_trans)*dH;
-    
-    delta_q = alpha * pinv(J_trans) * delta_x_i + NJ;
+    %%% test methods
+%     for j = 1:obj.nja
+%        dH(j) = (q_i(j)-a(j))/((a(j)-q_limits(j,2))^2); 
+%     end  
+%     NJ = -0.1*(eye(obj.nja)-pinv(J_trans)*J_trans)*dH;
+%     delta_q = alpha * pinv(J_trans) * delta_x_i + NJ;
+
+    delta_q = alpha * pinv(J_trans) * delta_x_i;
     q_i_new = q_i + delta_q;
-    obj.update_finger(q_i_new);
+    q_i_new_sat = max(min(q_i_new, q_limits(:, 2)), q_limits(:, 1));
+    obj.update_finger(q_i_new_sat);
 end
 q_res = q_i;
 x_res = x_i;
