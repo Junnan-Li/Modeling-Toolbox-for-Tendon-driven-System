@@ -16,7 +16,7 @@ finger_urdf.DataFormat = "column";
 
 
 % config = homeConfiguration(finger);
-config = [pi/4 pi/5 pi/5 0]';
+config = [pi/4 pi/4 pi/4 pi/8]';
 % config = [0 0 0 0]';
 
 
@@ -36,21 +36,23 @@ for i = 1:nj
     T_i = finger_urdf.Bodies{i}.Joint.JointToParentTransform;
     phi_i = R2euler_XYZ(T_i(1:3,1:3));
     p_i = T_i(1:3,4);
-    mdh_finger(i+1,:) = [-phi_i(1),p_i(1),0,p_i(3)];
+    mdh_finger(i,:) = [phi_i(1),p_i(1),0,p_i(3)];
 end
 
 
 %% define a finger with conventianal configuration
+
+mdh_finger(5,2) = 0.014;
 
 mdh_struct = mdh_matrix_to_struct(mdh_finger, 1);
 finger_handone = Finger('handone', 'mdh',mdh_struct );
 % set states
 % set base position and orientation
 finger_handone.w_p_base = 4*zeros(3,1);
-finger_handone.w_R_base = euler2R_XYZ(zeros(1,3));
+finger_handone.w_R_base = euler2R_XYZ([pi,0,0]);
 
 % init joint configurations
-q_0 = [0;0.1;0.1;0.1];
+% q_0 = [0;0.1;0.1;0.1];
 
 % udpate finger with given joint configurations
 finger_handone.update_finger(config);
@@ -62,11 +64,23 @@ rst_model_r = finger_handone.rst_model;
 p_link_all_w_r = finger_handone.get_p_all_links;
 p_link_all_w_t = finger_handone.get_p_all_links;
 figure(1)
+subplot(1,2,1)
 show(finger_urdf,config,'visuals','on','collision','off','Frames', 'off');
 hold on
-plot3(p_link_all_w_r(1,:)',p_link_all_w_r(2,:)',p_link_all_w_r(3,:)','o-','Color','r');
-hold on
+% plot3(p_link_all_w_r(1,:)',p_link_all_w_r(2,:)',p_link_all_w_r(3,:)','o-','Color','r');
+
 axis equal
+xlabel('x')
+ylabel('y')
+zlabel('z')
+subplot(1,2,2)
+finger_handone.print_finger
+hold on
+grid on
+axis equal
+xlabel('x')
+ylabel('y')
+zlabel('z')
 return
 %% set dynamic parameters
 % link index:
