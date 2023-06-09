@@ -285,7 +285,7 @@ finger_r.set_tendon_par_MA_poly3(3,2,[0,0,0,0.035]);
 finger_r.M_coupling;
 
 
-%% inverse kinematic
+%% Test 8: inverse kinematic
 
 p_link_all_w_r = finger_r.get_p_all_links;
 figure(1)
@@ -312,25 +312,25 @@ tol = 1e-9;
 p_link_all_w_r = finger_r.get_p_all_links;
 plot3(p_link_all_w_r(1,:)',p_link_all_w_r(2,:)',p_link_all_w_r(3,:)','o-','Color','c');
 
-%% inverse kinematic with joint limits
+%% Test 9: inverse kinematic with joint limits
 
 
-
-finger_r.w_p_base = 0*rand(3,1);
-finger_r.w_R_base = euler2R_XYZ(zeros(1,3));
-finger_r.update_finger([0,0,0,0]');
+q_init = rand(4,1);
+finger_r.w_p_base = rand(3,1);
+finger_r.w_R_base = euler2R_XYZ(rand(1,3));
+finger_r.update_finger(q_init);
 
 p_link_all_w_r = finger_r.get_p_all_links;
 figure(1)
 plot3(finger_r.w_p_base(1),finger_r.w_p_base(2),finger_r.w_p_base(3),'x','MarkerSize',15);
 hold on
-plot3(p_link_all_w_r(1,:)',p_link_all_w_r(2,:)',p_link_all_w_r(3,:)','o-','Color','r');
-hold on
+% plot3(p_link_all_w_r(1,:)',p_link_all_w_r(2,:)',p_link_all_w_r(3,:)','--','Color','r');
+% hold on
 grid on
 axis equal
 
 % update joint limits
-q_limit = [-15,15;0,80;0,80;0,50]*pi/180;
+q_limit = [-30,30;0,80;0,80;0,50]*pi/180;
 for i = 1:finger_r.nj
     finger_r.list_joints(i).q_limits = q_limit(i,:);
 end
@@ -339,20 +339,42 @@ finger_r.update_joints_info;
 
 
 x_init = p_link_all_w_r(:,end);
-x_des = x_init - 0.5*rand(3,1);
-plot3(x_des(1),x_des(2),x_des(3),'*','Color','b','MarkerSize',20);
+x_des = x_init - 0.01*rand(3,1);
+plot3(x_des(1),x_des(2),x_des(3),'.','Color','r','MarkerSize',40);
 hold on
 
 
 iter_max = 1000;
-alpha = 0.1;
+alpha = 0.8;
 color_plot = [1,0,0];
 tol = 1e-9;
 [q,q_all,x_res,phi_x,iter] = finger_r.invkin_trans_numeric_joint_limits(x_des,iter_max,tol,alpha);
+finger_r.update_finger(q_init);
+hold on
+[q_mex,q_all_mex,x_res_mex,phi_x_mex,iter_mex] = finger_r.invkin_trans_numeric_joint_limits(x_des,iter_max,tol,alpha,1);
+finger_r.print_finger('k');
+hold on 
+% mdh_matrix_ik9 = mdh_struct_to_matrix(finger_r.mdh_ori, 1);
+% [q_k,q_all_k,x_res_k,phi_x_k,iter_k] = ik_trans_numeric_joint_limits(mdh_matrix_ik9,...
+%                         x_des,q_init,finger_r.limits_q(:,1:2),iter_max,tol,alpha);
 
-p_link_all_w_r = finger_r.get_p_all_links;
-plot3(p_link_all_w_r(1,:)',p_link_all_w_r(2,:)',p_link_all_w_r(3,:)','o-','Color','c');
 
+% p_link_all_w_r = finger_r.get_p_all_links;
+% finger_r.print_finger('c');
+% hold on 
+% finger_r.update_finger(q_k);
+% finger_r.print_finger('b');
+
+% q_error = abs(q-q_k);
+q_error_mex = abs(q-q_mex);
+
+if max([q_error_mex(:)]) > 1e-4
+    fprintf('Test 9 (ik with joint limits): failed! \n')
+else
+    fprintf('Test 9 (ik with joint limits): pass! \n')
+end
+
+return
 %% Workspace
 
 

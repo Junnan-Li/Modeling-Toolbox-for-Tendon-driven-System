@@ -40,7 +40,7 @@
 %       
 %       
 
-classdef Finger < handle
+classdef Finger < handle & matlab.mixin.Copyable
     %FINGER Summary of this class goes here
     %   Detailed explanation goes here
     
@@ -527,11 +527,24 @@ classdef Finger < handle
             % plot 3d contact points 
             if nargin == 1
                 color = 'r';
-            else 
+                linewidth = 3;
+                markersize = 5;
+            elseif  nargin == 2
                 color = varargin{1};
+                linewidth = 3;
+                markersize = 5;
+            elseif  nargin == 3
+                color = varargin{1};
+                linewidth = varargin{2};
+                markersize = 5;
+            elseif  nargin == 4
+                color = varargin{1};
+                linewidth = varargin{2};
+                markersize = varargin{3};
             end
             p_link_all_w_r = obj.get_p_all_links;
-            plot3(p_link_all_w_r(1,:)',p_link_all_w_r(2,:)',p_link_all_w_r(3,:)','o-','Color',color,'LineWidth',5,'MarkerSize',15);
+            plot3(p_link_all_w_r(1,:)',p_link_all_w_r(2,:)',p_link_all_w_r(3,:)','o-','Color',color,...
+                                    'LineWidth',linewidth,'MarkerSize',markersize);
             hold on
         end
         
