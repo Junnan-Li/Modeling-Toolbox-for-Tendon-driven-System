@@ -12,7 +12,7 @@ clc
 finger_dimension_r = [0,0.05,0.03,0.02]; % in meter
 finger_dimension_t = [0,0.03,0.02,0.012]; % in meter
 
-finger_index = Finger('Index', 'type','R_RRRR', 'l_links',finger_dimension_r); 
+finger_index = Finger('Index', 'type','R_RRRR', 'l_links',finger_dimension_r);   
 finger_thumb = Finger('thumb', 'type','R_RRRR', 'l_links',finger_dimension_t);
 
 mdh_default_struct = finger_index.mdh_ori;
@@ -94,7 +94,7 @@ finger_thumb.update_finger_par_dyn;
 % finger_r.update_finger(q_0);
 
 %% add tendons
-
+finger_index_5_tendon = copy(finger_index);
 if finger_index.nt == 0
     finger_index.add_tendon('Flex_1', [1,1,1,1]);
     finger_index.add_tendon('Flex_2', [1,1,1,0]);
@@ -104,6 +104,17 @@ if finger_index.nt == 0
     finger_index.add_tendon('Ext_2', [-1,-1,-1,0]);
     finger_index.add_tendon('Ext_3', [-1,-1,0,0]);
     finger_index.add_tendon('Ext_4', [-1,0,0,0]);
+end
+
+if finger_index_5_tendon.nt == 0
+    finger_index_5_tendon.add_tendon('Flex_1', [1,1,1,1]);
+    finger_index_5_tendon.add_tendon('Flex_2', [1,1,1,0]);
+    finger_index_5_tendon.add_tendon('Flex_3', [1,1,0,0]);
+    finger_index_5_tendon.add_tendon('Flex_4', [1,0,0,0]);
+    finger_index_5_tendon.add_tendon('Ext_1', [-1,-1,-1,-1]);
+%     finger_index_5_tendon.add_tendon('Ext_2', [-1,-1,-1,0]);
+%     finger_index_5_tendon.add_tendon('Ext_2', [-1,-1,0,0]);
+    finger_index_5_tendon.add_tendon('Ext_2', [-1,0,0,0]);
 end
 
 if finger_thumb.nt == 0
@@ -125,6 +136,10 @@ finger_index.update_finger(q_0);
 finger_index.update_M_coupling(q_0);
 finger_index.M_coupling;
 
+finger_index_5_tendon.update_finger(q_0);
+finger_index_5_tendon.update_M_coupling(q_0);
+finger_index_5_tendon.M_coupling;
+
 finger_thumb.update_finger(q_0);
 finger_thumb.update_M_coupling(q_0);
 finger_thumb.M_coupling;
@@ -134,8 +149,12 @@ finger_thumb.M_coupling;
 finger_index.list_joints(1).q_limits = [-15,15]*pi/180; % abduction joints
 finger_index.list_joints(1).qd_limits = [-15,15]*pi/180; % abduction joints
 finger_index.list_joints(1).qdd_limits = [-15,15]*pi/180; % abduction joints
-
 finger_index.update_joints_info;
+
+finger_index_5_tendon.list_joints(1).q_limits = [-15,15]*pi/180; % abduction joints
+finger_index_5_tendon.list_joints(1).qd_limits = [-15,15]*pi/180; % abduction joints
+finger_index_5_tendon.list_joints(1).qdd_limits = [-15,15]*pi/180; % abduction joints
+finger_index_5_tendon.update_joints_info;
 
 finger_thumb.list_joints(1).q_limits = [-15,15]*pi/180; % abduction joints
 finger_thumb.list_joints(1).qd_limits = [-15,15]*pi/180; % abduction joints
@@ -150,6 +169,14 @@ if finger_index.nc == 0
     end
 end
 finger_index.update_list_contacts; % update link
+
+% add contacts
+if finger_index_5_tendon.nc == 0
+    for i = 1:finger_index_5_tendon.nl
+        finger_index_5_tendon.list_links(i).add_contact([finger_index_5_tendon.list_links(i).Length/2 0 0]');
+    end
+end
+finger_index_5_tendon.update_list_contacts; % update link
 
 % add contacts
 if finger_thumb.nc == 0

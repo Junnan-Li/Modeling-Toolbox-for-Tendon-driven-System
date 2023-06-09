@@ -18,25 +18,25 @@ run opt_create_thumb_index.m
 close all
 
 %%%%% test poses
-q = [-15;0;0;0]*pi/180;
-q_t = [0;0;0;0]*pi/180;
-finger_index.update_finger(q);
-finger_thumb.update_finger(q_t);
-finger_index.update_list_contacts;
-figure(2)
-finger_index.print_finger
-% finger_thumb.print_finger
-q = [15;0;0;0]*pi/180;
-finger_index.update_finger(q);
-finger_index.print_finger
-grid on
-axis equal
-xlabel('x')
-ylabel('y')
-zlabel('z')
+% q = [-15;0;0;0]*pi/180;
+% q_t = [0;0;0;0]*pi/180;
+% finger_index.update_finger(q);
+% finger_thumb.update_finger(q_t);
+% finger_index.update_list_contacts;
+% figure(2)
+% finger_index.print_finger
+% % finger_thumb.print_finger
+% q = [15;0;0;0]*pi/180;
+% finger_index.update_finger(q);
+% finger_index.print_finger
+% grid on
+% axis equal
+% xlabel('x')
+% ylabel('y')
+% zlabel('z')
 %%%%
 % 
-return
+% return
 
 %% get finger information
 
