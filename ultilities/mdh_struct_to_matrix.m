@@ -13,7 +13,7 @@
 
 
 function mdh_matrix = mdh_struct_to_matrix(mdh_struct, order)
-%
+%#codegen
 % assert(isequal(class(D), 'Finger'), 'Input class is not Finger!')
 
 mdh_matrix = [];
