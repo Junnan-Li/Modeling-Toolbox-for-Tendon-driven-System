@@ -6,6 +6,9 @@
 % Junnan Li, junnan.li@tum.de, MIRMI, 06.2023
 
 %% load work space
+clear all
+close all 
+clc
 
 load ./optimization/results/workspace_0506_x_1mm_downward.mat
 
@@ -28,19 +31,27 @@ acc_r_min = min(r_sample_acc);
 acc_r_index_normalized = (mani_acc_r - acc_r_min)/(acc_r_max-acc_r_min);
 
 % joint angle index
-q_limit_low = q_limit(:,1);
-q_limit_upper = q_limit(:,2);
+%%%%%%%
+% q_limit_low = q_limit(:,1);
+% q_limit_upper = q_limit(:,2);
+% mani_q = q_sample_r*180/pi;
+% mani_q_normalized = (mani_q - q_limit_low')./(q_limit_upper'-q_limit_low');
+% 
+% % use sin wave for joint limits
+% joint_limits_index_sin = sin(mani_q_normalized*2*pi-pi/2)+2;
+% joint_limits_index = (joint_limits_index_sin(:,1).*joint_limits_index_sin(:,2).*...
+%     joint_limits_index_sin(:,3).*joint_limits_index_sin(:,4));
+% 
+% joint_limits_index_normalized = (joint_limits_index-min(joint_limits_index))/...
+%     (max(joint_limits_index)-min(joint_limits_index));
+%%%%%%%
+
 mani_q = q_sample_r*180/pi;
-mani_q_normalized = (mani_q - q_limit_low')./(q_limit_upper'-q_limit_low');
-
-% use sin wave for joint limits
-joint_limits_index_sin = sin(mani_q_normalized*2*pi-pi/2)+2;
-joint_limits_index = (joint_limits_index_sin(:,1).*joint_limits_index_sin(:,2).*...
-    joint_limits_index_sin(:,3).*joint_limits_index_sin(:,4));
-
+joint_limits_index_i = penalty_joint_limits(mani_q', q_limit)';
+joint_limits_index = joint_limits_index_i(:,1).* joint_limits_index_i(:,2) ...
+                .* joint_limits_index_i(:,3) .* joint_limits_index_i(:,4);
 joint_limits_index_normalized = (joint_limits_index-min(joint_limits_index))/...
     (max(joint_limits_index)-min(joint_limits_index));
-
 
 % metric value
 % metric_value = zeros(size(mani_force_polytope));
@@ -63,10 +74,10 @@ force_pol_index_normalized_all = (mani_force_polytope - index_min_force_pol)./(i
 force_pol_index_normalized = force_pol_index_normalized_all * W;
 
 
-metric_j = joint_limits_index_normalized .* acc_r_index_normalized.* ...
-    acc_v_index_normalized.* force_pol_index_normalized;
+% metric_j = joint_limits_index_normalized .* acc_r_index_normalized.* ...
+%     acc_v_index_normalized.* force_pol_index_normalized;
 
-% metric_j = joint_limits_index_normalized .* acc_r_index_normalized .* force_pol_index_normalized;
+metric_j = joint_limits_index_normalized .* acc_r_index_normalized .* (force_pol_index_normalized);
 
 
 % normalized
@@ -130,15 +141,17 @@ for subplot_i = 1:5
             metric_term = force_pol_index_normalized;
             title_plot = 'Force index';
         case 5
-            metric_term = metric_j_normalized;
+            metric_term = metric_normalized;
             title_plot = 'metric index';
         otherwise
             disp('other value')
     end
 
-    
-    index_vec = find(states_sample(:) == 1);
+    index_vec = find(states_sample(:) == 1 & abs(pos_sample_r(:,2)) < 0.001);
     C = [metric_term(index_vec) zeros(size(metric_term(index_vec))) -metric_term(index_vec)] + [0 0 1];
+
+%     index_vec = find(states_sample(:) == 1);
+%     C = [metric_term(index_vec) zeros(size(metric_term(index_vec))) -metric_term(index_vec)] + [0 0 1];
     
    
     % origin finger
@@ -150,7 +163,11 @@ for subplot_i = 1:5
     q_i = q_sample_r(I,:)';
     finger_analysis.update_finger(q_i);
     finger_analysis.print_finger('k');
-    
+
+    fprintf("       JL,     Acc.R.,     F.I.,     M: \n")
+    fprintf("Index: %f, %f, %f, %f \n", joint_limits_index_normalized(I), acc_r_index_normalized(I),...
+                    force_pol_index_normalized(I), metric_j_normalized(I))   
+
     % rotated finger
 %     R = euler2R_XYZ([pi,0,0]);
 %     T = [0,0,-0.1];
@@ -174,6 +191,8 @@ for subplot_i = 1:5
     title(title_plot)
 
 end
+
+
 
 subplot(2,3,6)
 for i = 1%:5
