@@ -1,16 +1,18 @@
 % numeric inverse kinematic methods: inverse Jacobian 
 % 
-% 
+% Outputs:
+%           q
+%           status: 0: no solution within tol; 1: ik problem solved
 % 
 % TODO: 
 %   base rotation and position not considered
 
 
 
-function [q,q_all,x_res,phi_x,iter] = ik_trans_numeric_joint_limits(mdh_matrix,x_des,q_init,q_limits,iter_max,tol,alpha)
+function [q,status,q_all,x_res,phi_x,iter] = ik_trans_numeric_joint_limits(mdh_matrix,x_des,q_init,q_limits,iter_max,tol,alpha)
 %#codegen
 
-
+status = 0;
 q_i = q_init;
 n_q = length(q_i);
 
@@ -30,7 +32,8 @@ for i = 1:iter_max
     T = T_mdh_multi(mdh_q);
     x_i = T(1:3,4);
     delta_x_i = x_des - x_i;
-    if abs(delta_x_i) < tol
+    if max(abs(delta_x_i)) < tol
+        status = 1;
         break
     end
     J = Jacobian_analytic_mdh(mdh_matrix,q_i);

@@ -314,67 +314,152 @@ plot3(p_link_all_w_r(1,:)',p_link_all_w_r(2,:)',p_link_all_w_r(3,:)','o-','Color
 
 %% Test 9: inverse kinematic with joint limits
 
+test_9_status = 1; % 1: success; 0: failed
 
-q_init = rand(4,1);
-finger_r.w_p_base = rand(3,1);
-finger_r.w_R_base = euler2R_XYZ(rand(1,3));
-finger_r.update_finger(q_init);
+for i_9 = 1:10
+    q_init = rand(4,1);
+    finger_r.w_p_base = rand(3,1);
+    finger_r.w_R_base = euler2R_XYZ(rand(1,3));
+    finger_r.update_finger(q_init);
 
-p_link_all_w_r = finger_r.get_p_all_links;
-figure(1)
-plot3(finger_r.w_p_base(1),finger_r.w_p_base(2),finger_r.w_p_base(3),'x','MarkerSize',15);
-hold on
-% plot3(p_link_all_w_r(1,:)',p_link_all_w_r(2,:)',p_link_all_w_r(3,:)','--','Color','r');
-% hold on
-grid on
-axis equal
+    p_link_all_w_r = finger_r.get_p_all_links;
+    figure(1)
 
-% update joint limits
-q_limit = [-30,30;0,80;0,80;0,50]*pi/180;
-for i = 1:finger_r.nj
-    finger_r.list_joints(i).q_limits = q_limit(i,:);
+
+    % update joint limits
+    q_limit = [-30,30;0,80;0,80;0,50]*pi/180;
+    for i = 1:finger_r.nj
+        finger_r.list_joints(i).q_limits = q_limit(i,:);
+    end
+    finger_r.update_joints_info;
+
+
+
+    x_init = p_link_all_w_r(:,end);
+    x_des = x_init - 0.01*rand(3,1);
+    plot3(x_des(1),x_des(2),x_des(3),'.','Color','r','MarkerSize',40);
+    hold on
+
+
+    iter_max = 1000;
+    alpha = 0.8;
+    color_plot = [1,0,0];
+    tol = 1e-9;
+    [q,status, q_all,x_res,phi_x,iter] = finger_r.invkin_trans_numeric_joint_limits(x_des,iter_max,tol,alpha);
+    finger_r.update_finger(q_init);
+    hold on
+    [q_mex,status_mex, q_all_mex,x_res_mex,phi_x_mex,iter_mex] = finger_r.invkin_trans_numeric_joint_limits(x_des,iter_max,tol,alpha,1);
+    finger_r.print_finger('k');
+    hold on
+
+    mdh_matrix = mdh_struct_to_matrix(finger_r.mdh_ori, 1);
+    x_des_mod = finger_r.w_R_base' * (x_des - finger_r.w_p_base);
+    [q_kin,status,q_all_kin,x_res_kin,phi_x_kin,iter_kin] = ik_trans_numeric_joint_limits(mdh_matrix,x_des_mod,q_init,...
+        finger_r.limits_q(:,1:2),iter_max,tol,alpha);
+
+
+    q_error_meth = abs(q-q_kin);
+    q_error_mex = abs(q-q_mex);
+
+
+    if max(abs([q_error_mex(:);q_error_meth(:)])) > 1e-6 && status
+        test_9_status = 0;
+        break
+    end
 end
-finger_r.update_joints_info;
 
-
-
-x_init = p_link_all_w_r(:,end);
-x_des = x_init - 0.01*rand(3,1);
-plot3(x_des(1),x_des(2),x_des(3),'.','Color','r','MarkerSize',40);
-hold on
-
-
-iter_max = 1000;
-alpha = 0.8;
-color_plot = [1,0,0];
-tol = 1e-9;
-[q,q_all,x_res,phi_x,iter] = finger_r.invkin_trans_numeric_joint_limits(x_des,iter_max,tol,alpha);
-finger_r.update_finger(q_init);
-hold on
-[q_mex,q_all_mex,x_res_mex,phi_x_mex,iter_mex] = finger_r.invkin_trans_numeric_joint_limits(x_des,iter_max,tol,alpha,1);
-finger_r.print_finger('k');
-hold on 
-% mdh_matrix_ik9 = mdh_struct_to_matrix(finger_r.mdh_ori, 1);
-% [q_k,q_all_k,x_res_k,phi_x_k,iter_k] = ik_trans_numeric_joint_limits(mdh_matrix_ik9,...
-%                         x_des,q_init,finger_r.limits_q(:,1:2),iter_max,tol,alpha);
-
-
-% p_link_all_w_r = finger_r.get_p_all_links;
-% finger_r.print_finger('c');
-% hold on 
-% finger_r.update_finger(q_k);
-% finger_r.print_finger('b');
-
-% q_error = abs(q-q_k);
-q_error_mex = abs(q-q_mex);
-
-if max([q_error_mex(:)]) > 1e-4
+if ~test_9_status
     fprintf('Test 9 (ik with joint limits): failed! \n')
 else
     fprintf('Test 9 (ik with joint limits): pass! \n')
 end
 
 return
+%% test 10: ik nullspace solution
+
+
+test_10_status = 1; % 1: success; 0: failed
+
+iter_max = 1000;
+alpha = 0.8;
+tol = 1e-8;
+q_diff_min = 0.2;
+
+
+for i_10 = 1:10
+       
+    figure(1)
+
+    % update joint limits
+    q_limit = [-30,30;0,80;0,80;0,50]*pi/180;
+    for i = 1:finger_r.nj
+        finger_r.list_joints(i).q_limits = q_limit(i,:);
+    end
+    finger_r.update_joints_info;
+    
+    % give a pose inside its workspace as the x_des
+    q_init = rand(4,1).*(q_limit(:,2)-q_limit(:,1)) + q_limit(:,1);
+    finger_r.w_p_base = rand(3,1);
+    finger_r.w_R_base = euler2R_XYZ(rand(1,3));
+    finger_r.update_finger(q_init);
+    p_link_all_w_r = finger_r.get_p_all_links;
+    x_init = p_link_all_w_r(:,end);
+    x_des = x_init;
+    plot3(x_des(1),x_des(2),x_des(3),'.','Color','r','MarkerSize',40);
+    hold on
+    
+    % initialize the joint pose
+    finger_r.update_finger(0*q_init);
+    mdh_matrix = mdh_struct_to_matrix(finger_r.mdh_ori, 1);
+    x_des_mod = finger_r.w_R_base' * (x_des - finger_r.w_p_base);
+
+    % functino variants (normal, mex)
+    % Variant 1: matlab function
+    [q_kin,status,q_all_kin,x_res_kin,phi_x_kin,iter_kin,q_null,phi_x_null] = ik_trans_numeric_joint_limits_nullspace(mdh_matrix,x_des_mod,0*q_init,...
+        finger_r.limits_q(:,1:2),iter_max,tol,alpha,q_diff_min,0);
+
+    % Variant 2: mex function
+%     [q_kin,status,q_all_kin,x_res_kin,phi_x_kin,iter_kin,q_null,phi_x_null] = ik_trans_numeric_joint_limits_nullspace_mex(mdh_matrix,x_des_mod,0*q_init,...
+%         finger_r.limits_q(:,1:2),iter_max,tol,alpha,q_diff_min,1);
+
+    % Variant 3: class mex/matlab function
+%     [q_kin, status, ~, x_res,phi_x,iter,q_null,phi_x_null] = finger_r.invkin_trans_numeric_joint_limits_nullspace(x_des,iter_max,tol,alpha,q_diff_min,1);
+
+    finger_r.update_finger(q_kin);
+    finger_r.print_finger('r');
+    hold on
+    p_link_all_w_r_1 = finger_r.get_p_all_links;
+
+    x_error = x_des-p_link_all_w_r_1(:,end);
+
+    finger_r.update_finger(q_null);
+    finger_r.print_finger('b')
+    hold off
+
+    p_link_all_w_r = finger_r.get_p_all_links;
+
+    q_error_null = abs(q_kin-q_null);
+    x_error_null = x_des-p_link_all_w_r(:,end);
+
+    if status ~= 11
+        disp('no nullspace solution')
+    end
+
+    if (max([q_error_null(:)]) < 0.2 || max(abs([x_error_null(:);x_error(:)])) > tol*10) && status == 11
+        test_10_status = 0;
+    end
+end
+
+if ~test_10_status
+    fprintf('Test 10 (ik with joint limits): failed! \n')
+else
+    fprintf('Test 10 (ik with joint limits): pass! \n')
+end
+
+
+
+
+
 %% Workspace
 
 
