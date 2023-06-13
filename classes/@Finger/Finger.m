@@ -401,6 +401,7 @@ classdef Finger < handle & matlab.mixin.Copyable
             
             inertia_all_rst = zeros(size(obj.par_dyn_f.inertia_all)); % [xx yy zz yz xz xy]
             for i = 1:obj.nj
+                % transfer inertia into bodyframe
                 inertia_all_rst(:,i+1) = inertia_all(:,i+1) + ...
                     mass_all(i+1)*[com_all(2,i+1).^2+com_all(3,i+1).^2;com_all(1,i+1).^2+com_all(3,i+1).^2;com_all(1,i+1).^2+com_all(2,i+1).^2;...
                     -com_all(2,i+1)*com_all(3,i+1);-com_all(1,i+1)*com_all(3,i+1);-com_all(1,i+1)*com_all(2,i+1)];

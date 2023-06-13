@@ -37,7 +37,7 @@ classdef Links < handle
             obj.par_dyn = struct;
             obj.par_dyn.mass = 1;
             obj.par_dyn.com = 1/2 * [obj.Length,0,0]'; % middle point of the links
-            obj.par_dyn.inertia = [1,1,1,0,0,0]'; % [xx yy zz yz xz xy];
+            obj.par_dyn.inertia = [1,1,1,0,0,0]'; % [xx yy zz yz xz xy]; related to center of mass
             obj.stiffness = 1;
             obj.index = index; 
             obj.contacts = [];
