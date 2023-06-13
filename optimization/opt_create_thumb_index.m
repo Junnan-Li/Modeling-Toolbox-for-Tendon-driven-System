@@ -28,9 +28,11 @@ finger_thumb.set_mdh_parameters(mdh_matrix_t);
 %% set states
 % set base position and orientation
 finger_index.w_p_base = 4*zeros(3,1);
-finger_index.w_R_base = euler2R_XYZ([0,-pi/6,0]);
+finger_index.w_R_base = euler2R_XYZ([0,-pi/3,0]);
+% finger_index.w_R_base = euler2R_XYZ([0,0,0]);
 
-finger_thumb.w_p_base = [-0.02;0;-0.08];
+
+finger_thumb.w_p_base = [-0.01;0;-0.08];
 finger_thumb.w_R_base = euler2R_XYZ([pi,0,0]);
 % init joint configurations
 q_0 = [0;0;0;0];
@@ -58,7 +60,9 @@ zlabel('z')
 
 %% set dynamic parameters
 % link index:
-%   2: PP
+%  cylinder:
+%   I_x = m*r^2/2;  I_y = I_z = 1/12*m*(3*r^2 + h^2)
+%   2: PP l:5cm r=1cm M = 0.05kg 
 %   3: MP
 %   4: DP
 
@@ -66,13 +70,13 @@ finger_index.list_links(1).set_mass(0); % in kg
 finger_index.list_links(1).set_inertia([0,0,0,0,0,0]); 
 
 finger_index.list_links(2).set_mass(0.05); % in kg
-finger_index.list_links(2).set_inertia([0.5,0.2,0.2,0,0,0]); 
+finger_index.list_links(2).set_inertia([2.5e-6,1.16e-5,1.16e-5,0,0,0]); 
 
 finger_index.list_links(3).set_mass(0.03); % in kg
-finger_index.list_links(3).set_inertia([0.5,0.2,0.2,0,0,0]); 
+finger_index.list_links(3).set_inertia([1.5e-6,3e-6,3e-6,0,0,0]); 
 
-finger_index.list_links(4).set_mass(0.03); % in kg
-finger_index.list_links(4).set_inertia([0.5,0.2,0.2,0,0,0]); 
+finger_index.list_links(4).set_mass(0.02); % in kg
+finger_index.list_links(4).set_inertia([1e-6,1.17e-6,1.17e-6,0,0,0]); 
 
 % finger_r.list_links(3).set_mass(0.03); % in kg
 % finger_r.list_links(3).set_inertia([0.5,0.2,0.2,0,0,0]); 
@@ -81,13 +85,13 @@ finger_index.update_finger_par_dyn;
 % finger_r.update_finger(q_0);
 
 finger_thumb.list_links(2).set_mass(0.05); % in kg
-finger_thumb.list_links(2).set_inertia([0.5,0.2,0.2,0,0,0]); 
+finger_thumb.list_links(2).set_inertia([0.05,0.02,0.02,0,0,0]); 
 
 finger_thumb.list_links(3).set_mass(0.03); % in kg
-finger_thumb.list_links(3).set_inertia([0.5,0.2,0.2,0,0,0]); 
+finger_thumb.list_links(3).set_inertia([0.05,0.02,0.02,0,0,0]); 
 
-finger_thumb.list_links(4).set_mass(0.03); % in kg
-finger_thumb.list_links(4).set_inertia([0.5,0.2,0.2,0,0,0]); 
+finger_thumb.list_links(4).set_mass(0.02); % in kg
+finger_thumb.list_links(4).set_inertia([0.05,0.02,0.02,0,0,0]); 
 
 % update dynamic parameters
 finger_thumb.update_finger_par_dyn;
@@ -96,14 +100,14 @@ finger_thumb.update_finger_par_dyn;
 %% add tendons
 finger_index_5_tendon = copy(finger_index);
 if finger_index.nt == 0
-    finger_index.add_tendon('Flex_1', [1,1,1,1]);
-    finger_index.add_tendon('Flex_2', [1,1,1,0]);
-    finger_index.add_tendon('Flex_3', [1,1,0,0]);
-    finger_index.add_tendon('Flex_4', [1,0,0,0]);
-    finger_index.add_tendon('Ext_1', [-1,-1,-1,-1]);
-    finger_index.add_tendon('Ext_2', [-1,-1,-1,0]);
-    finger_index.add_tendon('Ext_3', [-1,-1,0,0]);
-    finger_index.add_tendon('Ext_4', [-1,0,0,0]);
+    finger_index.add_tendon('Flex_1', [0.01,0.01,0.01,0.01]);
+    finger_index.add_tendon('Flex_2', [0.01,0.01,0.01,0]);
+    finger_index.add_tendon('Flex_3', [0.01,0.01,0,0]);
+    finger_index.add_tendon('Flex_4', [0.01,0,0,0]);
+    finger_index.add_tendon('Ext_1', [-0.01,-0.01,-0.01,-0.01]);
+    finger_index.add_tendon('Ext_2', [-0.01,-0.01,-0.01,0]);
+    finger_index.add_tendon('Ext_3', [-0.01,-0.01,0,0]);
+    finger_index.add_tendon('Ext_4', [-0.01,0,0,0]);
 end
 
 if finger_index_5_tendon.nt == 0
@@ -118,14 +122,14 @@ if finger_index_5_tendon.nt == 0
 end
 
 if finger_thumb.nt == 0
-    finger_thumb.add_tendon('Flex_1', [1,1,1,1]);
-    finger_thumb.add_tendon('Flex_2', [1,1,1,0]);
-    finger_thumb.add_tendon('Flex_3', [1,1,0,0]);
-    finger_thumb.add_tendon('Flex_4', [1,0,0,0]);
-    finger_thumb.add_tendon('Ext_1', [-1,-1,-1,-1]);
-    finger_thumb.add_tendon('Ext_2', [-1,-1,-1,0]);
-    finger_thumb.add_tendon('Ext_3', [-1,-1,0,0]);
-    finger_thumb.add_tendon('Ext_4', [-1,0,0,0]);
+    finger_thumb.add_tendon('Flex_1', [0.01,0.01,0.01,0.01]);
+    finger_thumb.add_tendon('Flex_2', [0.01,0.01,0.01,0]);
+    finger_thumb.add_tendon('Flex_3', [0.01,0.01,0,0]);
+    finger_thumb.add_tendon('Flex_4', [0.01,0,0,0]);
+    finger_thumb.add_tendon('Ext_1', [-0.01,-0.01,-0.01,-0.01]);
+    finger_thumb.add_tendon('Ext_2', [-0.01,-0.01,-0.01,0]);
+    finger_thumb.add_tendon('Ext_3', [-0.01,-0.01,0,0]);
+    finger_thumb.add_tendon('Ext_4', [-0.01,0,0,0]);
 end
 % finger_r.set_tendon_par_MA_poly3(1,1,[0,0,0.01,0.03]);
 % finger_r.set_tendon_par_MA_poly3(3,1,[0,0,0.01,0.3]);
