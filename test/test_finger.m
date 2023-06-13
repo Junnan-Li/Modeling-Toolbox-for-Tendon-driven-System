@@ -415,15 +415,15 @@ for i_10 = 1:10
 
     % functino variants (normal, mex)
     % Variant 1: matlab function
-    [q_kin,status,q_all_kin,x_res_kin,phi_x_kin,iter_kin,q_null,phi_x_null] = ik_trans_numeric_joint_limits_nullspace(mdh_matrix,x_des_mod,0*q_init,...
-        finger_r.limits_q(:,1:2),iter_max,tol,alpha,q_diff_min,0);
+%     [q_kin,status,q_all_kin,x_res_kin,phi_x_kin,iter_kin,q_null,phi_x_null] = ik_trans_numeric_joint_limits_nullspace(mdh_matrix,x_des_mod,0*q_init,...
+%         finger_r.limits_q(:,1:2),iter_max,tol,alpha,q_diff_min,0);
 
     % Variant 2: mex function
 %     [q_kin,status,q_all_kin,x_res_kin,phi_x_kin,iter_kin,q_null,phi_x_null] = ik_trans_numeric_joint_limits_nullspace_mex(mdh_matrix,x_des_mod,0*q_init,...
 %         finger_r.limits_q(:,1:2),iter_max,tol,alpha,q_diff_min,1);
 
     % Variant 3: class mex/matlab function
-%     [q_kin, status, ~, x_res,phi_x,iter,q_null,phi_x_null] = finger_r.invkin_trans_numeric_joint_limits_nullspace(x_des,iter_max,tol,alpha,q_diff_min,1);
+    [q_kin, status, ~, x_res,phi_x,iter,q_null,phi_x_null] = finger_r.invkin_trans_numeric_joint_limits_nullspace(x_des,iter_max,tol,alpha,q_diff_min,1);
 
     finger_r.update_finger(q_kin);
     finger_r.print_finger('r');
