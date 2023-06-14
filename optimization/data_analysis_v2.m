@@ -23,15 +23,17 @@ q_sample_r = zeros(n_sample,8);
 pos_sample_r = zeros(n_sample,3);
 status = zeros(n_sample,2);
 
-for i = 1:n_sample
-    force_index(i,:) = [result{i,3}{1}',result{i,3}{2}'];
-%     vol_sample_acc = zeros(n_sample,2);
-    r_sample_acc(i,:) = [result{i,5}{1},result{i,5}{2}];
-    q_sample_r(i,:) = [result{i,2}{1}',result{i,2}{2}'];
-    pos_sample_r(i,:) = result{i,1}';
-    status(i,:) = [result{i,9}{1},result{i,9}{2}];
+q_sample_1 = result{2}{1};
+q_sample_2 = result{2}{2};
+force_index_1 = result{3}{1};
+force_index_2 = result{3}{2};
+f_vol_1 = result{4}{1};
+f_vol_2 = result{4}{2};
+acc_r_1 = result{5}{1};
+acc_r_2 = result{5}{2};
+pos_sample_r = result{1};
+status = result{9};
 
-end
 %%
 
 for i_ns = 1:2

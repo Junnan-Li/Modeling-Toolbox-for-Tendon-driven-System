@@ -143,12 +143,14 @@ direction_vec = [0 0 -1;...
 %         5: success without nullspace solution
 %       10: no ik solution
 %       1e2: Jacobian deficient
-%       1e3: acceleration polytope volume too large
-%       2e3: acceleration polytope volume too small
+%       1e3: acceleration polytope volume too small
+%       4e3: acceleration polytope volume too large
 %       1e4: unable to get acceleration volume
 %       1e5: unable to get force volume
 
-result = cell(n_sample,9);
+result = {zeros(n_sample,3),{zeros(n_sample,4),zeros(n_sample,4)},{zeros(n_sample,5),zeros(n_sample,5)},...
+            {zeros(n_sample,1),zeros(n_sample,1)},{zeros(n_sample,1),zeros(n_sample,1)},{zeros(n_sample,1),zeros(n_sample,1)},...
+            {zeros(n_sample,1),zeros(n_sample,1)},{zeros(n_sample,1),zeros(n_sample,1)},zeros(n_sample,1)};
 
 index = 1;
 
@@ -159,6 +161,8 @@ tol = 1e-8;
 q_diff_min = 0.2;
 
 %% generAte the pos_sample_r vector 
+
+x_all_samples = zeros(n_sample,3);
 for i = 1:size(x_voxel,1)
     for j = 1: size(y_voxel,2)
         for k = 1:size(z_voxel,3)
@@ -166,14 +170,13 @@ for i = 1:size(x_voxel,1)
             x_cube_i = [x_voxel(i,j,k);y_voxel(i,j,k);z_voxel(i,j,k)];
             x_i = x_cube_i + voxel_length/2; % middle ofeach voxel
             % init result value
-            result{index,1} = x_i;
-            result{index,2} = {[0,0,0,0]';[0,0,0,0]'};
-            result{index,3} = {[0,0,0,0,0]';[0,0,0,0,0]'};
-            result(index,4:9) = {{0;0},{0;0},{0;0},{0;0},{0;0},{0,0}};
+            
+            x_all_samples(index,:) = x_i';
             index = index + 1;
         end
     end
 end
+result{1} = x_all_samples;
 
 % return
 
@@ -185,7 +188,8 @@ end
 for i = 1:n_sample
     fprintf('processing: %d of %d \n',i, n_sample)
     
-    x_i = result{i,1};
+    x_i = result{1}(i,:)';
+    
     % update the current q
     finger_analysis.update_finger(rand(finger_analysis.nja,1));
     [q_i, status_i, ~, x_res,phi_x,iter,q_null_i,phi_x_null_i] = finger_analysis.invkin_trans_numeric_joint_limits_nullspace(...
@@ -194,12 +198,12 @@ for i = 1:n_sample
     % ik solutions
     if status_i == 0
         continue
-    elseif status_i == 1 % only ik solution
+    elseif status_i >= 1 % only ik solution
         
         assert(max(abs(phi_x(:))) < tol*10, 'nullspace ik error') % tolerance inconsistancy
         
-        result{i,9}{1} = result{i,9}{1} + 1;
-        result{i,2}{1} = q_i;
+        result{9}(i) = result{9}(i) + 1;
+        result{2}{1}(i,:) = q_i';
         finger_analysis.update_finger(q_i);
         
         % calculate the index
@@ -210,7 +214,7 @@ for i = 1:n_sample
         
         % check the Singularity of Jacobian
         if rank(J_index_red) < 3
-            result{i,9}{1} = result{i,9}{1} + 1e2;
+            result{9}(i) = result{9}(i) + 1e2;
             continue
         end
         
@@ -220,31 +224,31 @@ for i = 1:n_sample
         P_acc = J_index_red * inv(M_r) * P_tau;
         
         % check condition number of J*M-1
-        result{i,7}{1} = cond(J_index_red * inv(M_r));
-        result{i,8}{1} = cond(J_index_red);
+        result{7}{1}(i) = cond(J_index_red * inv(M_r));
+        result{8}{1}(i) = cond(J_index_red);
         % calculate the volume of the acceleration polytope
         try
-            result{i,6}{1} = P_acc.volume;
-            result{i,5}{1} = largest_minimum_radius_P_input(P_acc, [0,0,0]');
+            result{6}{1}(i) = P_acc.volume;
+            result{5}{1}(i) = largest_minimum_radius_P_input(P_acc, [0,0,0]');
             if P_acc.volume < 0.001
                 % acceleration polytope too small
-                result{i,9}{1} = result{i,9}{1} + 1e3; % acceleration polytope too small
+                result{9}(i) = result{9}(i) + 1e3; % acceleration polytope too small
             elseif P_acc.volume > 100
                 % acceleration polytope too large
-                result{i,9}{1} = result{i,9}{1} + 2e3;
+                result{9}(i) = result{9}(i) + 4e3;
             end
             
         catch
-            result{i,9}{1} = result{i,9}{1} + 1e4;
+            result{9}(i) = result{9}(i) + 1e4;
         end
         
         % calculate the force polytope
         P_ee = polytope_fingertip_3d(M_coupling, J_index_red,force_limits); % force polytope but not acceleration
         
         try
-            result{i,4}{1} = P_ee.volume;
+            result{4}{1}(i) = P_ee.volume;
         catch
-            result{i,9}{1} = result{i,9}{1} + 1e5;
+            result{9}(i) = result{9}(i) + 1e5;
         end
         
         % calculate the force polytope
@@ -261,20 +265,18 @@ for i = 1:n_sample
                 max_pos_f_Ver_i = max(Vertex_f_i(:,3)); % vextex of the 1-dimension polytope
             end
             if max_pos_f_Ver_i < 0
-                result{1,3}{1}(mi) = 0;
+                result{3}{1}(i,mi) = 0;
             else
-                result{1,3}{1}(mi) = max_pos_f_Ver_i;
+                result{3}{1}(i,mi) = max_pos_f_Ver_i;
             end
         end
        
-        result{i,9}{1} = result{i,9}{1} + 1;
-        
-    elseif status_i == 11
+    elseif status_i >= 11
         
         assert(max(abs([phi_x(:);phi_x_null_i(:)])) < tol*10, 'nullspace ik error')
         
-        result{i,9}{2} = result{i,9}{2} + 1;
-        result{i,2}{2} = q_null_i;
+        result{9}(i) = result{9}(i) + 4;
+        result{2}{2}(i,:) = q_null_i;
         finger_analysis.update_finger(q_null_i);
         
         % calculate the index
@@ -285,7 +287,7 @@ for i = 1:n_sample
         
         % check the Singularity of Jacobian
         if rank(J_index_red) < 3
-            result{i,9}{2} = result{i,9}{2} + 1e2;
+            result{9}(i) = result{9}(i) + 1e2;
             continue
         end
         
@@ -295,31 +297,31 @@ for i = 1:n_sample
         P_acc = J_index_red * inv(M_r) * P_tau;
         
         % check condition number of J*M-1
-        result{i,7}{2} = cond(J_index_red * inv(M_r));
-        result{i,8}{2} = cond(J_index_red);
+        result{7}{2}(i) = cond(J_index_red * inv(M_r));
+        result{8}{2}(i) = cond(J_index_red);
         % calculate the volume of the acceleration polytope
         try
-            result{i,6}{2} = P_acc.volume;
-            result{i,5}{2} = largest_minimum_radius_P_input(P_acc, [0,0,0]');
+            result{6}{2}(i) = P_acc.volume;
+            result{5}{2}(i) = largest_minimum_radius_P_input(P_acc, [0,0,0]');
             if P_acc.volume < 0.001
                 % acceleration polytope too small
-                result{i,9}{2} = result{i,9}{2} + 1e3; % acceleration polytope too small
+                result{9}(i) = result{9}(i) + 1e3; % acceleration polytope too small
             elseif P_acc.volume > 100
                 % acceleration polytope too large
-                result{i,9}{2} = result{i,9}{2} + 2e3;
+                result{9}(i) = result{9}(i) + 4e3;
             end
             
         catch
-            result{i,9}{2} = result{i,9}{2} + 1e4;
+            result{9}(i) = result{9}(i) + 1e4;
         end
         
         % calculate the force polytope
         P_ee = polytope_fingertip_3d(M_coupling, J_index_red,force_limits); % force polytope but not acceleration
         
         try
-            result{i,4}{2} = P_ee.volume;
+            result{4}{2}(i) = P_ee.volume;
         catch
-            result{i,9}{2} = result{i,9}{2} + 1e5;
+            result{9}(i) = result{9}(i) + 1e5;
         end
         
         % calculate the force polytope
@@ -336,20 +338,19 @@ for i = 1:n_sample
                 max_pos_f_Ver_i = max(Vertex_f_i(:,3)); % vextex of the 1-dimension polytope
             end
             if max_pos_f_Ver_i < 0
-                result{1,3}{2}(mi) = 0;
+                result{3}{2}(i,mi) = 0;
             else
-                result{1,3}{2}(mi) = max_pos_f_Ver_i;
+                result{3}{2}(i,mi) = max_pos_f_Ver_i;
             end
         end
        
-        result{i,9}{2} = result{i,9}{2} + 1;
         
     end
            
 end
 
 %%% save data
-save('./optimization/results/workspace_1306_x_3mm_downwards_index.mat');
+% save('./optimization/results/workspace_1306_x_3mm_downwards_index.mat');
 % 
 
 return
