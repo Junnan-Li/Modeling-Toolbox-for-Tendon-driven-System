@@ -28,7 +28,7 @@ finger_thumb.set_mdh_parameters(mdh_matrix_t);
 %% set states
 % set base position and orientation
 finger_index.w_p_base = 4*zeros(3,1);
-finger_index.w_R_base = euler2R_XYZ([0,-pi/3,0]);
+finger_index.w_R_base = euler2R_XYZ([0,-pi/6,0]);
 % finger_index.w_R_base = euler2R_XYZ([0,0,0]);
 
 
@@ -101,12 +101,12 @@ finger_thumb.update_finger_par_dyn;
 finger_index_5_tendon = copy(finger_index);
 if finger_index.nt == 0
     finger_index.add_tendon('Flex_1', [1,1,1,1]);
-    finger_index.add_tendon('Flex_2', [1,1,1,0]);
+    finger_index.add_tendon('Flex_2', [-1,1,1,0]);
     finger_index.add_tendon('Flex_3', [1,1,0,0]);
-    finger_index.add_tendon('Flex_4', [1,0,0,0]);
-    finger_index.add_tendon('Ext_1', [-1,-1,-1,-1]);
+    finger_index.add_tendon('Flex_4', [-1,0,0,0]);
+    finger_index.add_tendon('Ext_1', [1,-1,-1,-1]);
     finger_index.add_tendon('Ext_2', [-1,-1,-1,0]);
-    finger_index.add_tendon('Ext_3', [-1,-1,0,0]);
+    finger_index.add_tendon('Ext_3', [1,-1,0,0]);
     finger_index.add_tendon('Ext_4', [-1,0,0,0]);
 end
 

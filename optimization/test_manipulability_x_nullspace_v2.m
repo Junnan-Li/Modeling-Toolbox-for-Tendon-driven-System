@@ -114,27 +114,41 @@ n_sample = size(x_voxel,1)*size(y_voxel,2)*size(z_voxel,3);
 
 
 %% force direction definition of index finger
-% directions: 5
+% directions: 9
 % Ae_all [2*5x3], the vectors that are orthogonal to the direction vectors
+% directions: 1 |  2 |  3 |  4 |  5 |  6 |  7 |  8 |  9 | 
+%             -z|+x-z|-x-z|+y-z|-y-z| +x | -x | +y | -y |
 SQ2 = sqrt(2)/2;
 Ae_all = [1 0 0;...
-    0 1 0;...
+    0 1 0;... % 1: -z
     SQ2 0 SQ2;...
-    0 1 0;...
+    0 1 0;... % 2: +x-z
     SQ2 0 -SQ2;...
-    0 1 0;...
+    0 1 0;...% 3: -x-z
     1 0 0;...
-    0 SQ2 SQ2;...
+    0 SQ2 SQ2;...% 4: +y-z
     1 0 0;...
-    0 SQ2 -SQ2];
-be_all = zeros(10,1);
+    0 SQ2 -SQ2;...% 5: -y-z
+    0 0 1;...
+    0 1 0;... % 6: +x
+    0 0 1;...
+    0 -1 0;... % 7: -x
+    0 0 1;...
+    -1 0 0;... % 8: +y
+    0 0 1;...
+    1 0 0;... % 9: -y
+    ];
 
-% 5 direction vectors
+% 9 direction vectors
 direction_vec = [0 0 -1;...
     SQ2 0 -SQ2;...
     -SQ2 0 -SQ2;...
     0 SQ2 -SQ2;...
-    0 -SQ2 -SQ2];
+    0 -SQ2 -SQ2;...
+    1 0 0;...
+    -1 0 0;...
+    0 1 0;...
+    0 -1 0];
 
 
 
@@ -153,7 +167,7 @@ direction_vec = [0 0 -1;...
 %       1e4: unable to get acceleration volume
 %       1e5: unable to get force volume
 
-result = {zeros(n_sample,3),{zeros(n_sample,4),zeros(n_sample,4)},{zeros(n_sample,5),zeros(n_sample,5)},...
+result = {zeros(n_sample,3),{zeros(n_sample,4),zeros(n_sample,4)},{zeros(n_sample,9),zeros(n_sample,9)},...
             {zeros(n_sample,1),zeros(n_sample,1)},{zeros(n_sample,1),zeros(n_sample,1)},{zeros(n_sample,1),zeros(n_sample,1)},...
             {zeros(n_sample,1),zeros(n_sample,1)},{zeros(n_sample,1),zeros(n_sample,1)},zeros(n_sample,1)};
 
@@ -260,24 +274,27 @@ for i = 1:n_sample
             result{9}(i) = result{9}(i) + 1e5;
         end
         
+        % for constrain the half-plan of force polytope
+        if direction_downward
+            half_plane_vector = [0,0,1];
+        else
+            half_plane_vector = [0,0,-1];
+        end
         % calculate the force polytope
-        for mi = 1:5 % direction index
+        for mi = 1:9 % direction index
             % reduce the dimension from 3 to 1 along the direction
             % vector
-            p_tmp_force = Polyhedron('A', P_ee.A, 'b', P_ee.b, 'Ae',Ae_all(2*mi-1:2*mi,:) ,'be', zeros(2,1));
+            
+            half_plane_2 = cross(Ae_all(2*mi-1,:),Ae_all(2*mi,:));
+            p_tmp_force = Polyhedron('A', [P_ee.A;half_plane_vector;half_plane_2], 'b',[P_ee.b;0;0], 'Ae',Ae_all(2*mi-1:2*mi,:) ,'be', zeros(2,1));
             Vertex_f_i = p_tmp_force.V;
             if isempty(Vertex_f_i)
                 max_pos_f_Ver_i = 0;
-            elseif direction_downward
-                max_pos_f_Ver_i = -min(Vertex_f_i(:,3)); % vextex of the 1-dimension polytope
             else
-                max_pos_f_Ver_i = max(Vertex_f_i(:,3)); % vextex of the 1-dimension polytope
+                max_pos_f_Ver_i = max(diag(sqrt(Vertex_f_i*Vertex_f_i'))); % vextex of the 1-dimension polytope
             end
-            if max_pos_f_Ver_i < 0
-                result{3}{1}(i,mi) = 0;
-            else
-                result{3}{1}(i,mi) = max_pos_f_Ver_i;
-            end
+            result{3}{1}(i,mi) = max_pos_f_Ver_i;
+            
         end
     end   
     if status_i >= 11
@@ -333,31 +350,32 @@ for i = 1:n_sample
             result{9}(i) = result{9}(i) + 1e5;
         end
         
+        % for constrain the half-plan of force polytope
+        if direction_downward
+            half_plane_vector = [0,0,1];
+        else
+            half_plane_vector = [0,0,-1];
+        end
         % calculate the force polytope
-        for mi = 1:5 % direction index
+        for mi = 1:9 % direction index
             % reduce the dimension from 3 to 1 along the direction
             % vector
-            p_tmp_force = Polyhedron('A', P_ee.A, 'b', P_ee.b, 'Ae',Ae_all(2*mi-1:2*mi,:) ,'be', zeros(2,1));
+            half_plane_2 = cross(Ae_all(2*mi-1,:),Ae_all(2*mi,:));
+            p_tmp_force = Polyhedron('A', [P_ee.A;half_plane_vector;half_plane_2], 'b',[P_ee.b;0;0], 'Ae',Ae_all(2*mi-1:2*mi,:) ,'be', zeros(2,1));
             Vertex_f_i = p_tmp_force.V;
             if isempty(Vertex_f_i)
                 max_pos_f_Ver_i = 0;
-            elseif direction_downward
-                max_pos_f_Ver_i = -min(Vertex_f_i(:,3)); % vextex of the 1-dimension polytope
             else
-                max_pos_f_Ver_i = max(Vertex_f_i(:,3)); % vextex of the 1-dimension polytope
+                max_pos_f_Ver_i = max(diag(sqrt(Vertex_f_i*Vertex_f_i'))); % vextex of the 1-dimension polytope
             end
-            if max_pos_f_Ver_i < 0
-                result{3}{2}(i,mi) = 0;
-            else
-                result{3}{2}(i,mi) = max_pos_f_Ver_i;
-            end
+            result{3}{2}(i,mi) = max_pos_f_Ver_i;
         end
     end
            
 end
 
 % save data
-% save('./optimization/results/workspace_1406_x_4mm_30_downwards_index.mat');
+% save('./optimization/results/workspace_1506_x_4mm_30_downwards_index.mat');
 % 
 
 return

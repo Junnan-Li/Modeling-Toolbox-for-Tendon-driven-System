@@ -90,8 +90,8 @@ status = result{9};
 % index = 6207;
 
 M_coupling = [0.01, -0.01, 0.01, -0.01, 0.01, -0.01, 0.01, -0.01;...
-              0.01, 0.01, 0.01,   0,   -0.01, -0.01, -0.01, -0;...
-              0.01, 0.01, 0,      0,   -0.01, -0.01, 0 ,     0;...
+              0.01, 0.02, 0.01,   0,   -0.01, -0.01, -0.01, -0;...
+              0.02, 0.01, 0,      0,   -0.01, -0.01, 0 ,     0;...
               0.01, 0,    0,      0,   -0.01, 0 ,    0,     0];
 
 index = find(abs(pos_sample_r(:,1)-0.05) < 0.0015 & abs(pos_sample_r(:,2)-0.0) < 0.0015& ...
@@ -140,22 +140,33 @@ P_ee = polytope_fingertip_3d(M_coupling, J_index_red,force_limits); % force poly
 force_index_i = zeros(9,1);
 force_V_i = zeros(9,3);
 
-for mi = 1:9 % direction index
+if direction_downward
+    half_plane_vector = [0,0,1];
+else
+    half_plane_vector = [0,0,-1];
+end
+
+for mi = 8%1:9 % direction index
     % reduce the dimension from 3 to 1 along the direction
     % vector
-    p_tmp_force = Polyhedron('A', P_ee.A, 'b', P_ee.b, 'Ae',Ae_all(2*mi-1:2*mi,:) ,'be', zeros(2,1));
-    Vertex_f_i = p_tmp_force.V;
+    
+    half_plane_2 = cross(Ae_all(2*mi-1,:),Ae_all(2*mi,:));
+    p_tmp_force = Polyhedron('A', [P_ee.A;half_plane_vector], 'b',[P_ee.b;0], 'Ae',Ae_all(2*mi-1:2*mi,:) ,'be', zeros(2,1));
+    p_tmp_force2 = Polyhedron('A', [P_ee.A;half_plane_vector;half_plane_2], 'b',[P_ee.b;0;0], 'Ae',Ae_all(2*mi-1:2*mi,:) ,'be', zeros(2,1));
+    p_tmp_force.V
+    p_tmp_force2.V
+    
+    
+    Vertex_f_i = p_tmp_force2.V;
     if isempty(Vertex_f_i)
-        force_index_i(mi) = 0;
-    elseif direction_downward
-        force_index_i(mi) = sqrt(Vertex_f_i(1,:)*Vertex_f_i(1,:)'); % vextex of the 1-dimension polytope
+        max_pos_f_Ver_i = 0;
     else
-        force_index_i(mi) = sqrt(Vertex_f_i(2,:)*Vertex_f_i(2,:)'); % vextex of the 1-dimension polytope
+        max_pos_f_Ver_i = max(diag(sqrt(Vertex_f_i*Vertex_f_i'))) % vextex of the 1-dimension polytope
     end
     force_V_i(mi,:) = force_index_i(mi) * direction_vec(mi,:);
 end
 
-% return
+return
 %% plot generation
 
 
