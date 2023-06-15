@@ -80,6 +80,8 @@ direction_downward = 1;
 nj = finger_analysis.nja;
 % get coupling matrix
 M_coupling = finger_analysis.M_coupling;
+% M_coupling = 
+
 % get force limits
 force_limits = finger_analysis.limits_ft;
 
@@ -101,7 +103,7 @@ p_base = finger_analysis.w_p_base;
 workspace_cube_ori = [-0.025;-0.026;-0.11]; % index
 
 % size of the voxel
-voxel_length = 0.004;
+voxel_length = 0.002;
 
 
 [x_voxel,y_voxel,z_voxel] = ndgrid(workspace_cube_ori(1):voxel_length:workspace_cube_ori(1)+0.13,...
