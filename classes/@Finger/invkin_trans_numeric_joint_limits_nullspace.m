@@ -40,15 +40,15 @@ end
 % assert(length(q)== obj.nja, 'dimension of joint vector is incorrect!')
 
 q_all = zeros(iter_max,obj.nja);
-q_res = zeros(size(obj.nja));
+q_res = zeros(obj.nja,1);
+x_res = zeros(3,1);
+phi_x = zeros(3,1);
 status = 0;
+iter = 0;
 q_n = zeros(size(obj.nja));
 phi_x_n = zeros(3,1);
 
 q_limits = obj.limits_q(:,1:2);
-% for j = 1:obj.nja
-%     a(j) = (q_limits(j,2)+q_limits(j,1))/2;  
-% end
 
 w_p_base = obj.w_p_base;
 w_R_base = obj.w_R_base;
@@ -60,7 +60,7 @@ x_des_mod = w_R_base' * (x_des - w_p_base);
 
 if mex
     [q_mex,status_mex,q_all_mex,x_mex,phi_mex,iter_mex,q_null_mex,phi_x_null_mex] = ik_trans_numeric_joint_limits_nullspace_mex(mdh_matrix,x_des_mod,q_init,...
-                                                     q_limits,iter_max,tol,alpha,q_diff_min,1);
+        q_limits,iter_max,tol,alpha,q_diff_min,1);
     
     obj.update_finger(q_mex);
     q_res = q_mex;
@@ -71,10 +71,42 @@ if mex
     iter = iter_mex;
     q_n = q_null_mex;
     phi_x_n = phi_x_null_mex;
+%     
+    if status_mex ~= 11
+        for i = 1:5
+            q_init = rand(obj.nja,1).*(q_limits(:,2)-q_limits(:,1)) + q_limits(:,1);
+            [q_mex,status_mex,q_all_mex,x_mex,phi_mex,iter_mex,q_null_mex,phi_x_null_mex] = ik_trans_numeric_joint_limits_nullspace_mex(mdh_matrix,x_des_mod,q_init,...
+                q_limits,iter_max,tol,alpha,q_diff_min,1);
+            if status_mex == 11
+                obj.update_finger(q_mex);
+                q_res = q_mex;
+                status = status_mex;
+                q_all = q_all_mex;
+                x_res = w_R_base * x_mex + w_p_base;
+                phi_x = w_R_base * phi_mex;
+                iter = iter_mex;
+                q_n = q_null_mex;
+                phi_x_n = phi_x_null_mex;
+                break;          
+            elseif status_mex == 1
+                obj.update_finger(q_mex);
+                q_res = q_mex;
+                status = status_mex;
+                q_all = q_all_mex;
+                x_res = w_R_base * x_mex + w_p_base;
+                phi_x = w_R_base * phi_mex;
+                iter = iter_mex;
+                q_n = q_null_mex;
+                phi_x_n = phi_x_null_mex;
+            end
+        end
+    end
+
+   
 else
 
     [q_null,status_null,q_all_null,x_res_null,phi_x_null,iter_null,q_null_res,phi_x_null_2] = ik_trans_numeric_joint_limits_nullspace...
-           (mdh_matrix,x_des_mod,q_init,q_limits,iter_max,tol,alpha,q_diff_min,0);
+        (mdh_matrix,x_des_mod,q_init,q_limits,iter_max,tol,alpha,q_diff_min,0);
     obj.update_finger(q_null);
     q_res = q_null;
     status = status_null;

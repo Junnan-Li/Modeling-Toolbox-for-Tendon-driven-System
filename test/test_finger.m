@@ -374,7 +374,7 @@ else
     fprintf('Test 9 (ik with joint limits): pass! \n')
 end
 
-return
+% return
 %% test 10: ik nullspace solution
 
 
@@ -409,7 +409,7 @@ for i_10 = 1:10
     hold on
     
     % initialize the joint pose
-    finger_r.update_finger(0*q_init);
+    finger_r.update_finger(rand(4,1));
     mdh_matrix = mdh_struct_to_matrix(finger_r.mdh_ori, 1);
     x_des_mod = finger_r.w_R_base' * (x_des - finger_r.w_p_base);
 
