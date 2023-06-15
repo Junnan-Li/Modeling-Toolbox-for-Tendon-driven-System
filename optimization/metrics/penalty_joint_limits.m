@@ -9,7 +9,7 @@
 
 
 
-function  penal_jl = penalty_joint_limits(q, q_limit)
+function  penal_jl = penalty_joint_limits(q, q_limit,par)
 
 % q: [nj,n]
 nj = size(q,2);
@@ -20,9 +20,10 @@ q_limits_high = q_limit(:,2);
 
 % H = 1/4 * (q_limits_high-q_limits_low)^2 ./ ((q_limits_high - q).*(q-q_limits_low));
 
-Hdot = 1/1*(q_limits_high-q_limits_low).^2 .* (2*q - q_limits_high-q_limits_low) ./ ...
+Hdot = 1/par*(q_limits_high-q_limits_low).^2 .* (2*q - q_limits_high-q_limits_low) ./ ...
                                         ((q_limits_high - q).^2 .* (q-q_limits_low).^2);
 
-
 penal_jl = 1./(sqrt(1+abs(Hdot)));
+
+
 end

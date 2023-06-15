@@ -10,18 +10,31 @@ clear all
 close all 
 clc
 
-load ./optimization/results/workspace_1306_x_3mm_downwards_index.mat
+load ./optimization/results/workspace_1406_x_4mm_30_downwards_index.mat
 
 
 
 %% Data Analysis
+% cell: 
+%   1 pos |2 q 2x4 |3 forceindex 5 |4 vol_force |5 acc. r |6 acc.vol |7 conJ |
+%   8 conJM |9 status 
+% 
+% states: 1: success with nullspace solution
+%         5: success without nullspace solution
+%       10: no ik solution
+%       1e2: Jacobian deficient
+%       1e3: acceleration polytope volume too small
+%       4e3: acceleration polytope volume too large
+%       1e4: unable to get acceleration volume
+%       1e5: unable to get force volume
 
-force_index = zeros(n_sample,10);
-vol_sample_acc = zeros(n_sample,2);
-r_sample_acc = zeros(n_sample,2);
-q_sample_r = zeros(n_sample,8);
-pos_sample_r = zeros(n_sample,3);
-status = zeros(n_sample,2);
+
+% force_index = zeros(n_sample,10);
+% vol_sample_acc = zeros(n_sample,2);
+% r_sample_acc = zeros(n_sample,2);
+% q_sample_r = zeros(n_sample,8);
+% pos_sample_r = zeros(n_sample,3);
+% status = zeros(n_sample,2);
 
 q_sample_1 = result{2}{1};
 q_sample_2 = result{2}{2};
@@ -36,26 +49,19 @@ status = result{9};
 
 %%
 
+penal_acc_r = zeros(n_sample,2);
+joint_limits_index_normalized = zeros(n_sample,2);
+force_pol_index_normalized = zeros(n_sample,2);
+metric_normalized = zeros(n_sample,2);
+
 for i_ns = 1:2
 
-    
-
-
-    % force index
-    mani_force_polytope = force_index;
-
-    % acceleration polytope volume
-    mani_acc_v = vol_sample_acc;
-    acc_v_max = max(mani_acc_v);
-    acc_v_min = min(mani_acc_v);
-    acc_v_index_normalized = (mani_acc_v - acc_v_min)/(acc_v_max-acc_v_min);
-
-
     % acceleration index
-    mani_acc_r = r_sample_acc;
-    acc_r_max = max(r_sample_acc);
-    acc_r_min = min(r_sample_acc);
+    mani_acc_r = result{5}{i_ns};
+    acc_r_max = max(mani_acc_r);
+    acc_r_min = min(mani_acc_r);
     acc_r_index_normalized = (mani_acc_r - acc_r_min)/(acc_r_max-acc_r_min);
+    penal_acc_r(:,i_ns) = penalty_acc_r(acc_r_index_normalized, 1);
 
     % joint angle index
     %%%%%%%
@@ -72,39 +78,43 @@ for i_ns = 1:2
     % joint_limits_index_normalized = (joint_limits_index-min(joint_limits_index))/...
     %     (max(joint_limits_index)-min(joint_limits_index));
     %%%%%%%
-
+    q_sample_r = result{2}{i_ns};
     mani_q = q_sample_r*180/pi;
-    joint_limits_index_i = penalty_joint_limits(mani_q', q_limit)';
+    joint_limits_index_i = penalty_joint_limits(mani_q', q_limit,1)';
     joint_limits_index = joint_limits_index_i(:,1).* joint_limits_index_i(:,2) ...
         .* joint_limits_index_i(:,3) .* joint_limits_index_i(:,4);
-    joint_limits_index_normalized = (joint_limits_index-min(joint_limits_index))/...
+    joint_limits_index_normalized(:,i_ns) = (joint_limits_index-min(joint_limits_index))/...
         (max(joint_limits_index)-min(joint_limits_index));
 
     % metric value
     % metric_value = zeros(size(mani_force_polytope));
-    metric_normalized = zeros(size(mani_force_polytope,1),1);
-
+    
+    mani_force_polytope = result{3}{i_ns};
 
     % Weight vector of force index
 
-    W = [1,0,0,0,0]';
-    % W = [1,0.2,0.2,0.2,0.2]';
-
-    % mani_index_plot_j = mani_force_polytope;% *W;
-
+    W = [1,0,0,0,0]'/1;
+%     W = [1,0.1,0.1,0.1,0.1]'/1.4;
     % normalize the force index of one direction
-    index_max_force_pol = max(mani_force_polytope);
-    index_min_force_pol = min(mani_force_polytope);
+    
     %
+    max(mani_force_polytope);
 
-    force_pol_index_normalized_all = (mani_force_polytope - index_min_force_pol)./(index_max_force_pol-index_min_force_pol);
-    force_pol_index_normalized = force_pol_index_normalized_all * W;
+
+    
+    force_pol_index_all = mani_force_polytope * W;
+    
+    index_max_force_pol = max(force_pol_index_all);
+    index_min_force_pol = min(force_pol_index_all);
+
+    force_pol_index_normalized_all = (force_pol_index_all - index_min_force_pol)./(index_max_force_pol-index_min_force_pol);
+    force_pol_index_normalized(:,i_ns) = force_pol_index_normalized_all ;
 
 
     % metric_j = joint_limits_index_normalized .* acc_r_index_normalized.* ...
     %     acc_v_index_normalized.* force_pol_index_normalized;
 
-    metric_j = joint_limits_index_normalized .* acc_r_index_normalized .* (force_pol_index_normalized);
+    metric_j = joint_limits_index_normalized .* penal_acc_r .* (force_pol_index_normalized);
 
 
     % normalized
@@ -112,8 +122,7 @@ for i_ns = 1:2
     metric_j_min = min(metric_j);
     metric_j_normalized = (metric_j-metric_j_min)/(metric_j_max-metric_j_min);
 
-    metric_normalized = metric_j_normalized;
-
+    metric_normalized(:,i_ns) = metric_j_normalized;
 
 end 
 
@@ -143,10 +152,10 @@ set(groot, 'defaultAxesTickLabelInterpreter','latex');
 set(groot, 'defaultLegendInterpreter','latex');
 
 
-for subplot_i = 1:5
+for subplot_i = 1:4
 
 %     Pos_Car_occupied = zeros(dim_Car+2);
-    subplot(2,3,subplot_i)
+    subplot(1,4,subplot_i)
 %     figure(22)
 
     finger_analysis.update_finger([0,0,0,0]')
@@ -159,35 +168,34 @@ for subplot_i = 1:5
             metric_term = joint_limits_index_normalized;
             title_plot = 'Joint limits';
         case 2
-            metric_term = acc_r_index_normalized;
+            metric_term = penal_acc_r;
             title_plot = 'Acc. radius';
         case 3
-            metric_term = acc_v_index_normalized;
-            title_plot = 'Acc. volume';
-        case 4
             metric_term = force_pol_index_normalized;
             title_plot = 'Force index';
-        case 5
+        case 4
             metric_term = metric_normalized;
             title_plot = 'metric index';
         otherwise
             disp('other value')
     end
+    
+    [metric_term,I_metric_term] = max(metric_term,[],2);
 
-    index_vec = find(states_sample(:) == 1 & abs(pos_sample_r(:,2)) < 0.001);
+    index_vec = find(status(:) >= 1 ); %  & abs(pos_sample_r(:,2)-0.0) < 0.0015 
     C = [metric_term(index_vec) zeros(size(metric_term(index_vec))) -metric_term(index_vec)] + [0 0 1];
 
-%     index_vec = find(states_sample(:) == 1);
-%     C = [metric_term(index_vec) zeros(size(metric_term(index_vec))) -metric_term(index_vec)] + [0 0 1];
-    
+%     index_vec = find(status(:) >= 1 ); % & abs(pos_sample_r(:,1)-0.056) < 0.0015  
+%     C = [metric_term(index_vec) zeros(length(index_vec),1) -metric_term(index_vec)] + [0 0 1];
+
    
     % origin finger
-    hs = scatter3(pos_sample_r(index_vec,1),pos_sample_r(index_vec,2),pos_sample_r(index_vec,3),10,...
-        C,'square','MarkerEdgeAlpha',0.3,'MarkerFaceAlpha',.2);
+    hs = scatter3(pos_sample_r(index_vec,1),pos_sample_r(index_vec,2),pos_sample_r(index_vec,3),30,...
+        C,'square','filled','MarkerEdgeAlpha',.3,'MarkerFaceAlpha',.3);
     
     hold on
     [~,I] = max(metric_term);
-    q_i = q_sample_r(I,:)';
+    q_i = result{2}{I_metric_term(I)}(I,:)';
     finger_analysis.update_finger(q_i);
     finger_analysis.print_finger('k');
 
@@ -221,21 +229,21 @@ end
 
 
 
-subplot(2,3,6)
-for i = 1%:5
-    finger_analysis.print_finger('k');
-    quiver3(pos_sample_r(I,1),pos_sample_r(I,2),pos_sample_r(I,3),...
-        direction_vec(i,1)/50,direction_vec(i,2)/50,direction_vec(i,3)/50,'Color','r','LineWidth',5,'MaxHeadSize',5);
-    axis equal
-%     hold on
-%     finger_analysis_rot.print_finger('k');
-%     quiver3(pos_sample_modified(I,1),pos_sample_modified(I,2),pos_sample_modified(I,3),...
-%         -direction_vec(i,1)/50,-direction_vec(i,2)/50,-direction_vec(i,3)/50,'Color','r','LineWidth',5,'MaxHeadSize',5);
-    xlabel('x')
-    ylabel('y')
-    zlabel('z')
-    title('Force direction (neg. Z-axis)')
-end
+% subplot(2,3,6)
+% for i = 1%:5
+%     finger_analysis.print_finger('k');
+%     quiver3(pos_sample_r(I,1),pos_sample_r(I,2),pos_sample_r(I,3),...
+%         direction_vec(i,1)/50,direction_vec(i,2)/50,direction_vec(i,3)/50,'Color','r','LineWidth',5,'MaxHeadSize',5);
+%     axis equal
+% %     hold on
+% %     finger_analysis_rot.print_finger('k');
+% %     quiver3(pos_sample_modified(I,1),pos_sample_modified(I,2),pos_sample_modified(I,3),...
+% %         -direction_vec(i,1)/50,-direction_vec(i,2)/50,-direction_vec(i,3)/50,'Color','r','LineWidth',5,'MaxHeadSize',5);
+%     xlabel('x')
+%     ylabel('y')
+%     zlabel('z')
+%     title('Force direction (neg. Z-axis)')
+% end
 
 %% plot result for two finger
 metric_term = metric_j_normalized;
@@ -404,3 +412,68 @@ title('metric map of four-finger hand')
 
 
 return
+
+%% debud
+
+i = 64;
+% index = 6207;
+
+index = find(abs(pos_sample_r(:,1)-0.077) < 0.0015 & abs(pos_sample_r(:,2)-0.0) < 0.0015& ...
+    abs(pos_sample_r(:,3)- (-0.016)) < 0.0015 )
+
+pos_sample_r(index,:)
+status(index)
+q_i = result{2}{1}(index,:)';
+% q_i = [0;0.5;0.6;0.4];
+
+finger_analysis.update_finger(q_i);
+figure(100)
+subplot(1,3,1)
+finger_analysis.print_finger
+axis equal
+% calculate the index
+% get Jacobian
+J_index = finger_analysis.Jacobian_analytic_b_end;
+% get reduced Jacobian only with translational terms
+J_index_red = finger_analysis.w_R_base * J_index(1:3,:);
+
+rank(J_index_red)
+
+% calculate the Mass matrix
+[~,M_r,~,~] = finger_analysis.fordyn_ne_w_end(q_i, zeros(4,1), zeros(4,1), zeros(6,6));
+% calculate the Cartesian acceleration polytope
+P_acc = J_index_red * inv(M_r) * P_tau;
+P_acc2 = J_index_red * P_tau;
+subplot(1,3,2)
+P_acc.plot
+axis equal
+% check condition number of J*M-1
+cond(J_index_red * inv(M_r));
+cond(J_index_red);
+% calculate the volume of the acceleration polytope
+try
+%     P_acc.volume;
+    largest_minimum_radius_P_input(P_acc, [0,0,0]')
+end
+
+
+% calculate the force polytope
+P_ee = polytope_fingertip_3d(M_coupling, J_index_red,force_limits); % force polytope but not acceleration
+subplot(1,3,3)
+P_ee.plot
+axis equal
+% calculate the force polytope
+for mi = 1:5 % direction index
+    % reduce the dimension from 3 to 1 along the direction
+    % vector
+    p_tmp_force = Polyhedron('A', P_ee.A, 'b', P_ee.b, 'Ae',Ae_all(2*mi-1:2*mi,:) ,'be', zeros(2,1));
+    Vertex_f_i = p_tmp_force.V;
+    if isempty(Vertex_f_i)
+        max_pos_f_Ver_i = 0;
+    elseif direction_downward
+        max_pos_f_Ver_i = -min(Vertex_f_i(:,3)); % vextex of the 1-dimension polytope
+    else
+        max_pos_f_Ver_i = max(Vertex_f_i(:,3)); % vextex of the 1-dimension polytope
+    end
+end
+

@@ -72,6 +72,11 @@ close all
 
 finger_analysis = finger_index;
 
+% downward (1) or upward 0
+direction_downward = 1; 
+
+%%
+
 nj = finger_analysis.nja;
 % get coupling matrix
 M_coupling = finger_analysis.M_coupling;
@@ -96,10 +101,8 @@ p_base = finger_analysis.w_p_base;
 workspace_cube_ori = [-0.025;-0.026;-0.11]; % index
 
 % size of the voxel
-voxel_length = 0.003;
+voxel_length = 0.004;
 
-% downward (1) or upward 0
-direction_downward = 1; 
 
 [x_voxel,y_voxel,z_voxel] = ndgrid(workspace_cube_ori(1):voxel_length:workspace_cube_ori(1)+0.13,...
     workspace_cube_ori(2):voxel_length:workspace_cube_ori(2)+0.054,...
@@ -158,7 +161,7 @@ index = 1;
 iter_max = 1000;
 alpha = 0.7;
 tol = 1e-8;
-q_diff_min = 0.2;
+q_diff_min = 5*pi/180;
 
 %% generAte the pos_sample_r vector 
 
@@ -187,18 +190,21 @@ result{1} = x_all_samples;
 
 for i = 1:n_sample
     fprintf('processing: %d of %d \n',i, n_sample)
-    
+
     x_i = result{1}(i,:)';
-    
+
     % update the current q
-    finger_analysis.update_finger(rand(finger_analysis.nja,1));
+%     finger_analysis.update_finger(rand(finger_analysis.nja,1));
+    finger_analysis.update_finger(q_limit(:,1)*pi/180);
+
     [q_i, status_i, ~, x_res,phi_x,iter,q_null_i,phi_x_null_i] = finger_analysis.invkin_trans_numeric_joint_limits_nullspace(...
         x_i,iter_max,tol,alpha,q_diff_min,1);
     
     % ik solutions
     if status_i == 0
         continue
-    elseif status_i >= 1 % only ik solution
+    end
+    if status_i >= 1 % only ik solution
         
         assert(max(abs(phi_x(:))) < tol*10, 'nullspace ik error') % tolerance inconsistancy
         
@@ -226,10 +232,11 @@ for i = 1:n_sample
         % check condition number of J*M-1
         result{7}{1}(i) = cond(J_index_red * inv(M_r));
         result{8}{1}(i) = cond(J_index_red);
+        result{5}{1}(i) = largest_minimum_radius_P_input(P_acc, [0,0,0]');
+
         % calculate the volume of the acceleration polytope
         try
             result{6}{1}(i) = P_acc.volume;
-            result{5}{1}(i) = largest_minimum_radius_P_input(P_acc, [0,0,0]');
             if P_acc.volume < 0.001
                 % acceleration polytope too small
                 result{9}(i) = result{9}(i) + 1e3; % acceleration polytope too small
@@ -270,8 +277,8 @@ for i = 1:n_sample
                 result{3}{1}(i,mi) = max_pos_f_Ver_i;
             end
         end
-       
-    elseif status_i >= 11
+    end   
+    if status_i >= 11
         
         assert(max(abs([phi_x(:);phi_x_null_i(:)])) < tol*10, 'nullspace ik error')
         
@@ -299,10 +306,10 @@ for i = 1:n_sample
         % check condition number of J*M-1
         result{7}{2}(i) = cond(J_index_red * inv(M_r));
         result{8}{2}(i) = cond(J_index_red);
+        result{5}{2}(i) = largest_minimum_radius_P_input(P_acc, [0,0,0]');
         % calculate the volume of the acceleration polytope
         try
             result{6}{2}(i) = P_acc.volume;
-            result{5}{2}(i) = largest_minimum_radius_P_input(P_acc, [0,0,0]');
             if P_acc.volume < 0.001
                 % acceleration polytope too small
                 result{9}(i) = result{9}(i) + 1e3; % acceleration polytope too small
@@ -343,14 +350,12 @@ for i = 1:n_sample
                 result{3}{2}(i,mi) = max_pos_f_Ver_i;
             end
         end
-       
-        
     end
            
 end
 
-%%% save data
-% save('./optimization/results/workspace_1306_x_3mm_downwards_index.mat');
+% save data
+% save('./optimization/results/workspace_1406_x_4mm_30_downwards_index.mat');
 % 
 
 return
