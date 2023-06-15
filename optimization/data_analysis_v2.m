@@ -245,6 +245,8 @@ end
 %     title('Force direction (neg. Z-axis)')
 % end
 
+return
+
 %% plot result for two finger
 metric_term = metric_j_normalized;
 h = figure(16);

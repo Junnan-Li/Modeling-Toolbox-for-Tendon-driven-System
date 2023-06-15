@@ -100,14 +100,14 @@ finger_thumb.update_finger_par_dyn;
 %% add tendons
 finger_index_5_tendon = copy(finger_index);
 if finger_index.nt == 0
-    finger_index.add_tendon('Flex_1', [0.01,0.01,0.01,0.01]);
-    finger_index.add_tendon('Flex_2', [0.01,0.01,0.01,0]);
-    finger_index.add_tendon('Flex_3', [0.01,0.01,0,0]);
-    finger_index.add_tendon('Flex_4', [0.01,0,0,0]);
-    finger_index.add_tendon('Ext_1', [-0.01,-0.01,-0.01,-0.01]);
-    finger_index.add_tendon('Ext_2', [-0.01,-0.01,-0.01,0]);
-    finger_index.add_tendon('Ext_3', [-0.01,-0.01,0,0]);
-    finger_index.add_tendon('Ext_4', [-0.01,0,0,0]);
+    finger_index.add_tendon('Flex_1', [1,1,1,1]);
+    finger_index.add_tendon('Flex_2', [1,1,1,0]);
+    finger_index.add_tendon('Flex_3', [1,1,0,0]);
+    finger_index.add_tendon('Flex_4', [1,0,0,0]);
+    finger_index.add_tendon('Ext_1', [-1,-1,-1,-1]);
+    finger_index.add_tendon('Ext_2', [-1,-1,-1,0]);
+    finger_index.add_tendon('Ext_3', [-1,-1,0,0]);
+    finger_index.add_tendon('Ext_4', [-1,0,0,0]);
 end
 
 if finger_index_5_tendon.nt == 0
