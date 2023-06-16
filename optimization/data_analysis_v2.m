@@ -10,7 +10,7 @@ clear all
 close all 
 clc
 
-load ./optimization/results/workspace_1406_x_4mm_30_downwards_index.mat
+load ./optimization/results/workspace_1506_x_2mm_30_downwards_index.mat
 
 
 
@@ -80,7 +80,7 @@ for i_ns = 1:2
     %%%%%%%
     q_sample_r = result{2}{i_ns};
     mani_q = q_sample_r*180/pi;
-    joint_limits_index_i = penalty_joint_limits(mani_q', q_limit,1)';
+    joint_limits_index_i = penalty_joint_limits(mani_q', q_limit,2)';
     joint_limits_index = joint_limits_index_i(:,1).* joint_limits_index_i(:,2) ...
         .* joint_limits_index_i(:,3) .* joint_limits_index_i(:,4);
     joint_limits_index_normalized(:,i_ns) = (joint_limits_index-min(joint_limits_index))/...
@@ -93,7 +93,7 @@ for i_ns = 1:2
 
     % Weight vector of force index
 
-    W = [1,0,0,0,0]'/1;
+    W = [1,0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2]'/2.6;
 %     W = [1,0.1,0.1,0.1,0.1]'/1.4;
     % normalize the force index of one direction
     
@@ -180,21 +180,21 @@ for subplot_i = 1:4
             disp('other value')
     end
     
-    [metric_term,I_metric_term] = max(metric_term,[],2);
+    [~,I_metric_term] = max(metric_term,[],2);
 
     index_vec = find(status(:) >= 1 ); %  & abs(pos_sample_r(:,2)-0.0) < 0.0015 
-    C = [metric_term(index_vec) zeros(size(metric_term(index_vec))) -metric_term(index_vec)] + [0 0 1];
+    C = [metric_term(index_vec,I_metric_term) zeros(size(metric_term(index_vec,I_metric_term))) -metric_term(index_vec,I_metric_term)] + [0 0 1];
 
 %     index_vec = find(status(:) >= 1 ); % & abs(pos_sample_r(:,1)-0.056) < 0.0015  
 %     C = [metric_term(index_vec) zeros(length(index_vec),1) -metric_term(index_vec)] + [0 0 1];
 
    
     % origin finger
-    hs = scatter3(pos_sample_r(index_vec,1),pos_sample_r(index_vec,2),pos_sample_r(index_vec,3),30,...
+    hs = scatter3(pos_sample_r(index_vec,1),pos_sample_r(index_vec,2),pos_sample_r(index_vec,3),20,...
         C,'square','filled','MarkerEdgeAlpha',.3,'MarkerFaceAlpha',.3);
     
     hold on
-    [~,I] = max(metric_term);
+    [~,I] = max(metric_term(:,I_metric_term));
     q_i = result{2}{I_metric_term(I)}(I,:)';
     finger_analysis.update_finger(q_i);
     finger_analysis.print_finger('k');

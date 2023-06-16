@@ -375,7 +375,7 @@ for i = 1:n_sample
 end
 
 % save data
-% save('./optimization/results/workspace_1506_x_4mm_30_downwards_index.mat');
+% save('./optimization/results/workspace_1506_x_2mm_30_downwards_index.mat');
 % 
 
 return
