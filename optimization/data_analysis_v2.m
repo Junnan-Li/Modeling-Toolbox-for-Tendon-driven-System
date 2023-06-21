@@ -7,7 +7,7 @@
 
 %% load work space
 clear all
-close all 
+% close all 
 clc
 
 load ./optimization/results/workspace_1506_x_2mm_30_downwards_index.mat
@@ -58,10 +58,12 @@ for i_ns = 1:2
 
     % acceleration index
     mani_acc_r = result{5}{i_ns};
-    acc_r_max = max(mani_acc_r);
-    acc_r_min = min(mani_acc_r);
-    acc_r_index_normalized = (mani_acc_r - acc_r_min)/(acc_r_max-acc_r_min);
-    penal_acc_r(:,i_ns) = penalty_acc_r(acc_r_index_normalized, 1);
+%     acc_r_max = max(mani_acc_r);
+%     acc_r_min = min(mani_acc_r);
+%     acc_r_index_normalized = (mani_acc_r - acc_r_min)/(acc_r_max-acc_r_min);
+
+    acc_r_index_normalized(:,i_ns) = normalize_vector(mani_acc_r, 1);
+    penal_acc_r(:,i_ns) = penalty_acc_r(acc_r_index_normalized(:,i_ns), 1);
 
     % joint angle index
     %%%%%%%
@@ -86,15 +88,17 @@ for i_ns = 1:2
     joint_limits_index_normalized(:,i_ns) = (joint_limits_index-min(joint_limits_index))/...
         (max(joint_limits_index)-min(joint_limits_index));
 
+
     % metric value
     % metric_value = zeros(size(mani_force_polytope));
     
     mani_force_polytope = result{3}{i_ns};
 
     % Weight vector of force index
-
+% 
     W = [1,0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2]'/2.6;
-%     W = [1,0.1,0.1,0.1,0.1]'/1.4;
+%     W = [1,0,0,0,0,0,0,0,0]'/1;
+%     W = [1,0.2,0.2,0.2,0.2,0,0,0,0]'/1.8;
     % normalize the force index of one direction
     
     %
@@ -111,35 +115,36 @@ for i_ns = 1:2
     force_pol_index_normalized(:,i_ns) = force_pol_index_normalized_all ;
 
 
-    % metric_j = joint_limits_index_normalized .* acc_r_index_normalized.* ...
-    %     acc_v_index_normalized.* force_pol_index_normalized;
-
-    metric_j = joint_limits_index_normalized .* penal_acc_r .* (force_pol_index_normalized);
-
-
-    % normalized
-    metric_j_max = max(metric_j);
-    metric_j_min = min(metric_j);
-    metric_j_normalized = (metric_j-metric_j_min)/(metric_j_max-metric_j_min);
-
-    metric_normalized(:,i_ns) = metric_j_normalized;
+    
 
 end 
+% metric_j = joint_limits_index_normalized .* acc_r_index_normalized.* ...
+%     acc_v_index_normalized.* force_pol_index_normalized;
+
+metric_j = joint_limits_index_normalized .* penal_acc_r .* (force_pol_index_normalized);
+
+% normalized
+metric_j_max = max(metric_j);
+metric_j_min = min(metric_j);
+metric_normalized = (metric_j - metric_j_min) ./ (metric_j_max-metric_j_min);
 
 
 
 %% results Cartesian space
-% C_min = min(pos_sample_r);
-% C_max = max(pos_sample_r);
-% voxel_length = 0.001;
-% dim_Car = floor((C_max-C_min)/voxel_length); % 0.01m
-% 
-% voxel_min = floor(C_min/voxel_length);
-% 
-% Pos_Car_occupied = zeros(dim_Car+2);
 
 
-h = figure(15);
+
+
+dis_plane = -0.03:0.008:0.1;
+pos_condition = false;
+for condi_index = 1:length(dis_plane)
+    pos_condition = pos_condition | abs(pos_sample_r(:,1)-dis_plane(condi_index)) < 0.0015;
+end
+
+index_vec = find(status(:) >= 1 & pos_condition); %  & abs(pos_sample_r(:,2)-0.0) < 0.0015
+
+
+h = figure(13);
 set(0,'defaultfigurecolor','w')
 set(groot,'defaulttextinterpreter','none');
 set(h,'units','normalized','outerposition',[0 0 1 1])
@@ -164,13 +169,15 @@ for subplot_i = 1:4
 %     finger_analysis.print_finger('g')
     
     switch subplot_i
-        case 1
+        case 3
+%             metric_term = normalize_vector(joint_limits_index_normalized .* penal_acc_r.* force_pol_index_normalized,1);
             metric_term = joint_limits_index_normalized;
             title_plot = 'Joint limits';
         case 2
+%             metric_term = normalize_vector(penal_acc_r.* force_pol_index_normalized,1);
             metric_term = penal_acc_r;
             title_plot = 'Acc. radius';
-        case 3
+        case 1
             metric_term = force_pol_index_normalized;
             title_plot = 'Force index';
         case 4
@@ -180,46 +187,38 @@ for subplot_i = 1:4
             disp('other value')
     end
     
-    [~,I_metric_term] = max(metric_term,[],2);
+    [~,I_metric_term] = max(metric_term(index_vec,:),[],2);
 
-    index_vec = find(status(:) >= 1 ); %  & abs(pos_sample_r(:,2)-0.0) < 0.0015 
-    C = [metric_term(index_vec,I_metric_term) zeros(size(metric_term(index_vec,I_metric_term))) -metric_term(index_vec,I_metric_term)] + [0 0 1];
+    metric_term_sel = metric_term(index_vec,:);
+
+    row = [1:length(index_vec)]';
+    col = I_metric_term;
+    sz = size(metric_term_sel);
+    ind = sub2ind(sz,row,col);
+
+    C = [metric_term_sel(ind) zeros(length(index_vec),1) -metric_term_sel(ind)] + [0 0 1];
 
 %     index_vec = find(status(:) >= 1 ); % & abs(pos_sample_r(:,1)-0.056) < 0.0015  
 %     C = [metric_term(index_vec) zeros(length(index_vec),1) -metric_term(index_vec)] + [0 0 1];
 
    
     % origin finger
-    hs = scatter3(pos_sample_r(index_vec,1),pos_sample_r(index_vec,2),pos_sample_r(index_vec,3),20,...
-        C,'square','filled','MarkerEdgeAlpha',.3,'MarkerFaceAlpha',.3);
+    hs = scatter3(pos_sample_r(index_vec,1),pos_sample_r(index_vec,2),pos_sample_r(index_vec,3),30,...
+        C,'square','filled','MarkerEdgeAlpha',.6,'MarkerFaceAlpha',.6);
     
     hold on
-    [~,I] = max(metric_term(:,I_metric_term));
-    q_i = result{2}{I_metric_term(I)}(I,:)';
+    [~,I] = max(metric_term_sel(:));
+    [I_x,I_y]=ind2sub(size(metric_term_sel),I);
+    q_i = result{2}{I_y}(index_vec(I_x),:)';
     finger_analysis.update_finger(q_i);
-    finger_analysis.print_finger('k');
+    finger_analysis.print_finger('k',5,8);
 
     fprintf("       JL,     Acc.R.,     F.I.,     M: \n")
-    fprintf("Index: %f, %f, %f, %f \n", joint_limits_index_normalized(I), acc_r_index_normalized(I),...
-                    force_pol_index_normalized(I), metric_j_normalized(I))   
-
-    % rotated finger
-%     R = euler2R_XYZ([pi,0,0]);
-%     T = [0,0,-0.1];
-%     pos_sample_modified = pos_sample_r * R' + T;
-%     hs = scatter3(pos_sample_modified(index_vec,1),pos_sample_modified(index_vec,2),pos_sample_modified(index_vec,3),10,...
-%         C,'square','MarkerEdgeAlpha',0.6,'MarkerFaceAlpha',.2);
-%     
-%     hold on
-%     [~,I] = max(metric_term);
-%     q_i = q_sample_r(I,:)';
-%     finger_analysis_rot = copy(finger_analysis);
-%     finger_analysis_rot.w_p_base = T';
-%     finger_analysis_rot.w_R_base = R*finger_analysis_rot.w_R_base;
-%     finger_analysis_rot.update_finger(q_i);
-%     finger_analysis_rot.print_finger('k');
+    fprintf("Index: %f, %f, %f, %f \n", joint_limits_index_normalized(index_vec(I_x),I_y), penal_acc_r(index_vec(I_x),I_y),...
+                    force_pol_index_normalized(index_vec(I_x),I_y), metric_normalized(index_vec(I_x),I_y))   
 %     
     axis equal
+    grid off
     xlabel('x')
     ylabel('y')
     zlabel('z')
@@ -227,29 +226,19 @@ for subplot_i = 1:4
 
 end
 
-
-
-% subplot(2,3,6)
-% for i = 1%:5
-%     finger_analysis.print_finger('k');
-%     quiver3(pos_sample_r(I,1),pos_sample_r(I,2),pos_sample_r(I,3),...
-%         direction_vec(i,1)/50,direction_vec(i,2)/50,direction_vec(i,3)/50,'Color','r','LineWidth',5,'MaxHeadSize',5);
-%     axis equal
-% %     hold on
-% %     finger_analysis_rot.print_finger('k');
-% %     quiver3(pos_sample_modified(I,1),pos_sample_modified(I,2),pos_sample_modified(I,3),...
-% %         -direction_vec(i,1)/50,-direction_vec(i,2)/50,-direction_vec(i,3)/50,'Color','r','LineWidth',5,'MaxHeadSize',5);
-%     xlabel('x')
-%     ylabel('y')
-%     zlabel('z')
-%     title('Force direction (neg. Z-axis)')
-% end
-
 return
 
 %% plot result for two finger
-metric_term = metric_j_normalized;
-h = figure(16);
+
+dis_plane = -0.03:0.008:0.1;
+pos_condition = false;
+for condi_index = 1:length(dis_plane)
+    pos_condition = pos_condition | abs(pos_sample_r(:,1)-dis_plane(condi_index)) < 0.0015;
+end
+
+index_vec = find(status(:) >= 1 & pos_condition); %  & abs(pos_sample_r(:,2)-0.0) < 0.0015
+
+h = figure(15);
 set(0,'defaultfigurecolor','w')
 set(groot,'defaulttextinterpreter','none');
 set(h,'units','normalized','outerposition',[0 0 1 1])
@@ -262,69 +251,64 @@ set(groot, 'defaultAxesTickLabelInterpreter','latex');
 set(groot, 'defaultLegendInterpreter','latex');
 
 
-subplot(1,2,1)
 
-index_vec = find(states_sample(:) == 1);
-C = [metric_term(index_vec) zeros(size(metric_term(index_vec))) -metric_term(index_vec)] + [0 0 1];
+for subplot_i = 1:3
 
-% origin finger
-hs = scatter3(pos_sample_r(index_vec,1),pos_sample_r(index_vec,2),pos_sample_r(index_vec,3),30,...
-    C,'filled','MarkerEdgeAlpha',0.2,'MarkerFaceAlpha',.2);
+    subplot(1,3,subplot_i)
 
-hold on
-[~,I] = max(metric_term);
-q_i = q_sample_r(I,:)';
-finger_analysis.update_finger(q_i);
-finger_analysis.print_finger('k');
-% rotated finger
-R = euler2R_XYZ([pi,0,0]);
-T = [0,0,-0.1];
-pos_sample_modified = pos_sample_r * R' + T;
-hs = scatter3(pos_sample_modified(index_vec,1),pos_sample_modified(index_vec,2),pos_sample_modified(index_vec,3),30,...
-    C,'filled','MarkerEdgeAlpha',0.2,'MarkerFaceAlpha',.2);
-hold on
-finger_analysis_rot = copy(finger_analysis);
-finger_analysis_rot.w_p_base = T';
-finger_analysis_rot.w_R_base = R*finger_analysis_rot.w_R_base;
-finger_analysis_rot.update_finger(q_i);
-finger_analysis_rot.print_finger('k');
+    finger_analysis.update_finger([0,0,0,0]')
+    finger_analysis.update_finger([0;finger_analysis.limits_q(2:4,2)])
+    switch subplot_i
+        case 3
+            metric_term = normalize_vector(joint_limits_index_normalized .* penal_acc_r.* force_pol_index_normalized,1);
+            title_plot = 'Force index + Acc. radius + Joint limits';
+        case 2
+            metric_term = normalize_vector(penal_acc_r.* force_pol_index_normalized,1);
+            title_plot = 'Force index + Acc. radius';
+        case 1
+            metric_term = force_pol_index_normalized;
+            title_plot = 'Force index';
+        case 4
+            metric_term = metric_normalized;
+            title_plot = 'metric index';
+        otherwise
+            disp('other value')
+    end
+    
+    [~,I_metric_term] = max(metric_term(index_vec,:),[],2);
 
-subplot(1,2,2)
+    metric_term_sel = metric_term(index_vec,:);
 
-index_vec = find(states_sample(:) == 1 & abs(pos_sample_r(:,2)) < 0.001);
-C = [metric_term(index_vec) zeros(size(metric_term(index_vec))) -metric_term(index_vec)] + [0 0 1];
+    row = [1:length(index_vec)]';
+    col = I_metric_term;
+    sz = size(metric_term_sel);
+    ind = sub2ind(sz,row,col);
 
-% origin finger
-hs = scatter3(pos_sample_r(index_vec,1),pos_sample_r(index_vec,2),pos_sample_r(index_vec,3),120,...
-    C,'square', 'filled','MarkerEdgeAlpha',0.6,'MarkerFaceAlpha',.6);
-hold on
-[~,I] = max(metric_term(index_vec));
-q_i = q_sample_r(index_vec(I),:)';
-finger_analysis.update_finger(q_i);
-finger_analysis.print_finger('k');
+    C = [metric_term_sel(ind) zeros(length(index_vec),1) -metric_term_sel(ind)] + [0 0 1];
+   
+    % origin finger
+    hs = scatter3(pos_sample_r(index_vec,1),pos_sample_r(index_vec,2),pos_sample_r(index_vec,3),30,...
+        C,'square','filled','MarkerEdgeAlpha',.8,'MarkerFaceAlpha',.8);
+    
+    hold on
+    [~,I] = max(metric_term_sel(:));
+    [I_x,I_y]=ind2sub(size(metric_term_sel),I);
+    q_i = result{2}{I_y}(index_vec(I_x),:)';
+    finger_analysis.update_finger(q_i);
+    finger_analysis.print_finger('k',8,12);
 
-% rotated finger
-R = euler2R_XYZ([pi,0,0]);
-T = [0,0,-0.1];
-pos_sample_modified = pos_sample_r * R' + T;
-hs = scatter3(pos_sample_modified(index_vec,1),pos_sample_modified(index_vec,2),pos_sample_modified(index_vec,3),120,...
-    C,'square', 'filled','MarkerEdgeAlpha',0.6,'MarkerFaceAlpha',.6);
+    fprintf("       JL,     Acc.R.,     F.I.,     M: \n")
+    fprintf("Index: %f, %f, %f, %f \n", joint_limits_index_normalized(index_vec(I_x),I_y), penal_acc_r(index_vec(I_x),I_y),...
+                    force_pol_index_normalized(index_vec(I_x),I_y), metric_normalized(index_vec(I_x),I_y))   
+%     
+    axis equal
+    grid off
+    xlabel('x')
+    ylabel('y')
+    zlabel('z')
+    title(title_plot)
 
-hold on
-% [~,I] = max(metric_term);
-% q_i = q_sample_r(I,:)';
-finger_analysis_rot = copy(finger_analysis);
-finger_analysis_rot.w_p_base = T';
-finger_analysis_rot.w_R_base = R*finger_analysis_rot.w_R_base;
-finger_analysis_rot.update_finger(q_i);
-finger_analysis_rot.print_finger('k');
-
-axis equal
-xlabel('x')
-ylabel('y')
-zlabel('z')
-title('metric map of two-finger hand')
-
+end
 
 return
 
