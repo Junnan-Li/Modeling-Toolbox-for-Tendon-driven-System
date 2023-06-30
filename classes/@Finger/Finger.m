@@ -208,7 +208,7 @@ classdef Finger < handle & matlab.mixin.Copyable
             mdh_ori_new.a = mdh_matrix(:,2);
             mdh_ori_new.theta = mdh_matrix(:,3);
             mdh_ori_new.d = mdh_matrix(:,4);
-            mdh_ori_new.theta(:) = 0;
+%             mdh_ori_new.theta(:) = 0;
             obj.mdh_ori = mdh_ori_new;
             for i = obj.nl
                 obj.list_links(i).Length = mdh_ori_new.a(i+1);
@@ -252,7 +252,8 @@ classdef Finger < handle & matlab.mixin.Copyable
             
             % update mdh parameters
 %             [obj.mdh,obj.mdh_all, obj.mdh_ori] = get_finger_mdh(obj, obj.q_a);
-            obj.mdh_all.theta = [obj.q;0];
+            
+            obj.mdh_all.theta = obj.mdh_ori.theta +  [obj.q;0];
             obj.mdh = obj.mdh_all;
             % update par_kin 
             
