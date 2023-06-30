@@ -13,7 +13,10 @@ clc
 
 %%
 % create the index finger and thumb
+
+
 run opt_create_thumb_index.m
+% run create_shadow_hand.m
 
 close all
 

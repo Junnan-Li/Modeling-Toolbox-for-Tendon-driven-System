@@ -10,18 +10,22 @@ clc
 
 % define a finger
 finger_dimension_r = [0,0.05,0.03,0.02]; % in meter
-finger_dimension_t = [0,0.03,0.02,0.012]; % in meter
+finger_dimension_t = [0.005,0.03,0.005,0.02,0.012]; % in meter
 
 finger_index = Finger('Index', 'type','R_RRRR', 'l_links',finger_dimension_r);   
-finger_thumb = Finger('thumb', 'type','R_RRRR', 'l_links',finger_dimension_t);
+finger_thumb = Finger('thumb', 'type','R_RRRRR', 'l_links',finger_dimension_t);
 
 mdh_default_struct = finger_index.mdh_ori;
 mdh_matrix = mdh_struct_to_matrix(mdh_default_struct, 1);
 mdh_matrix(2,1) = -pi/2;
 finger_index.set_mdh_parameters(mdh_matrix);
 
+mdh_default_struct = finger_thumb.mdh_ori;
+mdh_matrix = mdh_struct_to_matrix(mdh_default_struct, 1);
 mdh_matrix_t = mdh_matrix;
-mdh_matrix_t(2:5,2) = finger_dimension_t';
+mdh_matrix_t(2,1) = -pi/2;
+mdh_matrix_t(4,1) = pi/2;
+mdh_matrix_t(2:end,2) = finger_dimension_t';
 finger_thumb.set_mdh_parameters(mdh_matrix_t);
 
 % return
@@ -39,24 +43,14 @@ q_0 = [0;0;0;0];
 
 % udpate finger with given joint configurations
 finger_index.update_finger(q_0);
-finger_thumb.update_finger(q_0);
+% finger_thumb.update_finger(q_0);
 % load rst model from finger class
 rst_model_r = finger_index.rst_model;
 rst_model_t = finger_thumb.rst_model;
 
 % plot 2 fingers
 p_link_all_w_r = finger_index.get_p_all_links;
-p_link_all_w_t = finger_thumb.get_p_all_links;
-figure(1)
-
-plot3(p_link_all_w_r(1,:)',p_link_all_w_r(2,:)',p_link_all_w_r(3,:)','o-','Color','r');
-hold on
-plot3(p_link_all_w_t(1,:)',p_link_all_w_t(2,:)',p_link_all_w_t(3,:)','o-','Color','b');
-grid on
-axis equal
-xlabel('x')
-ylabel('y')
-zlabel('z')
+% p_link_all_w_t = finger_thumb.get_p_all_links;
 
 %% set dynamic parameters
 % link index:
@@ -84,17 +78,17 @@ finger_index.list_links(4).set_inertia([1e-6,1.17e-6,1.17e-6,0,0,0]);
 finger_index.update_finger_par_dyn;
 % finger_r.update_finger(q_0);
 
-finger_thumb.list_links(2).set_mass(0.05); % in kg
-finger_thumb.list_links(2).set_inertia([0.05,0.02,0.02,0,0,0]); 
-
-finger_thumb.list_links(3).set_mass(0.03); % in kg
-finger_thumb.list_links(3).set_inertia([0.05,0.02,0.02,0,0,0]); 
-
-finger_thumb.list_links(4).set_mass(0.02); % in kg
-finger_thumb.list_links(4).set_inertia([0.05,0.02,0.02,0,0,0]); 
-
-% update dynamic parameters
-finger_thumb.update_finger_par_dyn;
+% finger_thumb.list_links(2).set_mass(0.05); % in kg
+% finger_thumb.list_links(2).set_inertia([0.05,0.02,0.02,0,0,0]); 
+% 
+% finger_thumb.list_links(3).set_mass(0.03); % in kg
+% finger_thumb.list_links(3).set_inertia([0.05,0.02,0.02,0,0,0]); 
+% 
+% finger_thumb.list_links(4).set_mass(0.02); % in kg
+% finger_thumb.list_links(4).set_inertia([0.05,0.02,0.02,0,0,0]); 
+% 
+% % update dynamic parameters
+% finger_thumb.update_finger_par_dyn;
 % finger_r.update_finger(q_0);
 
 %% add tendons
@@ -121,16 +115,17 @@ if finger_index_5_tendon.nt == 0
     finger_index_5_tendon.add_tendon('Ext_2', [-1,0,0,0]);
 end
 
-if finger_thumb.nt == 0
-    finger_thumb.add_tendon('Flex_1', [0.01,0.01,0.01,0.01]);
-    finger_thumb.add_tendon('Flex_2', [0.01,0.01,0.01,0]);
-    finger_thumb.add_tendon('Flex_3', [0.01,0.01,0,0]);
-    finger_thumb.add_tendon('Flex_4', [0.01,0,0,0]);
-    finger_thumb.add_tendon('Ext_1', [-0.01,-0.01,-0.01,-0.01]);
-    finger_thumb.add_tendon('Ext_2', [-0.01,-0.01,-0.01,0]);
-    finger_thumb.add_tendon('Ext_3', [-0.01,-0.01,0,0]);
-    finger_thumb.add_tendon('Ext_4', [-0.01,0,0,0]);
-end
+% if finger_thumb.nt == 0
+%     finger_thumb.add_tendon('Flex_1', [0.01,0.01,0.01,0.01]);
+%     finger_thumb.add_tendon('Flex_2', [0.01,0.01,0.01,0]);
+%     finger_thumb.add_tendon('Flex_3', [0.01,0.01,0,0]);
+%     finger_thumb.add_tendon('Flex_4', [0.01,0,0,0]);
+%     finger_thumb.add_tendon('Ext_1', [-0.01,-0.01,-0.01,-0.01]);
+%     finger_thumb.add_tendon('Ext_2', [-0.01,-0.01,-0.01,0]);
+%     finger_thumb.add_tendon('Ext_3', [-0.01,-0.01,0,0]);
+%     finger_thumb.add_tendon('Ext_4', [-0.01,0,0,0]);
+% end
+
 % finger_r.set_tendon_par_MA_poly3(1,1,[0,0,0.01,0.03]);
 % finger_r.set_tendon_par_MA_poly3(3,1,[0,0,0.01,0.3]);
 % finger_r.set_tendon_par_MA_poly3(3,2,[0,0,0.01,0.035]);
@@ -144,9 +139,9 @@ finger_index_5_tendon.update_finger(q_0);
 finger_index_5_tendon.update_M_coupling(q_0);
 finger_index_5_tendon.M_coupling;
 
-finger_thumb.update_finger(q_0);
-finger_thumb.update_M_coupling(q_0);
-finger_thumb.M_coupling;
+% finger_thumb.update_finger(q_0);
+% finger_thumb.update_M_coupling(q_0);
+% finger_thumb.M_coupling;
 
 
 % set joint limits
@@ -160,11 +155,11 @@ finger_index_5_tendon.list_joints(1).qd_limits = [-15,15]*pi/180; % abduction jo
 finger_index_5_tendon.list_joints(1).qdd_limits = [-15,15]*pi/180; % abduction joints
 finger_index_5_tendon.update_joints_info;
 
-finger_thumb.list_joints(1).q_limits = [-15,15]*pi/180; % abduction joints
-finger_thumb.list_joints(1).qd_limits = [-15,15]*pi/180; % abduction joints
-finger_thumb.list_joints(1).qdd_limits = [-15,15]*pi/180; % abduction joints
+% finger_thumb.list_joints(1).q_limits = [-15,15]*pi/180; % abduction joints
+% finger_thumb.list_joints(1).qd_limits = [-15,15]*pi/180; % abduction joints
+% finger_thumb.list_joints(1).qdd_limits = [-15,15]*pi/180; % abduction joints
 
-finger_thumb.update_joints_info;
+% finger_thumb.update_joints_info;
 
 % add contacts
 if finger_index.nc == 0
@@ -182,15 +177,15 @@ if finger_index_5_tendon.nc == 0
 end
 finger_index_5_tendon.update_list_contacts; % update link
 
-% add contacts
-if finger_thumb.nc == 0
-    for i = 1:finger_index.nl
-        finger_thumb.list_links(i).add_contact([finger_thumb.list_links(i).Length/2 0 0]');
-    end
-end
-finger_thumb.update_list_contacts; % update link
-
-return
+% % add contacts
+% if finger_thumb.nc == 0
+%     for i = 1:finger_index.nl
+%         finger_thumb.list_links(i).add_contact([finger_thumb.list_links(i).Length/2 0 0]');
+%     end
+% end
+% finger_thumb.update_list_contacts; % update link
+% 
+% return
 
 
 

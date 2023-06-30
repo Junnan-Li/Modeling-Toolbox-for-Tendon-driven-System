@@ -29,9 +29,13 @@ Be_1 = zeros(3,1);
 
 % mpt toolbox define a polytope
 P = Polyhedron('A', H_1, 'b', B_1, 'Ae', He_1, 'be', Be_1);
+% P.minHRep;
+% P.minVRep;
 % eliminate the tendon force from variable
 P_ft = [zeros(3,nt), eye(3)]*P;
-
+% P_ft = Polyhedron('V',([zeros(3,nt), eye(3)]*P.V')');
+% P_ft.minHRep;
+% P_ft.minVRep;
 
 
 end

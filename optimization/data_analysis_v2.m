@@ -10,7 +10,7 @@ clear all
 % close all 
 clc
 
-load ./optimization/results/workspace_1506_x_2mm_30_downwards_index.mat
+load ./optimization/results/workspace_2606_x_3mm_30_shadow_index.mat
 
 
 
@@ -82,7 +82,8 @@ for i_ns = 1:2
     %%%%%%%
     q_sample_r = result{2}{i_ns};
     mani_q = q_sample_r*180/pi;
-    joint_limits_index_i = penalty_joint_limits(mani_q', q_limit,2)';
+    q_limit_deg = q_limit*180/pi;
+    joint_limits_index_i = penalty_joint_limits(mani_q', q_limit_deg,4)';
     joint_limits_index = joint_limits_index_i(:,1).* joint_limits_index_i(:,2) ...
         .* joint_limits_index_i(:,3) .* joint_limits_index_i(:,4);
     joint_limits_index_normalized(:,i_ns) = (joint_limits_index-min(joint_limits_index))/...
@@ -96,9 +97,9 @@ for i_ns = 1:2
 
     % Weight vector of force index
 % 
-    W = [1,0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2]'/2.6;
+%     W = [1,0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2]'/2.6;
 %     W = [1,0,0,0,0,0,0,0,0]'/1;
-%     W = [1,0.2,0.2,0.2,0.2,0,0,0,0]'/1.8;
+    W = [0.2,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1]'/1;
     % normalize the force index of one direction
     
     %
@@ -135,14 +136,16 @@ metric_normalized = (metric_j - metric_j_min) ./ (metric_j_max-metric_j_min);
 
 
 
-dis_plane = -0.03:0.008:0.1;
+dis_plane = workspace_cube_ori(1,1):0.008:workspace_cube_ori(1,2);
+
+
 pos_condition = false;
 for condi_index = 1:length(dis_plane)
-    pos_condition = pos_condition | abs(pos_sample_r(:,1)-dis_plane(condi_index)) < 0.0015;
+    pos_condition = pos_condition | abs(pos_sample_r(:,1)-dis_plane(condi_index)) < 0.0018;
 end
 
 index_vec = find(status(:) >= 1 & pos_condition); %  & abs(pos_sample_r(:,2)-0.0) < 0.0015
-
+% index_vec = find(status(:) >= 1); 
 
 h = figure(13);
 set(0,'defaultfigurecolor','w')
