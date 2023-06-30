@@ -386,7 +386,7 @@ tol = 1e-8;
 q_diff_min = 0.2;
 
 
-for i_10 = 1:10
+for i_10 = 1:40
        
     figure(1)
 

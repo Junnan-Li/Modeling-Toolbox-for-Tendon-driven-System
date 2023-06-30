@@ -10,9 +10,9 @@ clc
 
 %% setting
 show_robot = 0;
-show_time_cost = 0;
+show_time_cost = 1;
 % number of joints
-n_q = 4; 
+n_q = 5; 
 
 %% random configurations
 

@@ -15,7 +15,10 @@ clc
 
 % define different types of fingers
 
-finger_r = Finger('Index', 'RRRR', [1,0.8,0.5]); 
+% finger_r = Finger('Index', 'RRRR', [1,0.8,0.5]); 
+finger_dimension_r = [0,1,0.8,0.5]; % in meter
+
+finger_r = Finger('Index', 'type','R_RRRR', 'l_links',finger_dimension_r);   
 
 %% set random states
 % set base position and orientation
@@ -52,7 +55,7 @@ P = [2;70;40;5];
 D = [2;1;1;5];
 
 % if use mex function
-mex = 1;
+mex = 0;
 gravity_com = 0; % if using gravity compensation
 %% simulation
 
