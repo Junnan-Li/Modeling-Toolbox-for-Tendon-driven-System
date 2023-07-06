@@ -23,14 +23,14 @@ close all
 
 % q_limit_min = finger_little.limits_q(:,1);
 % q_limit_max = finger_little.limits_q(:,2);
-% % 
+% %
 % [q1,q2,q3,q4,q5] = ndgrid(q_limit_min(1):0.3:q_limit_max(1),...
 %         q_limit_min(2):0.3:q_limit_max(2),...
 %         q_limit_min(3):0.3:q_limit_max(3),...
 %         q_limit_min(4):0.3:q_limit_max(4),...
 %         q_limit_min(5):0.3:q_limit_max(5));
 % n_sample = size(q1,1)*size(q2,2)*size(q3,3)*size(q4,4)*size(q5,5);
-% 
+%
 % figure(1)
 % % finger_index.print_finger()
 % % vec_q = [0.2,0.2,0.2,0.2,0]';
@@ -55,7 +55,7 @@ close all
 % xlabel('x')
 % ylabel('y')
 % zlabel('z')
-% 
+%
 % return
 %% ik test
 % for i = 1:10
@@ -63,13 +63,13 @@ close all
 %     finger_thumb.update_finger(q);
 %     x_all = finger_thumb.get_p_all_links;
 %     x = x_all(:,end);
-%     
+%
 %     iter_max = 1000;
 %     alpha = 0.7;
 %     tol = 1e-8;
 %     q_diff_min = 5*pi/180;
-%     
-%     
+%
+%
 %     finger_thumb.update_finger(q_limit_min);
 %     [q_i, status_i, ~, x_res,phi_x,iter,q_null_i,phi_x_null_i] = finger_thumb.invkin_trans_numeric_joint_limits_nullspace(...
 %         x,iter_max,tol,alpha,q_diff_min,1);
@@ -82,9 +82,9 @@ close all
 
 %%
 % size of the voxel
-voxel_length = 0.004; 
-result_all = struct();    
-    
+voxel_length = 0.003;
+result_all = struct();
+
 for finger_i = 1:3
     % finger_i: 1 <-- fingers
     %           2 <-- thumb
@@ -94,7 +94,7 @@ for finger_i = 1:3
     if finger_i == 1 % fingers
         finger_analysis = finger_index;
         % downward (1) or upward 0
-        direction_downward = 1;
+        %         direction_downward = 1;
         
         nj = finger_analysis.nja;
         % get coupling matrix
@@ -111,15 +111,18 @@ for finger_i = 1:3
         
         % get cartesian workspace cube
         workspace_cube_ori = [0.07,0.23;-0.02,0.09;-0.38,0.18]; % index
+        % d_0 setting
+        R_d = euler2R_XYZ([0,0,0]);
+        
     elseif finger_i == 2 % for thumb
         finger_analysis = finger_thumb;
         % downward (1) or upward 0
-        direction_downward = 0;
+        %         direction_downward = 0;
         
         nj = finger_analysis.nja;
         % get coupling matrix
         M_coupling = finger_analysis.M_coupling;
-%         M_coupling = [];
+        %         M_coupling = [];
         
         % get force limits
         force_limits = finger_analysis.limits_ft;
@@ -132,16 +135,18 @@ for finger_i = 1:3
         
         % get cartesian workspace cube
         workspace_cube_ori = [-0.01,0.14;-0.02,0.14;-0.08,0.1]; % thumb
+        % d_0 setting
+        R_d = euler2R_XYZ([-pi*3/4,0,0]);
         
     elseif finger_i == 3 % little finger
-         finger_analysis = finger_little;
+        finger_analysis = finger_little;
         % downward (1) or upward 0
-        direction_downward = 1;
+        %         direction_downward = 1;
         
         nj = finger_analysis.nja;
         % get coupling matrix
         M_coupling = finger_analysis.M_coupling;
-%         M_coupling = [];
+        %         M_coupling = [];
         
         % get force limits
         force_limits = finger_analysis.limits_ft;
@@ -154,9 +159,10 @@ for finger_i = 1:3
         
         % get cartesian workspace cube
         workspace_cube_ori = [0.06,0.23;-0.065,0.045;-0.05,0.15]; % little
-        %         
+        % d_0 setting
+        R_d = euler2R_XYZ([pi/4,0,0]);
     end
-    
+    % compile mex kinematic/dynamic functions
     finger_analysis.compile_functions;
     
     [x_voxel,y_voxel,z_voxel] = ndgrid(workspace_cube_ori(1,1):voxel_length:workspace_cube_ori(1,2),...
@@ -171,8 +177,12 @@ for finger_i = 1:3
     % Ae_all [2*5x3], the vectors that are orthogonal to the direction vectors
     % directions: 1 |  2 |  3 |  4 |  5 |  6 |  7 |  8 |  9 |
     %             -z|+x-z|-x-z|+y-z|-y-z| +x | -x | +y | -y |
+    % d = R * [0,0,-1]
     SQ2 = sqrt(2)/2;
-    Ae_all = [1 0 0;...
+    
+    
+    Ae_all = (R_d * ...
+        [1 0 0;...
         0 1 0;... % 1: -z
         SQ2 0 SQ2;...
         0 1 0;... % 2: +x-z
@@ -190,10 +200,11 @@ for finger_i = 1:3
         -1 0 0;... % 8: +y
         0 0 1;...
         1 0 0;... % 9: -y
-        ];
+        ]')';
     
     % 9 direction vectors
-    direction_vec = [0 0 -1;...
+    direction_vec = (R_d *...
+        [0 0 -1;...
         SQ2 0 -SQ2;...
         -SQ2 0 -SQ2;...
         0 SQ2 -SQ2;...
@@ -201,8 +212,9 @@ for finger_i = 1:3
         1 0 0;...
         -1 0 0;...
         0 1 0;...
-        0 -1 0];
+        0 -1 0]')';
     
+    d_0 = R_d * [0,0,-1]';
     
     
     
@@ -298,7 +310,7 @@ for finger_i = 1:3
             % calculate the Cartesian acceleration polytope
             
             P_acc = Polyhedron('V',(J_index_red * inv(M_r) * P_tau.V')');
-%             P_acc = J_index_red * inv(M_r) * (P_tau); %  - G_fd);
+            %             P_acc = J_index_red * inv(M_r) * (P_tau); %  - G_fd);
             
             % check condition number of J*M-1
             result{7}{1}(i) = cond(J_index_red * inv(M_r));
@@ -336,18 +348,14 @@ for finger_i = 1:3
             end
             
             % for constrain the half-plan of force polytope
-            if direction_downward
-                half_plane_vector = [0,0,1];
-            else
-                half_plane_vector = [0,0,-1];
-            end
+            half_plane_vector = - d_0';
             % calculate the force polytope
             for mi = 1:9 % direction index
                 % reduce the dimension from 3 to 1 along the direction
                 % vector
                 
-                half_plane_2 = (-1)^(direction_downward+1) * cross(Ae_all(2*mi-1,:),Ae_all(2*mi,:)); % the correct plane
-                p_tmp_force = Polyhedron('A', [P_ee.A;half_plane_vector;half_plane_2], 'b',[P_ee.b;0;0], 'Ae',Ae_all(2*mi-1:2*mi,:) ,'be', zeros(2,1));
+                %                 half_plane_2 = (-1)^(direction_downward+1) * cross(Ae_all(2*mi-1,:),Ae_all(2*mi,:)); % the correct plane
+                p_tmp_force = Polyhedron('A', [P_ee.A;half_plane_vector], 'b',[P_ee.b;0], 'Ae',Ae_all(2*mi-1:2*mi,:) ,'be', zeros(2,1));
                 p_tmp_force.minHRep;
                 Vertex_f_i = p_tmp_force.V;
                 if isempty(Vertex_f_i)
@@ -383,8 +391,8 @@ for finger_i = 1:3
             [~,M_r,~,~] = finger_analysis.fordyn_ne_w_end(q_i, zeros(finger_analysis.nja,1), zeros(finger_analysis.nja,1), zeros(6,finger_analysis.nja+2));
             % calculate the Cartesian acceleration polytope
             
-%             P_acc = J_index_red * inv(M_r) * (P_tau); %  - G_fd);
-%             P_acc.minHRep;
+            %             P_acc = J_index_red * inv(M_r) * (P_tau); %  - G_fd);
+            %             P_acc.minHRep;
             P_acc = Polyhedron('V',(J_index_red * inv(M_r) * P_tau.V')');
             
             
@@ -422,17 +430,13 @@ for finger_i = 1:3
             end
             
             % for constrain the half-plan of force polytope
-            if direction_downward
-                half_plane_vector = [0,0,1];
-            else
-                half_plane_vector = [0,0,-1];
-            end
+            half_plane_vector = - d_0';
             % calculate the force polytope
             for mi = 1:9 % direction index
                 % reduce the dimension from 3 to 1 along the direction
                 % vector
-                half_plane_2 = (-1)^(direction_downward+1) * cross(Ae_all(2*mi-1,:),Ae_all(2*mi,:));
-                p_tmp_force = Polyhedron('A', [P_ee.A;half_plane_vector;half_plane_2], 'b',[P_ee.b;0;0], 'Ae',Ae_all(2*mi-1:2*mi,:) ,'be', zeros(2,1));
+                %                 half_plane_2 = (-1)^(direction_downward+1) * cross(Ae_all(2*mi-1,:),Ae_all(2*mi,:));
+                p_tmp_force = Polyhedron('A', [P_ee.A;half_plane_vector], 'b',[P_ee.b;0], 'Ae',Ae_all(2*mi-1:2*mi,:) ,'be', zeros(2,1));
                 p_tmp_force.minHRep;
                 p_tmp_force.minVRep;
                 Vertex_f_i = p_tmp_force.V;
@@ -458,7 +462,7 @@ for finger_i = 1:3
     
 end
 % save data
-% save('./optimization/results/workspace_2806_x_4mm_30_shadow.mat');
+% save('./optimization/results/workspace_3006_x_3mm_30_shadow.mat');
 
 % save './optimization/results/variable_2606_x_3mm_30_shadow_thumb.mat' result result_all
 
@@ -497,7 +501,7 @@ for mi = 1:5
     p_tmp_force = Polyhedron('A', P_ee.A, 'b', P_ee.b, 'Ae',Ae_all(2*mi-1:2*mi,:) ,'be', zeros(2,1));
     vec_tmp_force = p_tmp_force.distance(1000*direction_vec(mi,:)').y;
     dist_tmp_force = p_tmp_force.distance(1000*direction_vec(mi,:)').dist;
-
+    
     p_tmp_acc = Polyhedron('A', P_acc.A, 'b', P_acc.b, 'Ae',Ae_all(2*mi-1:2*mi,:) ,'be', zeros(2,1));
     vec_tmp_acc = p_tmp_acc.distance(1000*direction_vec(mi,:)').y;
     dist_tmp_acc = p_tmp_acc.distance(1000*direction_vec(mi,:)').dist;
@@ -535,7 +539,7 @@ finger_analysis.update_finger(finger_analysis.limits_q(:,1))
 [q_res2, ~, ~,phi_x,iter_test] = finger_analysis.invkin_trans_numeric_joint_limits(x,1000,1e-9,0.8,1)
 finger_analysis.print_finger('c')
 
-hold on 
+hold on
 plot3(x(1),x(2),x(3),'*','MarkerSize',10,'Color','b')
 return
 

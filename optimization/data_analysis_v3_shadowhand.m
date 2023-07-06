@@ -10,11 +10,12 @@ clear all
 % close all 
 clc
 
-load ./optimization/results/workspace_2806_x_4mm_30_shadow.mat
+% load ./optimization/results/workspace_2806_x_4mm_30_shadow.mat % shadow hand data 
 % load ./optimization/results/workspace_2606_x_3mm_30_shadow_index.mat
 % load ./optimization/results/variable_2606_x_3mm_30_shadow_thumb.mat result
 
-
+% load ./optimization/results/workspace_3006_x_3mm_30_shadow.mat % shadow hand data with changed d_0 
+load ./optimization/results/workspace_3006_x_3mm_30_shadow_fixed.mat
 %% Data Analysis
 % cell: 
 %   1 pos |2 q 2x4 |3 forceindex 5 |4 vol_force |5 acc. r |6 acc.vol |7 conJ |
@@ -114,8 +115,8 @@ for i = 1:3
         %
         % W = [0,0,0,0.2,0,0,0,0,0]'/0.2;
         % W = [1,0,0,0,0,0,0,0,0]'/1;
-        W = [0.4,0.2,0.2,0.2,0.2,0,0,0,0]'/1.2;
-%         W = [0.2,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1]'/1;
+%         W = [0.4,0.2,0.2,0.2,0.2,0,0,0,0]'/1.2;
+        W = [0.2,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1]'/1;
         % normalize the force index of one direction
         
         %
@@ -185,7 +186,7 @@ set(groot, 'defaultLegendInterpreter','latex');
 
 
 
-for i = 3
+for i = 2
     if i == 1
         metric_i = Metric.fingers;
         finger_analysis = finger_index;
@@ -462,7 +463,7 @@ return
 
 %% debud
 
-i = 152713;
+i = 68961;
 % index = 6207;
 
 % index = find(abs(pos_sample_r(:,1)-0.077) < 0.0015 & abs(pos_sample_r(:,2)-0.0) < 0.0015& ...
