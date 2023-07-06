@@ -36,9 +36,9 @@ finger_thumb.set_mdh_parameters(mdh_matrix_t);
 mdh_default_struct = finger_little.mdh_ori;
 mdh_matrix = mdh_struct_to_matrix(mdh_default_struct, 1);
 mdh_matrix_l = mdh_matrix;
-mdh_matrix_l(1,4) = 77.89*sin(55/180*pi)*1e-3;
+mdh_matrix_l(1,4) = 65.89*sin(55/180*pi)*1e-3;
 mdh_matrix_l(2,1) = -pi/2;
-mdh_matrix_l(2,2) = 77.89*cos(55/180*pi)*1e-3;
+mdh_matrix_l(2,2) = 65.89*cos(55/180*pi)*1e-3;
 mdh_matrix_l(2,3) = -55/180*pi;
 mdh_matrix_l(3,1) = pi/2;
 mdh_matrix_l(3:end,2) = finger_dimension_r';
@@ -51,15 +51,15 @@ R = euler2R_XYZ([0,-pi/6,0]);
 finger_index.w_p_base = R*[0.129;0.034;0]; 
 finger_index.w_R_base = R*euler2R_XYZ([0,0,0]);
 
-finger_thumb.w_p_base = R*[0.029;0.034;0];
+finger_thumb.w_p_base = R*[0.063;0.034;0];
 finger_thumb.w_R_base = R*euler2R_XYZ([0,pi/2,0])*euler2R_XYZ([-pi/4,0,0]);
 
 finger_little.w_p_base = R*[0.05471;-0.032;0];
 finger_little.w_R_base = R*euler2R_XYZ([-pi/2,55/180*pi,0]);
 % init joint configurations
-q_I_0 = [0;0;0;20]*pi/180;
-q_T_0 = [0;40;12;20;10]*pi/180;
-q_L_0 = [45;0;0;0;50]*pi/180;
+q_I_0 = [0;0;0;0]*pi/180;
+q_T_0 = [0;0;0;0;0]*pi/180;
+q_L_0 = [0;0;0;0;0]*pi/180;
 % udpate finger with given joint configurations
 finger_index.update_finger(q_I_0);
 finger_thumb.update_finger(q_T_0);
@@ -235,18 +235,54 @@ finger_ring.w_p_base = R*[0.129;-0.011;0];
 
 %% plot 2 fingers
 
-figure(1)
-finger_index.print_finger('r')
-finger_thumb.print_finger('b')
-finger_ring.print_finger('r')
-finger_middle.print_finger('r')
-finger_little.print_finger('g')
+h = figure(2);
+set(0,'defaultfigurecolor','w')
+set(groot,'defaulttextinterpreter','none');
+set(h,'units','normalized','outerposition',[0 0 1 1])
+set(h, 'Units', 'centimeters')
+pos = get(h,'Position');
+set(h,'PaperPositionMode','Auto','PaperUnits','centimeters','PaperSize',[pos(3), pos(4)]);%
+set(h, 'Units', 'centimeters')
+set(groot,'defaulttextinterpreter','latex');
+set(groot, 'defaultAxesTickLabelInterpreter','latex');
+set(groot, 'defaultLegendInterpreter','latex');
 
+
+finger_index.print_finger('g',5,8)
+finger_thumb.print_finger('k',5,8)
+finger_ring.print_finger('g',5,8)
+finger_middle.print_finger('g',5,8)
+finger_little.print_finger('c',5,8)
+
+plot3(0,0,0,'.','Color','k','MarkerSize',50 )
+
+
+% xlim([0 .2])
+% ylim([-0.02 .06])
+% zlim([-0.02 .12])
+xticks([0 0.05 0.1 0.15 0.2])
+yticks([-0 0.05 0.1])
+zticks([0 0.05 0.1])
 
 xlabel('x')
 ylabel('y')
 zlabel('z')
 axis equal
+
+% [X,Y,Z] = sphere;
+% X = 0.04*X + 0.15;
+% Y = 0.04*Y + 0.02;
+% Z = 0.04*Z + 0.02;
+% 
+% for i = 1:size(X,1)
+%     for j = 1: size(Y,2)
+%         for k = 1:size(Z,3)
+%             plot3(X(i,j,k),Y(i,j,k),Z(i,j,k),'.', 'Color','c');
+%             hold on
+%         end
+%     end
+% end
+
 return
 
 
