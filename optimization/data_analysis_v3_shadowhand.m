@@ -186,7 +186,7 @@ set(groot, 'defaultLegendInterpreter','latex');
 
 
 
-for i = 2
+for i = 1
     if i == 1
         metric_i = Metric.fingers;
         finger_analysis = finger_index;
@@ -204,10 +204,10 @@ for i = 2
     status = result{9};
     
     
-    for subplot_i = 1:4
+    for subplot_i = 2
         
         %     Pos_Car_occupied = zeros(dim_Car+2);
-        subplot(1,4,subplot_i)
+%         subplot(1,4,subplot_i)
         %     figure(22)
         
 %         finger_analysis.update_finger(0*finger_analysis.q_a);
@@ -221,7 +221,7 @@ for i = 2
                 metric_term = metric_i.jl_n;
                 title_plot = 'Joint limits';
             case 2
-                %             metric_term = normalize_vector(penal_acc_r.* force_pol_index_normalized,1);
+%                             metric_term = normalize_vector(metric_i.acc_n.* metric_i.fi_n,1);
                 metric_term = metric_i.acc_n;
                 title_plot = 'Acc. radius';
             case 1
@@ -243,7 +243,7 @@ for i = 2
             pos_condition = pos_condition | abs(pos_sample_r(:,1)-dis_plane(condi_index)) < 0.0018;
         end
         
-        index_vec_plot = find(status(:) >= 1 & pos_condition); %  & abs(pos_sample_r(:,2)-0.0) < 0.0015
+        index_vec_plot = find(status(:) >= 1 & pos_condition); % 
         [~,I_metric_term] = max(metric_term(index_vec_plot,:),[],2);
         
         metric_term_sel = metric_term(index_vec_plot,:);
@@ -260,8 +260,8 @@ for i = 2
         
         
         % origin finger
-        hs = scatter3(pos_sample_r(index_vec_plot,1),pos_sample_r(index_vec_plot,2),pos_sample_r(index_vec_plot,3),30,...
-            C,'square','filled','MarkerEdgeAlpha',.6,'MarkerFaceAlpha',.6);
+        hs = scatter3(pos_sample_r(index_vec_plot,1),pos_sample_r(index_vec_plot,2),pos_sample_r(index_vec_plot,3),70,...
+            C,'square','filled','MarkerEdgeAlpha',.5,'MarkerFaceAlpha',.5);
         
         hold on
         
@@ -272,18 +272,40 @@ for i = 2
         [~,I] = max(metric_term_sel(:));
         [I_x,I_y]=ind2sub(size(metric_term_sel),I);
         q_i = result{2}{I_y}(index_vec(I_x),:)';
-        finger_analysis.update_finger(q_i);
-        finger_analysis.print_finger('k',5,8);
+
+%         finger_analysis.update_finger(q_i);
+%         finger_analysis.print_finger('k',10,15);
         
         fprintf("       JL,     Acc.R.,     F.I.,     M: \n")
         fprintf("Index: %f, %f, %f, %f \n", metric_i.jl_n(index_vec(I_x),I_y), metric_i.acc_n(index_vec(I_x),I_y),...
              metric_i.fi_n(index_vec(I_x),I_y), metric_i.metric_n(index_vec(I_x),I_y))
         %
+        p_c = finger_analysis.get_p_all_links;
+%         plot3(p_c(1,end),p_c(2,end),p_c(3,end),'o','Color','g','MarkerSize',20,'LineWidth',15)
         axis equal
-        grid off
+        grid on
+        
+%         finger_thumb.update_finger([0,pi/3,0,pi/10,pi/10]);
+%         finger_thumb.print_finger([0.7,0.7,0.7],5,8);
+        finger_index.update_finger([0,pi/6,pi/6,pi/10]);
+        finger_index.print_finger([0,0,0],5,8);
+%         finger_middle.update_finger([0,pi/10,pi/10,pi/15]);
+%         finger_middle.print_finger([0.7,0.7,0.7],5,8);
+%         finger_ring.update_finger([0,pi/15,pi/15,pi/15]);
+%         finger_ring.print_finger([0.7,0.7,0.7],5,8);
+%         finger_little.update_finger([0,0,pi/20,pi/20,0.1]');
+%         finger_little.print_finger([0,0,0],10,15);
+
+        % % xlim([0 .2])
+% % ylim([-0.02 .06])
+% % zlim([-0.02 .12])
+        xticks([0.06 0.12 0.18])
+        yticks([-0.05 0 0.05 0.1])
+        zticks([-0.05 0 0.05 0.1])
         xlabel('x')
         ylabel('y')
         zlabel('z')
+%         colorbar
         title(title_plot)
         
     end
@@ -349,7 +371,7 @@ for subplot_i = 1:3
     C = [metric_term_sel(ind) zeros(length(index_vec),1) -metric_term_sel(ind)] + [0 0 1];
    
     % origin finger
-    hs = scatter3(pos_sample_r(index_vec,1),pos_sample_r(index_vec,2),pos_sample_r(index_vec,3),30,...
+    hs = scatter3(pos_sample_r(index_vec,1),pos_sample_r(index_vec,2),pos_sample_r(index_vec,3),60,...
         C,'square','filled','MarkerEdgeAlpha',.8,'MarkerFaceAlpha',.8);
     
     hold on
@@ -364,7 +386,10 @@ for subplot_i = 1:3
                     force_pol_index_normalized(index_vec(I_x),I_y), metric_normalized(index_vec(I_x),I_y))   
 %     
     axis equal
-    grid off
+    grid on
+
+    
+
     xlabel('x')
     ylabel('y')
     zlabel('z')

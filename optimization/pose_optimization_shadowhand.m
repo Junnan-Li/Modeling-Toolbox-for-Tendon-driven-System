@@ -173,12 +173,12 @@ Metric.middle.pos = Metric.middle.pos + [0.133,0.011,0] - [0.129,0.034,0];
 %% object setting
 % contact points: -pi/2, pi*2/3, 
 
-r_object = 0.03; % 4cm sphere
+r_object = 0.025; % 4cm sphere
 
 %% 
 fitnessfcn_fcn = @(X_object)fitness_metric_three_fingers_grasp(X_object,r_object,Metric);
 
-options = optimoptions('particleswarm','MaxIterations',10,'Display','iter','SwarmSize',1000);
+options = optimoptions('particleswarm','MaxIterations',20,'Display','iter','SwarmSize',1000);
 
 var_limits = [0,0.2;-0.05,0.1;-0.06,0.1;-pi/2,pi/2;-pi/2,pi/2;-pi/2,pi/2];
 
@@ -190,6 +190,10 @@ fval = fitness_metric_three_fingers_grasp(x,r_object,Metric);
 
 return
 %%
+%   result 1: -0.0796
+%   result 2: -0.1392
+%   result 3: -0.1405
+%   result 4: -0.2821
 h = figure(15);
 set(0,'defaultfigurecolor','w')
 set(groot,'defaulttextinterpreter','none');
@@ -217,24 +221,24 @@ p_c_middle = r_object * euler2R_XYZ(phi_object)*euler2R_XYZ([pi*2/3,0,0])*[0,1,0
 [M_index,I_index] = max(Metric.fingers.metric_n(k_index,:));
 q_index = result_all.fingers{2}{I_index}(k_index,:);
 finger_index.update_finger(q_index);
-finger_index.print_finger('g',5,8)
+finger_index.print_finger('k',10,12)
 
 
 [M_thumb,I_thumb] = max(Metric.thumb.metric_n(k_thumb,:));
 q_thumb = result_all.thumb{2}{I_thumb}(k_thumb,:);
 finger_thumb.update_finger(q_thumb);
-finger_thumb.print_finger('k',5,8)
+finger_thumb.print_finger('k',10,12)
 
 [M_middle,I_middle] = max(Metric.fingers.metric_n(k_middle,:));
 q_middle = result_all.fingers{2}{I_middle}(k_middle,:);
 finger_middle.update_finger(q_middle');
-finger_middle.print_finger('g',5,8)
+finger_middle.print_finger('k',10,12)
 % plot results
 
-finger_ring.update_finger(zeros(4,1));
-finger_ring.print_finger('g')
-finger_little.update_finger(zeros(5,1));
-finger_little.print_finger('c')
+finger_ring.update_finger([0,-0.1,0.4,0.8]);
+finger_ring.print_finger('k',10,12)
+finger_little.update_finger([0,0,-0.2,0.3,0.5]);
+finger_little.print_finger('k',10,12)
 
 plot3(0,0,0,'.')
 
@@ -244,7 +248,7 @@ X = r_object*X + p_object(1);
 Y = r_object*Y + p_object(2);
 Z = r_object*Z + p_object(3);
 
-surf(X,Y,Z,'FaceColor','b')
+surf(X,Y,Z,'FaceColor','b','FaceAlpha',0.5)
 
 plot3(p_c_thumb(1),p_c_thumb(2),p_c_thumb(3),'.','Color','r','MarkerSize',100)
 hold on
@@ -259,6 +263,7 @@ plot3(p_c_middle(1),p_c_middle(2),p_c_middle(3),'.','Color','r','MarkerSize',100
 xticks([])
 yticks([])
 zticks([])
+title(fval)
 xlabel('x')
 ylabel('y')
 zlabel('z')
@@ -280,35 +285,43 @@ set(groot, 'defaultAxesTickLabelInterpreter','latex');
 set(groot, 'defaultLegendInterpreter','latex');
 
 finger_index.update_finger([0,0.5,0.4,0.2]);
-finger_index.print_finger('g',5,8)
+finger_index.print_finger('k',10,12)
 
 finger_middle.update_finger([0,0.5,0.4,0.2]);
-finger_middle.print_finger('g',5,8)
+finger_middle.print_finger('k',10,12)
 
 finger_thumb.update_finger([0.1,1,0,0.3,0.3]);
-finger_thumb.print_finger('k',5,8)
+finger_thumb.print_finger('k',10,12)
 
-% finger_ring.update_finger(0*finger_ring.q_a)
-% finger_ring.print_finger('g')
+finger_ring.update_finger([0,-0.1,0.4,0.8]);
+finger_ring.print_finger('k',10,12)
+finger_little.update_finger([0,0,-0.2,0.3,0.5]);
+finger_little.print_finger('k',10,12)
 
-% finger_little.update_finger(0*finger_little.q_a)
-% finger_little.print_finger('c')
+plot3(0,0,0,'.')
 
-p_object = [0.16,0.04,0.01];
 
-[X,Y,Z] = sphere;
+[X,Y,Z] = sphere(15);
 X = r_object*X + p_object(1);
 Y = r_object*Y + p_object(2);
 Z = r_object*Z + p_object(3);
 
-surf(X,Y,Z,'FaceColor','b')
+surf(X,Y,Z,'FaceColor','b','FaceAlpha',0.5,'EdgeAlpha',0.5)
 
-xlim([0.02 .2])
-ylim([-0.02 .06])
-zlim([-0.02 .12])
-xticks([0.04 0.09 0.14 0.19])
-yticks([-0 0.02 0.04])
-zticks([0 0.04 0.08 0.19])
+% plot3(p_c_thumb(1),p_c_thumb(2),p_c_thumb(3),'.','Color','r','MarkerSize',100)
+% hold on
+% plot3(p_c_index(1),p_c_index(2),p_c_index(3),'.','Color','r','MarkerSize',100)
+% hold on
+% plot3(p_c_middle(1),p_c_middle(2),p_c_middle(3),'.','Color','r','MarkerSize',100)
+% 
+
+% xlim([0.02 .2])
+% ylim([-0.02 .06])
+% zlim([-0.02 .12])
+xticks([])
+yticks([])
+zticks([])
+title(fval)
 xlabel('x')
 ylabel('y')
 zlabel('z')
