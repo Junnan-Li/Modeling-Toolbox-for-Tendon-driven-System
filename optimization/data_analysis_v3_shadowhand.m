@@ -68,6 +68,9 @@ for i = 1:3
     force_pol_index_normalized = zeros(n_sample,2);
     metric_normalized = zeros(n_sample,2);
     
+    max_acc = zeros(1,2);
+    max_fi = zeros(1,2);
+    
     for i_ns = 1:2
         
         % acceleration index
@@ -78,7 +81,7 @@ for i = 1:3
         
         acc_r_index_normalized(:,i_ns) = normalize_vector(mani_acc_r, 1);
         penal_acc_r(:,i_ns) = penalty_acc_r(acc_r_index_normalized(:,i_ns), 1);
-        
+        max_acc(i_ns) = max(mani_acc_r);
         % joint angle index
         %%%%%%%
         % q_limit_low = q_limit(:,1);
@@ -132,7 +135,7 @@ for i = 1:3
         force_pol_index_normalized_all = (force_pol_index_all - index_min_force_pol)./(index_max_force_pol-index_min_force_pol);
         force_pol_index_normalized(:,i_ns) = force_pol_index_normalized_all ;
         
-        
+        max_fi(i_ns) = max(index_max_force_pol);
         
         
     end
@@ -152,18 +155,24 @@ for i = 1:3
         Metric.fingers.jl_n = joint_limits_index_normalized;
         Metric.fingers.acc_n = penal_acc_r;
         Metric.fingers.pos = pos_sample_r;
+        Metric.fingers.max_fi = max_fi;
+        Metric.fingers.max_acc = max_acc;
     elseif i == 2
         Metric.thumb.metric_n = metric_normalized;
         Metric.thumb.fi_n = force_pol_index_normalized;
         Metric.thumb.jl_n = joint_limits_index_normalized;
         Metric.thumb.acc_n = penal_acc_r;
         Metric.thumb.pos = pos_sample_r;
+        Metric.thumb.max_fi = max_fi;
+        Metric.thumb.max_acc = max_acc;
     elseif i == 3
         Metric.little.metric_n = metric_normalized;
         Metric.little.fi_n = force_pol_index_normalized;
         Metric.little.jl_n = joint_limits_index_normalized;
         Metric.little.acc_n = penal_acc_r;
         Metric.little.pos = pos_sample_r;
+        Metric.little.max_fi = max_fi;
+        Metric.little.max_acc = max_acc;
     end
     
 end
@@ -204,7 +213,7 @@ for i = 1
     status = result{9};
     
     
-    for subplot_i = 2
+    for subplot_i = 1
         
         %     Pos_Car_occupied = zeros(dim_Car+2);
 %         subplot(1,4,subplot_i)
@@ -270,15 +279,13 @@ for i = 1
         index_vec = find(status(:) >= 1);
         metric_term_sel = metric_term(index_vec,:);
         [~,I] = max(metric_term_sel(:));
-        [I_x,I_y]=ind2sub(size(metric_term_sel),I);
+        [I_x,I_y]=ind2sub(size(metric_term_sel),I);% I_y is the index of nullspace config
         q_i = result{2}{I_y}(index_vec(I_x),:)';
 
 %         finger_analysis.update_finger(q_i);
 %         finger_analysis.print_finger('k',10,15);
         
-        fprintf("       JL,     Acc.R.,     F.I.,     M: \n")
-        fprintf("Index: %f, %f, %f, %f \n", metric_i.jl_n(index_vec(I_x),I_y), metric_i.acc_n(index_vec(I_x),I_y),...
-             metric_i.fi_n(index_vec(I_x),I_y), metric_i.metric_n(index_vec(I_x),I_y))
+        
         %
         p_c = finger_analysis.get_p_all_links;
 %         plot3(p_c(1,end),p_c(2,end),p_c(3,end),'o','Color','g','MarkerSize',20,'LineWidth',15)
@@ -296,6 +303,10 @@ for i = 1
 %         finger_little.update_finger([0,0,pi/20,pi/20,0.1]');
 %         finger_little.print_finger([0,0,0],10,15);
 
+
+        % get fingertip  metric
+        
+
         % % xlim([0 .2])
 % % ylim([-0.02 .06])
 % % zlim([-0.02 .12])
@@ -307,9 +318,20 @@ for i = 1
         zlabel('z')
 %         colorbar
         title(title_plot)
-        
     end
+    
+    p_j_all = finger_index.get_p_all_links;
+    p_fingertip = p_j_all(:,end);
+    ind = dsearchn(pos_sample_r,p_fingertip');
+    metric_term(ind,I_y)
+    fprintf("       JL,     Acc.R.,     F.I.,     M: \n")
+    fprintf("Index: %f, %f, %f, %f \n", metric_i.jl_n(ind,I_y), metric_i.acc_n(ind,I_y),...
+             metric_i.fi_n(ind,I_y)*metric_i.max_fi(I_y), metric_i.metric_n(ind,I_y))
 end
+
+
+
+
 return
 
 %% plot result for two finger
