@@ -9,7 +9,7 @@ clc
 
 %% load urdf model
 
-finger_urdf = importrobot('..\Handgroup_finger\modified_urdf\URDF_FINGERS_4DOF-torsion_modified.urdf');
+finger_urdf = importrobot('.\examples\hand_one\URDF_FINGERS_4DOF-torsion_modified.urdf');
 % finger_urdf = importrobot('..\Handgroup_finger\finger_files\Finger_V2-URDF-DH_Parameter\A-S_FINGERS_4DOF-torsion_test.SLDASM\urdf\A-S_FINGERS_4DOF-torsion_test.SLDASM.urdf');
 finger_urdf.DataFormat = "column";
 % 
@@ -19,87 +19,59 @@ finger_urdf.DataFormat = "column";
 config = [pi/4 pi/4 pi/4 pi/8]';
 % config = [0 0 0 0]';
 
+global finger_handone
+finger_handone = init_from_rst(finger_urdf);
+mdh_ori = finger_handone.mdh_ori;
+mdh_matrix = mdh_struct_to_matrix(mdh_ori,1);
+mdh_matrix(5,2) = 0.014;
 
-
-% return
-%%
-
-%% rigidbodytree model to mdh
-
-w_p_base = 4*zeros(3,1);
-w_R_base = euler2R_XYZ(zeros(1,3));
-nj = length(finger_urdf.Bodies);
-mdh_finger = zeros(nj+1,4);
-mdh_finger(1,:) = [0,0,0,0]; % base
-for i = 1:nj
-    
-    T_i = finger_urdf.Bodies{i}.Joint.JointToParentTransform;
-    phi_i = R2euler_XYZ(T_i(1:3,1:3));
-    p_i = T_i(1:3,4);
-    mdh_finger(i,:) = [phi_i(1),p_i(1),0,p_i(3)];
-end
-
-
-%% define a finger with conventianal configuration
-
-mdh_finger(5,2) = 0.014;
-
-mdh_struct = mdh_matrix_to_struct(mdh_finger, 1);
-finger_handone = Finger('handone', 'mdh',mdh_struct );
-% set states
-% set base position and orientation
+finger_handone.set_mdh_parameters(mdh_matrix);
 finger_handone.w_p_base = 4*zeros(3,1);
 finger_handone.w_R_base = euler2R_XYZ([pi,0,0]);
-
-% init joint configurations
-% q_0 = [0;0.1;0.1;0.1];
-
-% udpate finger with given joint configurations
 finger_handone.update_finger(config);
 
 % load rst model from finger class
 rst_model_r = finger_handone.rst_model;
 
-% plot 2 fingers
-p_link_all_w_r = finger_handone.get_p_all_links;
-p_link_all_w_t = finger_handone.get_p_all_links;
-figure(1)
-subplot(1,2,1)
-show(finger_urdf,config,'visuals','on','collision','off','Frames', 'off');
-hold on
-% plot3(p_link_all_w_r(1,:)',p_link_all_w_r(2,:)',p_link_all_w_r(3,:)','o-','Color','r');
+% finger_handone.compile_functions
 
-axis equal
-xlabel('x')
-ylabel('y')
-zlabel('z')
-subplot(1,2,2)
-finger_handone.print_finger
-hold on
-grid on
-axis equal
-xlabel('x')
-ylabel('y')
-zlabel('z')
+%% simulation setting
+
+q_init = [0,0,0.1,0]';
+qD_init = [0,0,0,0]';
+
+
+% joint stiffness 
+q_stiff_init = [0,0,0,0]';
+S_j = 0* 1e-4 * [1,1,1,1]';
+D_j = 0* 1e-5 * [1,1,1,1]';
+
+
+
 return
-%% set dynamic parameters
-% link index:
-%   1: PP
-%   2: MP
-%   3: DP
 
-finger_r.list_links(1).set_mass(0.05); % in kg
-finger_r.list_links(1).set_inertia([0.5,0.2,0.2,0,0,0]); 
+%% show model
+% figure(1)
+% subplot(1,2,1)
+% show(finger_urdf,config,'visuals','on','collision','off','Frames', 'off');
+% hold on
+% % plot3(p_link_all_w_r(1,:)',p_link_all_w_r(2,:)',p_link_all_w_r(3,:)','o-','Color','r');
+% 
+% axis equal
+% xlabel('x')
+% ylabel('y')
+% zlabel('z')
+% [caz,cel] = view;
+% subplot(1,2,2)
+% finger_handone.print_finger('r',5)
+% hold on
+% grid on
+% axis equal
+% xlabel('x')
+% ylabel('y')
+% zlabel('z')
+% view(caz,cel)
 
-finger_r.list_links(2).set_mass(0.03); % in kg
-finger_r.list_links(2).set_inertia([0.5,0.2,0.2,0,0,0]); 
-
-finger_r.list_links(3).set_mass(0.03); % in kg
-finger_r.list_links(3).set_inertia([0.5,0.2,0.2,0,0,0]); 
-
-% update dynamic parameters
-finger_r.update_finger_par_dyn;
-% finger_r.update_finger(q_0);
 
 %% add tendons
 
@@ -142,82 +114,7 @@ finger_r.update_list_contacts; % update link
 
 
 return
-%%
-
-clear all
-close all
-clc
-
-
-%% create fingers
-finger_1 = Finger('Index', 'RRRR', [0.5 0.3 0.2]);
-finger_2 = Finger('Middle', 'RRRR', [0.6 0.4 0.2]);
-finger_3 = Finger('Ring', 'RRRR', [0.5 0.3 0.2]);
-finger_4 = Finger('little', 'RRRR', [0.4 0.25 0.2]);
-
-finger_list = {finger_1,finger_2,finger_3,finger_4};
-
-%% set finger init position & orientation
-finger_1.w_p_base = [1,0,0]';
-finger_1.w_R_base = eul2rotm([pi/6,0,0],'ZYZ');
-
-% set finger joint configurations
-q = [45 0 0 0]'*pi/180;
-
-% update
-finger_1.update_finger(q);
-% finger_1.update_rst_model;
-
-rst_model_r = finger_1.rst_model;
-
-% rst_model.show
-% showdetails(rst_model)
-
-
-
-mdh = mdh_struct_to_matrix(finger_1.mdh,1);
-T = T_mdh_multi(mdh);
-
-
-% geometric Jacobian of the endeffector
-J_e = finger_1.Jacobian_geom_end;
-
-%% add contact
-
-for i = 1:finger_1.nl
-    finger_1.list_links(i).add_contact([finger_1.list_links(i).Length/2 0 0]');
-%     finger_1.list_links(i).add_contact([finger_1.list_links(i).Length/2 0 0]')
-end
-
-finger_1.update_all_contacts;
-
-
-%% geometric Jacobian of the contact points
-
-J_c = [];
-
-for i = 1:finger_1.nl
-    if finger_1.list_links(i).nc
-        for j = 1:finger_1.list_links(i).nc
-            J_c = [J_c;finger_1.Jacobian_geom_contact(q,finger_1.list_links(i).contacts(j))];
-        end
-    end
-end
-
-
-
-%% visualization
-show(rst_model_r,[q;0],'Collisions','on','Visuals','off');
-hold on
-for i = 1:finger_1.nl
-    
-    contact_pos = finger_1.list_links(i).contacts(1).base_p;
-    plot3(contact_pos(1),contact_pos(2),contact_pos(3),'*','Color', 'r', 'MarkerSize',10)
-end
-
-return
-
-
+%
 
 
 
