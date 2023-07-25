@@ -235,43 +235,46 @@ finger_ring.w_p_base = R*[0.129;-0.011;0];
 
 %% plot 2 fingers
 
-% h = figure(2);
-% set(0,'defaultfigurecolor','w')
-% set(groot,'defaulttextinterpreter','none');
-% set(h,'units','normalized','outerposition',[0 0 1 1])
-% set(h, 'Units', 'centimeters')
-% pos = get(h,'Position');
-% set(h,'PaperPositionMode','Auto','PaperUnits','centimeters','PaperSize',[pos(3), pos(4)]);%
-% set(h, 'Units', 'centimeters')
-% set(groot,'defaulttextinterpreter','latex');
-% set(groot, 'defaultAxesTickLabelInterpreter','latex');
-% set(groot, 'defaultLegendInterpreter','latex');
-% 
-% finger_index.update_finger([0,pi/6,pi/6,pi/10]);
-% finger_index.print_finger('g',5,8)
-% finger_thumb.update_finger([0,pi/3,0,pi/10,pi/10]);
-% finger_thumb.print_finger('k',5,8)
-% finger_ring.update_finger(finger_ring.q_a)
-% finger_ring.print_finger('g',5,8)
-% finger_middle.print_finger('g',5,8)
-% finger_little.print_finger('c',5,8)
-% 
-% plot3(0,0,0,'.','Color','k','MarkerSize',50 )
-% 
-% % xlim([0 .2])
-% % ylim([-0.02 .06])
-% % zlim([-0.02 .12])
+h = figure(2);
+set(0,'defaultfigurecolor','w')
+set(groot,'defaulttextinterpreter','none');
+set(h,'units','normalized','outerposition',[0 0 1 1])
+set(h, 'Units', 'centimeters')
+pos = get(h,'Position');
+set(h,'PaperPositionMode','Auto','PaperUnits','centimeters','PaperSize',[pos(3), pos(4)]);%
+set(h, 'Units', 'centimeters')
+set(groot,'defaulttextinterpreter','latex');
+set(groot, 'defaultAxesTickLabelInterpreter','latex');
+set(groot, 'defaultLegendInterpreter','latex');
+
+finger_index.update_finger([0,pi/6,pi/6,pi/10]);
+finger_index.print_finger('g',5,8)
+finger_thumb.update_finger([0,pi/3,0,pi/10,pi/10]);
+finger_thumb.print_finger('k',5,8)
+finger_middle.update_finger([0,pi/8,pi/10,pi/20])
+finger_middle.print_finger('g',5,8)
+finger_ring.update_finger([0,0.3,0.1,0.1])
+finger_ring.print_finger('g',5,8)
+finger_little.update_finger([0.2,0,0.2,0.1,0.1])
+finger_little.print_finger('c',5,8)
+
+plot3(0,0,0,'.','Color','k','MarkerSize',50 )
+
+% xlim([0 .2])
+% ylim([-0.02 .06])
+% zlim([-0.02 .12])
 % xticks([0 0.05 0.1 0.15 0.2])
 % yticks([-0 0.05 0.1])
 % zticks([0 0.05 0.1])
-% xlabel('x')
-% ylabel('y')
-% zlabel('z')
-% axis equal
+xlabel('x')
+ylabel('y')
+zlabel('z')
+axis equal
+grid on
 
 % 
-figure
-[X,Y,Z] = sphere(10);
+% figure
+[X,Y,Z] = sphere(30);
 X = 0.04*X + 0.15;
 Y = 0.04*Y + 0.02;
 Z = 0.04*Z + 0.02;
