@@ -19,7 +19,11 @@ clc
 finger_dimension_r = [0,1,0.8,0.5]; % in meter
 
 finger_r = Finger('Index', 'type','R_RRRR', 'l_links',finger_dimension_r);   
-
+mdh_default_struct = finger_r.mdh_ori;
+mdh_matrix = mdh_struct_to_matrix(mdh_default_struct, 1);
+mdh_matrix(2,1) = -pi/2;
+% mdh_matrix(2,4) = 1;
+finger_r.set_mdh_parameters(mdh_matrix);
 %% set random states
 % set base position and orientation
 finger_r.w_p_base = 4*zeros(3,1);
@@ -40,23 +44,23 @@ rst_model = finger_r.rst_model;
 
 %% simulation settings
 n_q = 4;
-q_desired = [0,0,0,pi/2]';
+q_desired = [0.5,0.4,0.3,0.2]';
 qd_desired = zeros(4,1);
 qdd_desired = zeros(4,1);
 
 delta_t = 0.001; % unit s
-end_time = 1*60; % unit s
+end_time = 1*2; % unit s
 tSpan = 0:delta_t:end_time;
 step = length(tSpan); 
 initialState = [q_0;zeros(4,1)]; % [q;qd]
 F_ext = zeros(6,n_q+2);
 % controller parameters
-P = [2;70;40;5];
-D = [2;1;1;5];
+P = 10*[0;0;2;0];
+D = 5* [0;0;1;0];
 
 % if use mex function
-mex = 0;
-gravity_com = 0; % if using gravity compensation
+mex = 1;
+gravity_com = 1; % if using gravity compensation
 %% simulation
 
 state = zeros(2*n_q,step);
@@ -65,7 +69,7 @@ state_d = zeros(2*n_q,step);
 
 Tau = zeros(n_q,step);
 
-
+% figure(1)
 T = zeros(step,1);
 for i = 1:step
     tic;
@@ -133,30 +137,33 @@ xlabel('Time (s)')
 ylabel('Torque (Nm)')
 
 % compare simscape and scripts
-figure(3)
+h = figure(3)
 
 for i = 1:4
     subplot(4,1,i)
-    plot(tSpan,state(i,1:end-1)) % Joint position
+    plot(tSpan,state(i,1:end-1),'LineWidth',2) % Joint position
     hold on
-    plot(out.tout,out.q_out.signals.values(:,i), '--') % Joint position
-    hold on
-    plot(tSpan,q_desired(i).*ones(1,length(tSpan)), 'Color','c') % Joint setpoint
+%     plot(out.tout,out.q_out.signals.values(:,i), '--', 'LineWidth',2) % Joint position
+%     hold on
+    plot(tSpan,q_desired(i).*ones(1,length(tSpan)), 'Color','c','LineWidth',2) % Joint setpoint
+    title('Joint x')
 end
-title('Compare: Joint Position')
-figure(4)
-for i = 1:4
-    subplot(4,1,i)
-    plot(tSpan,state(i,1:end-1)'-out.q_out.signals.values(:,i)) % Joint position
-end
-title('error: Joint torque input')
+legend('toolbox results', 'Simscape results','desired input')
+sgtitle('Forward Simulation Comparison')
+
+% figure(4)
+% for i = 1:4
+%     subplot(4,1,i)
+%     plot(tSpan,state(i,1:end-1)'-out.q_out.signals.values(:,i)) % Joint position
+% end
+% title('error: Joint torque input')
 
 figure(5)
 for i = 1:4
     subplot(4,1,i)
-    plot(tSpan,Tau(i,:)) % Joint position
+    plot(tSpan,state_d(i,:)) % Joint position
     hold on
-    plot(out.tout,out.tau.signals.values(:,i), '--') % Joint position
+    plot(tSpan,state_d(4+i,:), '--') % Joint position
 end
 title('Compare: Joint torque input')
 

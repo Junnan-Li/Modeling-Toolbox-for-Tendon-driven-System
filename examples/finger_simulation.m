@@ -91,7 +91,7 @@ n_t = finger_r.nt;
 q_0 = [0;0.15;0.2;0.2];
 finger_r.update_finger(q_0);
 
-q_desired = [0.1,1,1,pi/2]';
+q_desired = [0.1,0.4,1,1.1]';
 qd_desired = zeros(4,1);
 qdd_desired = zeros(4,1);
 
@@ -103,8 +103,8 @@ initialState = [q_0;zeros(4,1)]; % [q;qd]
 F_ext = zeros(6,n_q+2);
 
 % controller parameters
-P = [1;1;1;1];
-D = [1;1;1;1];
+P = 1 * [1;1;1;1];
+D = 0.5 * [1;1;1;1];
 gravity_com = 1; 
 
 
