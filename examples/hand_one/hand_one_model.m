@@ -37,14 +37,18 @@ rst_model_r = finger_handone.rst_model;
 
 %% simulation setting
 
-q_init = [0,0,0.1,0]';
+q_init = [0,0,0,0]';
 qD_init = [0,0,0,0]';
 
 
 % joint stiffness 
 q_stiff_init = [0,0,0,0]';
-S_j = 0* 1e-4 * [1,1,1,1]';
-D_j = 0* 1e-5 * [1,1,1,1]';
+S_j = 1e-4 * [1,1,1,1]';
+D_j = 1e-4 * [1,1,1,1]';
+
+% coupling tendon stiffness
+k_coupling = 1e-1;
+d_coupling = 1e-5;
 
 
 
