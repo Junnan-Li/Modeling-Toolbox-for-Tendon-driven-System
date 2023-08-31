@@ -311,7 +311,7 @@ classdef Finger < handle & matlab.mixin.Copyable
             
         end
         
-        
+%%%%%%%%%%%%%%%%%%%%%%% dynamic parameters
         function update_finger_par_dyn(obj)
             % update the finger dynamic parameters
             % TODO: finalize for all types
@@ -329,7 +329,16 @@ classdef Finger < handle & matlab.mixin.Copyable
             obj.par_dyn_f.com_all = com_all;
             obj.par_dyn_f.inertia_all = inertia_all;
         end
-        
+
+        function set_g_w(obj,g)
+            % set dynamic parameter in world frame
+            g_reshape = reshape(g,3,1);
+            w_R_b = obj.w_R_base;
+            obj.par_dyn_f.g = w_R_b'*g_reshape;
+            
+        end
+
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%       
         % to be replaced
 %         function [mdh_reduced,mdh_all,mdh_ori] = get_finger_mdh(obj, q_a)
 %             % get mdh parameter from the given joint angle
@@ -516,6 +525,8 @@ classdef Finger < handle & matlab.mixin.Copyable
             end
         end
         
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %%%%%%%%% print finger
         function print_contact(obj) % UNUSED
             % plot 3d contact points 
             for i = 1:obj.nl
@@ -550,6 +561,7 @@ classdef Finger < handle & matlab.mixin.Copyable
             hold on
         end
         
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         % tendon related:
         function add_tendon(obj, name, routing)
             % add tendon to class

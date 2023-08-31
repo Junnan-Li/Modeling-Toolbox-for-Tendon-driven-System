@@ -14,6 +14,25 @@ finger_urdf = importrobot('.\examples\hand_one\URDF_FINGERS_4DOF-torsion_modifie
 finger_urdf.DataFormat = "column";
 % 
 
+%%
+r = rateControl(100);
+figure
+xlim([-0.05, 0.05])
+for i = 1:length(out_q.time)
+    finger_urdf.show(out_q.signals.values(i,:)','Frame','off','PreservePlot',0);
+    hold on
+    xlim([-0.1, 0.1])
+    ylim([-0.1, 0.1])
+    zlim([-0.1, 0.1])
+    grid off
+    drawnow;
+    exportgraphics(gcf,'testAnimated.gif','Append',true);
+%     waitfor(r);
+end
+%%
+finger_urdf.show(out_q.signals.values(i,:)','Frame','off','PreservePlot',0);
+view
+%%
 
 % config = homeConfiguration(finger);
 config = [pi/4 pi/4 pi/4 pi/8]';
