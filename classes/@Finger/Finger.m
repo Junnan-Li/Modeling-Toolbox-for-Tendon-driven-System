@@ -395,7 +395,7 @@ classdef Finger < handle & matlab.mixin.Copyable
             %
             % TODO: integrate the dynamic parameters of the links into
             % model
-             
+                         
             mdh_matrix = mdh_struct_to_matrix(obj.mdh_ori,2); % mdh order: a,alpha,d,theta
 %             mdh_matrix_order_1 = mdh_struct_to_matrix(obj.mdh_ori,1);
             % create rigid body tree

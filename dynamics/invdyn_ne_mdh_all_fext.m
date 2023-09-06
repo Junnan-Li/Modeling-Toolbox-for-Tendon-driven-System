@@ -1,4 +1,5 @@
 % recursive Newton-Euler method to compute inverse dynamic with mdh
+% with external forces on all links as input
 % parameters
 % Input:
 %     q,qD,qDD:         [n_qx1] joint states
