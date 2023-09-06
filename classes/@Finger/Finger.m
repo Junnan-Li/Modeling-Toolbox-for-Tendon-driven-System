@@ -527,7 +527,7 @@ classdef Finger < handle & matlab.mixin.Copyable
         
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%%%%%%%% print finger
-        function print_contact(obj) % UNUSED
+        function print_contact(obj) % 
             % plot 3d contact points 
             for i = 1:obj.nl
                 contact_pos = obj.list_links(i).contacts(1).base_p;
@@ -536,8 +536,9 @@ classdef Finger < handle & matlab.mixin.Copyable
                 hold on
             end
         end
-        function print_finger(obj,varargin) % UNUSED
+        function print_finger(obj,varargin) % 
             % plot 3d contact points 
+            % [06.09.2023] new version of plot is avaible: plot_finger
             if nargin == 1
                 color = 'r';
                 linewidth = 3;
@@ -559,6 +560,50 @@ classdef Finger < handle & matlab.mixin.Copyable
             plot3(p_link_all_w_r(1,:)',p_link_all_w_r(2,:)',p_link_all_w_r(3,:)','o-','Color',color,...
                                     'LineWidth',linewidth,'MarkerSize',markersize);
             hold on
+        end
+
+        function plot_finger(obj,parameters) 
+            % [06.09.2023] plot the finger with paramter structures
+            % parameters.linecolor = 'r'
+            %           .linewidth = 3
+            %           .markersize = 5
+            %           .axis_show = 1
+            %           .linewidth = 3
+            %           .linewidth = 3
+            
+            w_R_b = obj.w_R_base;
+            w_p_b = obj.w_p_base;
+
+            color = parameters.linecolor;
+            linewidth = parameters.linewidth;
+            markersize = parameters.markersize;
+
+            p_link_all_w_r = obj.get_p_all_links;
+            plot3(p_link_all_w_r(1,:)',p_link_all_w_r(2,:)',p_link_all_w_r(3,:)','o-','Color',color,...
+                                    'LineWidth',linewidth,'MarkerSize',markersize);
+            hold on
+            if parameters.axis_show
+                for i = 1:obj.nl
+                    length_link_i = obj.list_links(i).Length;
+                    W_p_link_i = w_p_b + w_R_b*obj.list_links(i).base_p;
+                    W_p_link_z_i = 0.5*length_link_i*w_R_b*obj.list_links(i).base_R*[0;0;1];
+                    quiver3(W_p_link_i(1),W_p_link_i(2),W_p_link_i(3),...
+                            W_p_link_z_i(1),W_p_link_z_i(2),W_p_link_z_i(3),...
+                            'Color','b','LineWidth',linewidth);
+                    hold on
+                end 
+
+            end
+        end
+
+        function parstr = plot_parameter_init(obj)
+            % init the parameter struct for plot_finger
+            parstr = struct();
+            parstr.linecolor = 'r';
+            parstr.linewidth = 3;
+            parstr.markersize = 5;
+            parstr.axis_show = 1;
+%             parstr.linecolor = 'r';
         end
         
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

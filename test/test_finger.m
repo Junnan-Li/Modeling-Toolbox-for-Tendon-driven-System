@@ -53,6 +53,11 @@ rst_model = finger_r.rst_model;
 
 % plot rst model
 show(rst_model,q_r,'Collisions','on','Visuals','off');
+hold on
+%% test finger plot
+plot_par = finger_r.plot_parameter_init();
+finger_r.plot_finger(plot_par)
+
 
 %% Test 1:  Transformation matrix test with respect to mdh parameters 
 % mdh parameter from class properties
