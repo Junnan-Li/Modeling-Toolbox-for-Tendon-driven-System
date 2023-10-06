@@ -32,7 +32,7 @@ load ./optimization/results/workspace_3006_x_3mm_30_shadow_fixed.mat
 
 Metric = struct();
 
-for i = 1:3
+for i = 1%:3
     
     if i == 1
         result = result_all.fingers;
@@ -66,10 +66,13 @@ for i = 1:3
 %     joint_limits_index_i = zeros(n_sample,1);
     joint_limits_index_normalized = zeros(n_sample,2);
     force_pol_index_normalized = zeros(n_sample,2);
+    force_pol_index = zeros(n_sample,2);
     metric_normalized = zeros(n_sample,2);
     
     max_acc = zeros(1,2);
+    min_acc = zeros(1,2);
     max_fi = zeros(1,2);
+    min_fi = zeros(1,2);
     
     for i_ns = 1:2
         
@@ -81,7 +84,8 @@ for i = 1:3
         
         acc_r_index_normalized(:,i_ns) = normalize_vector(mani_acc_r, 1);
         penal_acc_r(:,i_ns) = penalty_acc_r(acc_r_index_normalized(:,i_ns), 1);
-        max_acc(i_ns) = max(mani_acc_r);
+        max_acc(i_ns) = max(mani_acc_r(status>=1));
+        min_acc(i_ns) = min(mani_acc_r(status>=1));
         % joint angle index
         %%%%%%%
         % q_limit_low = q_limit(:,1);
@@ -129,20 +133,22 @@ for i = 1:3
         
         force_pol_index_all = mani_force_polytope * W;
         
-        index_max_force_pol = max(force_pol_index_all);
-        index_min_force_pol = min(force_pol_index_all);
+        index_max_force_pol = max(force_pol_index_all(status>=1));
+        index_min_force_pol = min(force_pol_index_all(status>=1));
         
         force_pol_index_normalized_all = (force_pol_index_all - index_min_force_pol)./(index_max_force_pol-index_min_force_pol);
         force_pol_index_normalized(:,i_ns) = force_pol_index_normalized_all ;
+        force_pol_index(:,i_ns) = force_pol_index_all;
         
-        max_fi(i_ns) = max(index_max_force_pol);
-        
+        max_fi(i_ns) = index_max_force_pol;
+        min_fi(i_ns) = index_min_force_pol;
         
     end
     % metric_j = joint_limits_index_normalized .* acc_r_index_normalized.* ...
     %     acc_v_index_normalized.* force_pol_index_normalized;
     
     metric_j = joint_limits_index_normalized .* penal_acc_r .* (force_pol_index_normalized);
+    metric_FtM = joint_limits_index_normalized .* penal_acc_r .* (force_pol_index);
     
     % normalized
     metric_j_max = max(metric_j);
@@ -151,28 +157,40 @@ for i = 1:3
     
     if i == 1
         Metric.fingers.metric_n = metric_normalized;
+        Metric.fingers.metric_FtM = metric_FtM;
         Metric.fingers.fi_n = force_pol_index_normalized;
+        Metric.fingers.fi = force_pol_index;
         Metric.fingers.jl_n = joint_limits_index_normalized;
         Metric.fingers.acc_n = penal_acc_r;
         Metric.fingers.pos = pos_sample_r;
         Metric.fingers.max_fi = max_fi;
+        Metric.fingers.min_fi = min_fi;
         Metric.fingers.max_acc = max_acc;
+        Metric.fingers.min_acc = min_acc;
     elseif i == 2
         Metric.thumb.metric_n = metric_normalized;
+        Metric.thumb.metric_FtM = metric_FtM;
         Metric.thumb.fi_n = force_pol_index_normalized;
+        Metric.thumb.fi = force_pol_index;
         Metric.thumb.jl_n = joint_limits_index_normalized;
         Metric.thumb.acc_n = penal_acc_r;
         Metric.thumb.pos = pos_sample_r;
         Metric.thumb.max_fi = max_fi;
+        Metric.thumb.min_fi = min_fi;
         Metric.thumb.max_acc = max_acc;
+        Metric.thumb.min_acc = min_acc;
     elseif i == 3
         Metric.little.metric_n = metric_normalized;
+        Metric.little.metric_FtM = metric_FtM;
         Metric.little.fi_n = force_pol_index_normalized;
+        Metric.little.fi = force_pol_index;
         Metric.little.jl_n = joint_limits_index_normalized;
         Metric.little.acc_n = penal_acc_r;
         Metric.little.pos = pos_sample_r;
         Metric.little.max_fi = max_fi;
+        Metric.little.min_fi = min_fi;
         Metric.little.max_acc = max_acc;
+        Metric.little.min_acc = min_acc;
     end
     
 end
@@ -213,7 +231,7 @@ for i = 1
     status = result{9};
     
     
-    for subplot_i = 1
+    for subplot_i = 4
         
         %     Pos_Car_occupied = zeros(dim_Car+2);
 %         subplot(1,4,subplot_i)
@@ -237,7 +255,8 @@ for i = 1
                 metric_term = metric_i.fi_n;
                 title_plot = 'Force index';
             case 4
-                metric_term = metric_i.metric_n;
+%                 metric_term = metric_i.metric_n;
+                metric_term = metric_i.metric_FtM;
                 title_plot = 'metric index';
             otherwise
                 disp('other value')
@@ -247,7 +266,10 @@ for i = 1
         % plot
         % slice in Cartesian space
         dis_plane = min(pos_sample_r(:,1)):0.01:max(pos_sample_r(:,1));
-        pos_condition = false;
+        % special slice
+        dis_plane = 0.212;
+
+        pos_condition = true;
         for condi_index = 1:length(dis_plane)
             pos_condition = pos_condition | abs(pos_sample_r(:,1)-dis_plane(condi_index)) < 0.0018;
         end
@@ -255,8 +277,11 @@ for i = 1
         index_vec_plot = find(status(:) >= 1 & pos_condition); % 
         [~,I_metric_term] = max(metric_term(index_vec_plot,:),[],2);
         
-        metric_term_sel = metric_term(index_vec_plot,:);
-        
+        metric_term_sel = metric_term(index_vec_plot(:),:);
+        a = max(metric_term_sel,[],2);
+        FI = max(a)*(metric_i.max_fi-metric_i.min_fi)+metric_i.min_fi;
+
+
         row = [1:length(index_vec_plot)]';
         col = I_metric_term;
         sz = size(metric_term_sel);
