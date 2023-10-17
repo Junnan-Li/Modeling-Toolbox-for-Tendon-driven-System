@@ -490,7 +490,8 @@ classdef Finger < handle & matlab.mixin.Copyable
             end
             obj.nc = num_contact;
         end
-        
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % calculate kinematics 
         function [p_link_all_w,p_link_all_b] = get_p_all_links(obj)
             % get the Cartesian position of the base and link ends
             w_R_b = obj.w_R_base; 
@@ -509,6 +510,19 @@ classdef Finger < handle & matlab.mixin.Copyable
             p_link_all_w(:,end) = w_p_b + w_R_b * b_T_i(1:3,4);
         end
         
+        function [w_p_ee,w_R_ee] = get_T_ee_w(obj)
+            % get the Cartesian position of the base and link ends
+            w_R_b = obj.w_R_base; 
+            w_p_b = obj.w_p_base;
+%             w_T_b = get_W_T_B(obj);
+            w_R_ee = zeros(3,3);
+            w_p_ee = zeros(3,1);
+            % fingertip position
+            mdh_all_matrix = mdh_struct_to_matrix(obj.mdh_all, 1);
+            b_T_i = T_mdh_multi(mdh_all_matrix);
+            w_p_ee = w_p_b + w_R_b * b_T_i(1:3,4);
+            w_R_ee =  w_R_b * b_T_i(1:3,1:3);
+        end
         
         function [w_p_contacts_all,b_p_contacts_all] = get_p_all_contacts(obj)
             % plot 3d contact points
@@ -677,7 +691,7 @@ classdef Finger < handle & matlab.mixin.Copyable
                obj.limits_ft(i,:) = obj.list_tendons(i).f_limits;
             end 
         end
-        
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     end
 end
 
