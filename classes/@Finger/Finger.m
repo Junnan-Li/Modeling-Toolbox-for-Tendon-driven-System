@@ -77,7 +77,7 @@ classdef Finger < handle & matlab.mixin.Copyable
         rst_model           % robotic system toolbox model based on mdh. Default: colume Dataformat
         q_a                 % [njax1] unit rad
         q                   % [njx1] unit rad
-        par_dyn_f           
+        par_dyn_f           % [nj+1x1]mass_all, [3xnj+1]com_all, [6xNJ+1] inertial regarding com, [3x1] g 
         M_coupling          % [njxnt] coupling matrix of the finger
     end
     
@@ -176,8 +176,9 @@ classdef Finger < handle & matlab.mixin.Copyable
             % update mdh parameters
             obj.par_dyn_f = struct();
             obj.par_dyn_f.g = [0;0;-9.81];
-            
-            
+            obj.par_dyn_f.mass_all = zeros(obj.nj+1,1);
+            obj.par_dyn_f.inertia_all = zeros(6,obj.nj+1);
+            obj.par_dyn_f.com_all = zeros(3,obj.nj+1);
             % set mdh parameters
 %             obj.set_mdh_parameters(mdh_matrix)
             
@@ -313,7 +314,8 @@ classdef Finger < handle & matlab.mixin.Copyable
         
 %%%%%%%%%%%%%%%%%%%%%%% dynamic parameters
         function update_finger_par_dyn(obj)
-            % update the finger dynamic parameters
+            % update the finger dynamic parameters (only links, leave the
+            % base parameter unchanged
             % TODO: finalize for all types
             
             mass_all = zeros(obj.nja+1,1); % first is base
@@ -325,17 +327,29 @@ classdef Finger < handle & matlab.mixin.Copyable
                 com_all(:,i+1) = obj.list_links(i).par_dyn.com;
                 inertia_all(:,i+1) = obj.list_links(i).par_dyn.inertia;
             end
-            obj.par_dyn_f.mass_all = mass_all;
-            obj.par_dyn_f.com_all = com_all;
-            obj.par_dyn_f.inertia_all = inertia_all;
+            obj.par_dyn_f.mass_all(2:end) = mass_all(2:end);
+            obj.par_dyn_f.com_all(:,2:end) = com_all(:,2:end);
+            obj.par_dyn_f.inertia_all(:,2:end) = inertia_all(:,2:end);
         end
 
         function set_g_w(obj,g)
             % set dynamic parameter in world frame
+            % g is in world frame as input 
             g_reshape = reshape(g,3,1);
             w_R_b = obj.w_R_base;
-            obj.par_dyn_f.g = w_R_b'*g_reshape;
-            
+%             obj.par_dyn_f.g = w_R_b'*g_reshape;
+            obj.par_dyn_f.g = g_reshape;
+        end
+
+        function set_base_dynpar(obj,mass,com,inertia )
+            % set dynamic parameter in world frame
+            assert(length(mass) == 1, '[set_base_dynpar] mass dimentino is not correct')
+            assert(length(com) == 3, '[set_base_dynpar] com dimentino is not correct')
+            assert(length(inertia) == 6, '[set_base_dynpar] inertia dimentino is not correct')
+
+            obj.par_dyn_f.mass_all(1) = mass;
+            obj.par_dyn_f.com_all(:,1) = reshape(com,3,1) ; % regarding com
+            obj.par_dyn_f.inertia_all(:,1) = reshape(inertia,6,1) ; 
         end
 
  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%       
@@ -576,15 +590,24 @@ classdef Finger < handle & matlab.mixin.Copyable
             hold on
         end
 
-        function plot_finger(obj,parameters) 
+        function plot_finger(obj,varargin) 
             % [06.09.2023] plot the finger with paramter structures
             % parameters.linecolor = 'r'
             %           .linewidth = 3
             %           .markersize = 5
             %           .axis_show = 1
+            %           .axis_length = 0.1
             %           .linewidth = 3
             %           .linewidth = 3
             
+            if nargin == 1
+                parameters = obj.plot_parameter_init;
+            elseif nargin == 2
+                parameters =  varargin{1};
+            else
+                error('[plot_finger] input dimension is incorrect! \n')
+            end
+
             w_R_b = obj.w_R_base;
             w_p_b = obj.w_p_base;
 
@@ -598,13 +621,18 @@ classdef Finger < handle & matlab.mixin.Copyable
             hold on
             if parameters.axis_show
                 for i = 1:obj.nl
-                    length_link_i = obj.list_links(i).Length;
+%                     length_link_i = obj.list_links(i).Length;
+                    length_link_i = parameters.axis_len;
                     W_p_link_i = w_p_b + w_R_b*obj.list_links(i).base_p;
                     W_p_link_z_i = 0.5*length_link_i*w_R_b*obj.list_links(i).base_R*[0;0;1];
-                    quiver3(W_p_link_i(1),W_p_link_i(2),W_p_link_i(3),...
+                    h = quiver3(W_p_link_i(1),W_p_link_i(2),W_p_link_i(3),...
                             W_p_link_z_i(1),W_p_link_z_i(2),W_p_link_z_i(3),...
                             'Color','b','LineWidth',linewidth);
+                    set(h,'AutoScale','on', 'AutoScaleFactor',1)
                     hold on
+                    xlabel('x')
+                    ylabel('y')
+                    zlabel('z')
                 end 
 
             end
@@ -616,10 +644,45 @@ classdef Finger < handle & matlab.mixin.Copyable
             parstr.linecolor = 'r';
             parstr.linewidth = 3;
             parstr.markersize = 5;
+            parstr.markercolor= 'g';
             parstr.axis_show = 1;
+            parstr.axis_len = 0.1;
 %             parstr.linecolor = 'r';
         end
-        
+
+
+        function plot_com(obj,varargin) 
+            % plot the com of each link in world frame
+            
+            if nargin == 1
+                par = obj.plot_parameter_init;
+            elseif nargin == 2
+                par =  varargin{1};
+            else
+                error('[plot_com] input dimension is incorrect! \n')
+            end
+            w_R_b = obj.w_R_base; 
+            w_p_b = obj.w_p_base;
+%             p_link_all_b = zeros(3,obj.nl+1);
+            p_com_all_b = obj.par_dyn_f.com_all;
+            p_com_all_w = zeros(3,obj.nl+1);
+            for i = 1:obj.nl
+                b_p_link = obj.list_links(i).base_p;
+                b_R_link = obj.list_links(i).base_R;
+                p_com_all_w(:,i+1) = w_R_b * (b_p_link+b_R_link*p_com_all_b(:,i+1)) + w_p_b;
+                
+            end
+            p_com_all_w(:,1) = w_R_b * (obj.par_dyn_f.com_all(:,1)) + w_p_b;
+            plot3(p_com_all_w(1,:)',p_com_all_w(2,:)',p_com_all_w(3,:)','*','Color',par.markercolor,...
+                                    'MarkerSize',par.markersize);
+            hold on
+            % fingertip position
+%             mdh_all_matrix = mdh_struct_to_matrix(obj.mdh_all, 1);
+%             b_T_i = T_mdh_multi(mdh_all_matrix);
+%             p_link_all_b(:,end) = b_T_i(1:3,4);
+%             p_link_all_w(:,end) = w_p_b + w_R_b * b_T_i(1:3,4);
+
+        end
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         % tendon related:
         function add_tendon(obj, name, routing)

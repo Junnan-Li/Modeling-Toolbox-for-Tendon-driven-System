@@ -4,6 +4,7 @@
 % input:
 %           qD: 
 %           Tau: 
+%           F_ext: [6xn_q+2]
 % 
 % output:
 %           qDD: [obj.nj] 

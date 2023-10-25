@@ -61,6 +61,10 @@ D = 5* [0;0;1;0];
 % if use mex function
 mex = 1;
 gravity_com = 1; % if using gravity compensation
+g = [0,0,-9.81];
+if gravity_com
+    g = [0,0,0];
+end
 %% simulation
 
 state = zeros(2*n_q,step);
@@ -143,9 +147,9 @@ for i = 1:4
     subplot(4,1,i)
     plot(tSpan,state(i,1:end-1),'LineWidth',2) % Joint position
     hold on
-%     plot(out.tout,out.q_out.signals.values(:,i), '--', 'LineWidth',2) % Joint position
-%     hold on
-    plot(tSpan,q_desired(i).*ones(1,length(tSpan)), 'Color','c','LineWidth',2) % Joint setpoint
+    plot(out.tout,out.q_out.signals.values(:,i), '--', 'LineWidth',2) % Joint position
+    hold on
+%     plot(tSpan,q_desired(i).*ones(1,length(tSpan)), 'Color','c','LineWidth',2) % Joint setpoint
     title('Joint x')
 end
 legend('toolbox results', 'Simscape results','desired input')
@@ -158,13 +162,13 @@ sgtitle('Forward Simulation Comparison')
 % end
 % title('error: Joint torque input')
 
-figure(5)
-for i = 1:4
-    subplot(4,1,i)
-    plot(tSpan,state_d(i,:)) % Joint position
-    hold on
-    plot(tSpan,state_d(4+i,:), '--') % Joint position
-end
-title('Compare: Joint torque input')
+% figure(5)
+% for i = 1:4
+%     subplot(4,1,i)
+%     plot(tSpan,state_d(i,:)) % Joint position
+%     hold on
+%     plot(tSpan,state_d(4+i,:), '--') % Joint position
+% end
+% title('Compare: Joint torque input')
 
 

@@ -11,7 +11,7 @@
 %     F_ext:            [6x1] force/moment that exerted by the environment to the endeffector frame. 
 %     CoM:              [3xn_q+1] in local frame; last column is endeffector
 %     I:                [6xn_q+1] in local frame with respect to center of mass. in sequence of [xx yy zz yz xz xy]
-%     g:                [3x1] gravity term
+%     g:                [3x1] gravity term in world frame
 % 
 % Output:
 %     Tau:              [n_qx1] joint torque 

@@ -11,7 +11,8 @@ robot_dimension = [4,2]; % in meter
 
 robot_2dof = Finger('Index', 'type','R_RR', 'l_links',robot_dimension); 
 
-
+mdh_default_struct = robot_2dof.mdh_ori;
+mdh_matrix = mdh_struct_to_matrix(mdh_default_struct, 1); % alpha,a,theta,d
 %% set states
 % set base position and orientation
 robot_2dof.w_p_base = 4*zeros(3,1);
@@ -41,7 +42,7 @@ robot_2dof.plot_finger(par_plot);
 %   2: MP
 %   3: DP
 
-robot_2dof.list_links(1).set_mass(5); % in kg
+robot_2dof.list_links(1).set_mass(1); % in kg
 robot_2dof.list_links(1).set_inertia([0.5,0.2,0.2,0,0,0]); 
 
 robot_2dof.list_links(2).set_mass(3); % in kg
