@@ -54,7 +54,7 @@ robot_2dof.list_links(2).set_inertia([0.5,0.2,0.2,0,0,0]);
 robot_2dof.update_finger_par_dyn;
 % finger_r.update_finger(q_0);
 
-Tau = robot_2dof.invdyn_ne_w_end(q_0, zeros(2,1), zeros(2,1), zeros(6,1))
+% Tau = robot_2dof.invdyn_ne_w_end(q_0, zeros(2,1), zeros(2,1), zeros(6,1))
 
 return
 
