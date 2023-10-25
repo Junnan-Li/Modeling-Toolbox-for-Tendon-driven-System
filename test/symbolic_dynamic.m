@@ -11,8 +11,10 @@ clc
 
 %% load example model
 
-run examples\create_planar_2dof.m
+% run examples\create_planar_2dof.m
+run examples\christ\create_model.m
 
+% run examples\create_finger.m
 %% invdyn
 % symbolic terms:
 %   [q_1, ..., q_n]
@@ -27,10 +29,10 @@ run examples\create_planar_2dof.m
 %   [xd_1, ..., xd_n]
 %   [xdd_1, ..., xdd_n]
 
-model = copy(robot_2dof);
+model = copy(prost_low);
 nj = model.nj;
 model.set_base(zeros(3,1), eye(3))
-model.update_finger(zeros(2,1))
+model.update_finger(zeros(nj,1))
 
 mdh_ne = mdh_struct_to_matrix(model.mdh_ori, 1);
 mdh_ne(1:nj,3) = mdh_ne(1:nj,3);
@@ -60,15 +62,33 @@ I_ne_sym = sym(model.par_dyn_f.inertia_all);
 g_sym = sym(model.par_dyn_f.g);
 
 % return
-%%
+%% symbolic calculation
 
 [Tau,~,~] = invdyn_ne_mdh_sym(q_sym,qd_sym,qdd_sym,mdh_sym, Mass_sym,...
              sym(zeros(6,1)), sym(zeros(6,1)), sym(zeros(6,1)), F_ext_ne, CoM_ne_sym, I_ne_sym, g_sym);
 Tau = simplify(Tau);
-%%
-q_0 = rand(2,1);
-qd_0 = rand(2,1);
-qdd_0 = rand(2,1);
+%% Validation
+q_init = rand(nj,1);
+model.update_finger(q_init);
+q_0 = pi*rand(nj,1);
+qd_0 = pi*rand(nj,1);
+qdd_0 = pi*rand(nj,1);
+tic
 Tau_num = model.invdyn_ne_w_end(q_0, qd_0, qdd_0, zeros(6,1))
-
+t1 = toc;
+model.update_finger(q_init);
+tic
 Tau_sym = double(subs(Tau,[q_sym qd_sym qdd_sym], [q_0 qd_0 qdd_0]))
+t2 = toc;
+tic  
+Tau_sym_gen = tau_prost_low(q_0,qd_0,qdd_0)
+t3 = toc;
+fprintf('Time cost of invdyn computation: \n')
+fprintf('class function: %.4f \n', t1)
+fprintf('symbolic function direct: %.4f \n', t2)
+fprintf('symbolic function generated: %.4f \n', t3)
+%% Code generation
+
+% matlabFunction(Tau,"File","tau_prost_low","Vars", {q_sym,qd_sym,qdd_sym});
+
+
