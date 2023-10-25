@@ -67,6 +67,7 @@ for i = 2:n_f-1
     W_T_allframe(:,:,i) = W_T_allframe(:,:,1)*T_mdh_multi(mdh(1:i-1,:));
 end
 
+W_T_allframe = simplify(W_T_allframe);             
 
 % forward recursion: 
 for i = 2:n_q+2
@@ -86,20 +87,20 @@ for i = 2:n_q+2
     W_T_i = W_T_allframe(:,:,i);
     W_R_i = W_T_i(1:3,1:3);
     W_T_i_1 = W_T_allframe(:,:,i-1);
-    i_1_T_i =  W_T_i_1\W_T_i;
+    i_1_T_i =  simplify(W_T_i_1\W_T_i);
     
-    W_i_1_r_i = W_T_i_1(1:3,1:3)*i_1_T_i(1:3,4);% frame i-1 to frame i
-    W_i_r_c = W_R_i*CoM_i;% frame i to center of mass
+    W_i_1_r_i = simplify(W_T_i_1(1:3,1:3)*i_1_T_i(1:3,4));% frame i-1 to frame i
+    W_i_r_c = simplify(W_R_i*CoM_i);% frame i to center of mass
     
     % update frame velocity 
-    V(4:6,i) = V(4:6,i-1) + qD_i*W_R_i*[0 0 1]';
-    V(1:3,i) = V(1:3,i-1) + cross(V(4:6,i-1),W_i_1_r_i);
+    V(4:6,i) = simplify(V(4:6,i-1) + qD_i*W_R_i*[0 0 1]');
+    V(1:3,i) = simplify(V(1:3,i-1) + cross(V(4:6,i-1),W_i_1_r_i));
     % update frame acceleration 
-    VD(4:6,i) = VD(4:6,i-1) + qDD_i*W_R_i*[0 0 1]' + qD_i*cross(V(4:6,i-1),W_R_i*[0 0 1]');
-    VD(1:3,i) = VD(1:3,i-1) + cross(VD(4:6,i-1),W_i_1_r_i)+cross(V(4:6,i-1),cross(V(4:6,i-1),W_i_1_r_i));
+    VD(4:6,i) = simplify(VD(4:6,i-1) + qDD_i*W_R_i*[0 0 1]' + qD_i*cross(V(4:6,i-1),W_R_i*[0 0 1]'));
+    VD(1:3,i) = simplify(VD(1:3,i-1) + cross(VD(4:6,i-1),W_i_1_r_i)+cross(V(4:6,i-1),cross(V(4:6,i-1),W_i_1_r_i)));
     % calculate acceleration with respect to the center of mass
     VD_c(4:6,i) = VD(4:6,i);
-    VD_c(1:3,i) = VD(1:3,i) + cross(VD(4:6,i),W_i_r_c) + cross(V(4:6,i),cross(V(4:6,i),W_i_r_c));
+    VD_c(1:3,i) = simplify(VD(1:3,i) + cross(VD(4:6,i),W_i_r_c) + cross(V(4:6,i),cross(V(4:6,i),W_i_r_c)));
  end
 
 % backward recursion
@@ -109,17 +110,17 @@ for i = n_q+1:-1:1
     W_T_i = W_T_allframe(:,:,i);
     W_R_i = W_T_i(1:3,1:3);
     W_T_ip1 = W_T_allframe(:,:,i+1);
-    i_T_ip1 =  W_T_i\W_T_ip1;
-    W_i_r_ip1 = W_R_i*i_T_ip1(1:3,4);
+    i_T_ip1 =  simplify(W_T_i\W_T_ip1);
+    W_i_r_ip1 = simplify(W_R_i*i_T_ip1(1:3,4));
     % i to center of mass
     
-    W_i_r_c = W_R_i*CoM(:,i);
-    W_c_r_ip1 = W_i_r_ip1-W_i_r_c;
+    W_i_r_c = simplify(W_R_i*CoM(:,i));
+    W_c_r_ip1 = simplify(W_i_r_ip1-W_i_r_c);
     
     % dynamic parameters
     m_i = Mass(i);
     I_i = inertia_tensor2matrix(I(:,i));
-    W_I_i = W_R_i*I_i*W_R_i';
+    W_I_i = simplify(W_R_i*I_i*W_R_i');
     
     % forces exerted on the current frame by the last frame
     F(1:3,i) = F(1:3,i+1) - m_i*g + m_i*VD_c(1:3,i);

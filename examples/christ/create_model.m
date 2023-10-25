@@ -19,7 +19,8 @@ d5 = 0.29696; % new
 %% define a finger
 robot_dimension = [0,0,a4,a5,0,0,0]; % in meter
 
-prost = Finger('Index', 'type','R_RRRRRRR', 'l_links',robot_dimension); 
+prost = Finger('Index', 'type','R_RRRRRRR', 'l_links',robot_dimension); % entire prosthetic 
+prost_low = Finger('Index', 'type','R_RRRR', 'l_links',robot_dimension(4:end)); % only low part 
 mdh_default_struct = prost.mdh_ori;
 mdh_matrix = mdh_struct_to_matrix(mdh_default_struct, 1); % alpha,a,theta,d
 mdh_matrix(1,1) = -pi/2;
@@ -37,7 +38,11 @@ mdh_matrix(5,4) = d5;
 mdh_matrix(6,1) = pi/2;
 mdh_matrix(6,3) = pi/2;
 mdh_matrix(7,1) = pi/2;
+
+
 prost.set_mdh_parameters(mdh_matrix);
+prost_low.set_mdh_parameters(mdh_matrix(4:end,:));
+
 
 T = T_mdh_multi(mdh_matrix(1:1,:));
 T_base = T_mdh_multi([-pi/2 0 0 0]);
@@ -67,12 +72,23 @@ rst_model_r = prost.rst_model;
 % grid on 
 % axis equal
 
+prost_low.w_p_base = [0;0;0];
+prost_low.w_R_base = euler2R_XYZ([pi/2;0;0]);
+% prost.w_R_base = R_base;
 
-
+% init joint configurations
+q_0 = [0,0,0,0]';
+% udpate finger with given joint configurations
+prost_low.update_finger(q_0);
+par_plot = prost_low.plot_parameter_init;
+par_plot.axis_len = 0.1;
+prost_low.plot_finger(par_plot);
+axis equal
+return
 %% set dynamic parameters
 
 % load examples\christ\Junnan\02_calibweight\mech_param.mat
-path___ = './examples/christ/Junnan/02_calibweight/';
+path___ = 'D:/repos/hand_modeling_toolbox/examples/christ/Junnan/02_calibweight/';
 [m_p, rSges_p, mrSges_p, Ifges_p, Icges_p] = read_SW_inertia(path___,  ...
             {'T_0_0', 'T_0_sh1', 'T_0_sh2','T_0_sh3', 'T_0_el', 'T_0_fa', 'T_0_wj1', 'T_0_wj2'});
 
@@ -84,14 +100,18 @@ for i = 2:length(m_p)
     prost.list_links(i-1).set_com(com_converted(i,:)'); %
 end
 
-
-% update dynamic parameters
-
-
 % add base information
 prost.set_base_dynpar(m_p(1),rSges_p(1,:)',Icges_p(1,:)' )
 % prost.set_g_w([0,0,-9.81]');
 prost.update_finger_par_dyn;
+
+% update prost_low
+for i = 1:prost_low.nl
+    prost_low.list_links(i).set_mass(m_p(4+i));
+    prost_low.list_links(i).set_inertia(Icges_p(4+i,:)); % regarding com
+    prost_low.list_links(i).set_com(com_converted(4+i,:)'); %
+end
+prost_low.update_finger_par_dyn;
 
 %% alex code for plot 
 
