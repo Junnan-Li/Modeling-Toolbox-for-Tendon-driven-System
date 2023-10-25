@@ -1,0 +1,31 @@
+Masseneigenschaften von ausgewählte Komponenten
+     Koordinatensystem: T_0_el
+
+Masse = 761.41078237 Gramm
+
+Volumen = 229982.57665095 Kubikmillimeter
+
+Oberfläche = 247968.47491215  Quadratmillimeter
+
+Massenmittelpunkt: ( Millimeter )
+	X = -0.03836775
+	Y = -46.50128281
+	Z = -0.86113416
+
+Hauptachsen der Trägheit und Hauptträgheitsmomente: ( Gramm *  Quadratmillimeter )
+Bezogen auf den Massenmittelpunkt.
+	 Ix = (-0.00210258, -0.99986420,  0.01634512)   	Px = 364993.76857588
+	 Iy = (-0.30552645, -0.01492128, -0.95206667)   	Py = 1900421.95276960
+	 Iz = ( 0.95218127, -0.00699566, -0.30545359)   	Pz = 1905373.41787844
+
+Trägheitsmomente: ( Gramm *  Quadratmillimeter )
+Bezogen auf den Massenmittelpunkt und ausgerichtet auf das Ausgabekoordinatensystem.
+	Lxx = 1904904.40657418	Lxy = 3260.90772500	Lxz = 1387.35170621
+	Lyx = 3260.90772500	Lyy = 365411.00831295	Lyz = -25103.93018181
+	Lzx = 1387.35170621	Lzy = -25103.93018181	Lzz = 1900473.72433679
+
+Trägheitsmomente: ( Gramm *  Quadratmillimeter )
+Bezogen auf das Ausgabekoordinatensystem.
+	Ixx = 3551920.33501543	Ixy = 4619.37839420	Ixz = 1412.50854990
+	Iyx = 4619.37839420	Iyy = 365976.75489827	Iyz = 5385.88385264
+	Izx = 1412.50854990	Izy = 5385.88385264	Izz = 3546926.14791412
