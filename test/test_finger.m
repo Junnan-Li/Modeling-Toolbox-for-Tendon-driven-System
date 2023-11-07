@@ -465,7 +465,7 @@ end
 
 
 
-%% Workspace
+%% Workspace 11
 
 
 q_limit = rand(finger_r.nja,2);
@@ -494,3 +494,51 @@ end
 
 grid on
 axis equal
+
+%% symbolic generation test 12
+% test with 3dof structure
+
+mdh_parameter = rand(3,4);
+mdh_parameter(:,3) = 0;
+mdh_parameter(1,1:4) = 0;
+mdh_struct = mdh_matrix_to_struct(mdh_parameter, 1);
+finger_3dof = Finger('finger_3dof', 'mdh',mdh_struct );
+
+mdh_default_struct = finger_3dof.mdh_ori;
+mdh_matrix = mdh_struct_to_matrix(mdh_default_struct, 1);
+mdh_matrix(2,1) = -pi/2;
+finger_3dof.set_mdh_parameters(mdh_matrix);
+% set random states
+% set random base position and orientation
+finger_3dof.w_p_base = 4*rand(3,1);
+finger_3dof.w_R_base = euler2R_XYZ(rand(1,3));
+
+Tau_sym = finger_3dof.invdyn_ne_w_end_sym(0);
+
+% test results
+q_rand = rand(finger_3dof.nj,1);
+qd_rand = rand(finger_3dof.nj,1);
+qdd_rand = rand(finger_3dof.nj,1);
+
+F_ext_rand  = rand(6,1);
+
+Tau_num = finger_3dof.invdyn_ne_w_end(q_rand, qd_rand , qdd_rand , F_ext_rand );
+
+q_sym = sym('q',[2,1], 'real');
+qd_sym = sym('qd',[2,1], 'real');
+qdd_sym = sym('qdd',[2,1], 'real');
+F_ext_sym = sym('F_ext',[6,1], 'real');
+Tau_sym_res = double(subs(Tau_sym,symvar(Tau_sym), [F_ext_rand ;q_rand ;qd_rand ;qdd_rand]')); % [q_sym qd_sym qdd_sym F_ext_sym],
+
+Tau_error = Tau_num-Tau_sym_res;
+
+if max(abs(Tau_error(:))) > 1e-6
+    test_12_status = 0;
+    fprintf('Test 12 (sym torque): failed! \n')
+else
+    fprintf('Test 12 (sym torque): pass! \n')
+end
+
+
+
+

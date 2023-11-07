@@ -1,4 +1,4 @@
-% recursive Newton-Euler method to compute inverse dynamic with mdh
+% symbolic generation of recursive Newton-Euler method to compute inverse dynamic with mdh
 % only end-effector external force input
 % parameters
 % Input:
@@ -36,7 +36,7 @@
 % Comment: [04/23] XDbase not updated (VD_c)
 
 
-function [Tau,F,W_T_allframe] = invdyn_ne_mdh(q,qD,qDD,mdh, Mass, X_base, XD_base,XDD_base, F_ext, CoM, I, g)
+function [Tau,F,W_T_allframe] = invdyn_ne_mdh_sym(q,qD,qDD,mdh, Mass, X_base, XD_base,XDD_base, F_ext, CoM, I, g)
 %#codegen
 
 % test input dimension

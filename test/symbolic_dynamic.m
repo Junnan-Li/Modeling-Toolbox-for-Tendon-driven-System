@@ -11,8 +11,10 @@ clc
 
 %% load example model
 
-% run examples\create_planar_2dof.m
-run examples\christ\create_model.m
+run examples\create_planar_2dof.m
+% run examples\christ\create_model.m
+
+Tau_sym = robot_2dof.invdyn_ne_w_end_sym(1)
 
 % run examples\create_finger.m
 %% invdyn
