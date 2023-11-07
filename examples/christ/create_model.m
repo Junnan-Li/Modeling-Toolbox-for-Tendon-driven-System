@@ -77,14 +77,8 @@ prost_low.w_R_base = euler2R_XYZ([pi/2;0;0]);
 % prost.w_R_base = R_base;
 
 % init joint configurations
-q_0 = [0,0,0,0]';
-% udpate finger with given joint configurations
-prost_low.update_finger(q_0);
-par_plot = prost_low.plot_parameter_init;
-par_plot.axis_len = 0.1;
-prost_low.plot_finger(par_plot);
-axis equal
-return
+
+% return
 %% set dynamic parameters
 
 % load examples\christ\Junnan\02_calibweight\mech_param.mat
@@ -129,7 +123,7 @@ frame_index_order = {'T_0_0', 'T_0_sh1', 'T_0_sh2','T_0_sh3', 'T_0_el', 'T_0_fa'
 s_mp_out = fct_calc_mass_parameter_box(s_mp_in);
 
 % plot position
-for i = 1:10
+for i = 1:1
 q0 = [0,0,0,0,0,0,0]';
 q0 = rand(7,1);
 T_c_mdh = exoprB01_fkine_fixb_rotmat_mdh_sym_varpar(q0, pkin_p);
@@ -172,7 +166,22 @@ par_plot_com.markercolor = 'k';
 % prost.list_links(3).set_com([0,0,0]);
 % prost.update_finger_par_dyn;
 prost.plot_com(par_plot_com);
+% hold off
+q_0 = [0,0,0,0]';
+% udpate finger with given joint configurations
+prost_low.update_finger(q_0);
+par_plot = prost_low.plot_parameter_init;
+par_plot.axis_len = 0.1;
+prost_low.plot_finger(par_plot);
+par_plot_com = par_plot;
+par_plot_com.markersize = 28;
+par_plot_com.markercolor = 'k';
+
+% prost.list_links(3).set_com([0,0,0]);
+% prost.update_finger_par_dyn;
+prost_low.plot_com(par_plot_com);
 hold off
+axis equal
 end
 return
 
