@@ -257,7 +257,7 @@ Tau_error_2 = abs(Tau_class-Tau_class_fb(7:end));
 % 
 
 % test floating base function
-
+X_base = rand(6,1);
 XD_base = rand(6,1);
 XDD_base = rand(6,1);
 Tau_class_fb = finger_r.invdyn_ne_xq_fb_all_fext([X_base;q_r],[XD_base;q_rD],[XDD_base;q_rDD],[zeros(6,finger_r.nj+1),F_ext]);
@@ -273,7 +273,7 @@ if max(Tau_error(:)) > 1e-10 | max(Tau_error_2(:)) > 1e-10 | max(Tau_error_fb(:)
 else
     fprintf('Test 5 (inverse dynamic): pass! \n')
 end
-
+return
 %% Test 6 Forward dynamic test
 
 % random states

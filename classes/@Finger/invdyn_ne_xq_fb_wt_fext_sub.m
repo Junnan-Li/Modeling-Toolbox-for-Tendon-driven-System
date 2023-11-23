@@ -25,47 +25,15 @@ assert(length(xq)== obj.nj+6, 'dimension of joint vector is incorrect!')
 assert(length(xqD)== obj.nj+6, 'dimension of joint vector is incorrect!')
 assert(length(xqDD)== obj.nj+6, 'dimension of joint vector is incorrect!')
 
-n_state = obj.nj + 6;
 mdh_ne = mdh_struct_to_matrix(obj.mdh_ori, 1);
 mdh_ne(1:obj.nj,3) = mdh_ne(1:obj.nj,3);
 Mass = obj.par_dyn_f.mass_all;
-% X_base = zeros(6,1);
-% X_base(1:3) = obj.w_p_base;
-% X_base(4:6) = R2euler_XYZ(obj.w_R_base);
-% XD_base = zeros(6,1);
-% XDD_base = zeros(6,1);
 
 CoM_ne = obj.par_dyn_f.com_all;
 I_ne = obj.par_dyn_f.inertia_all;
 g = obj.par_dyn_f.g;
 
 
-[FTau_wt_fext,~] = invdyn_ne_xq_mdh_all_fext(xq,xqD,xqDD,...
-            mdh_ne,Mass,zeros(6,obj.nj+2), CoM_ne, I_ne, g);
-
-%% gravity term
-% xqD = 0; xqDD = 0; F_ext = 0;
-[FTau_G,~] = invdyn_ne_xq_mdh_all_fext(xq,zeros(n_state,1),zeros(n_state,1),mdh_ne,Mass,zeros(6,obj.nj+2), CoM_ne, I_ne, g);
-
-%% Coriolis term
-% xqD = 0; xqDD = 0; F_ext = 0;
-FTau_CG = invdyn_ne_xq_mdh_all_fext(xq,xqD,zeros(n_state,1),mdh_ne,Mass,zeros(6,obj.nj+2), CoM_ne, I_ne, g);
-FTau_C = FTau_CG - FTau_G;
-
-%% Mass matrix
-% xqD = 0, F_ext = 0
-M_xq = zeros(n_state,n_state);
-for i = 1:n_state
-    xqDD_i = zeros(n_state,1);
-    xqDD_i(i) = 1;
-    [FTau_MG,~] = invdyn_ne_xq_mdh_all_fext(xq,zeros(n_state,1),xqDD_i,mdh_ne,Mass,zeros(6,obj.nj+2), CoM_ne, I_ne, g);
-    FTau_M = FTau_MG - FTau_G;
-    M_xq(:,i) = FTau_M;
-end
-FTau_M = M_xq * xqDD;
-
-% % for validating: other method of calculate FTau_M
-% [FTau_MG,~] = invdyn_ne_xq_mdh_all_fext(xq,zeros(n_state,1),xqDD,mdh_ne,Mass,zeros(6,obj.nj+2), CoM_ne, I_ne, g);
-% FTau_M = FTau_MG - FTau_G;
+[FTau_G,FTau_C,M_xq,FTau_M,FTau_wt_fext] = invdyn_ne_xq_mdh_wt_fext_sub(xq,xqD,xqDD,mdh_ne,Mass,CoM_ne, I_ne, g);
 
 end
