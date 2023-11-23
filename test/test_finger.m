@@ -542,7 +542,8 @@ finger_3dof.set_mdh_parameters(mdh_matrix);
 finger_3dof.w_p_base = 4*rand(3,1);
 finger_3dof.w_R_base = euler2R_XYZ(rand(1,3));
 
-Tau_sym = finger_3dof.invdyn_ne_w_end_sym(101,1);
+% % generate the symbolic term
+% Tau_sym = finger_3dof.invdyn_ne_w_end_sym(101,1);
 
 % test results
 q_rand = rand(finger_3dof.nj,1);
