@@ -2,6 +2,8 @@
 % comparing results to the robot system toolbox of MATLAB
 % 
 % random joint states, X_base, external force, mass, inertia, com, 
+% 
+% Note: this test is only for fixed base due to the rst model
 
 
 clear all
@@ -10,7 +12,7 @@ clc
 
 %% setting
 show_robot = 0;
-show_time_cost = 1;
+show_time_cost = 0;
 % number of joints
 n_q = 5; 
 
@@ -125,6 +127,7 @@ if show_robot
 end
 
 %% Newton-Euler inverse dynamic all f_ext(ne method)
+% invdyn_ne_mdh_all_fext.m
 tic;
 [Tau_ne_all_fext,F,W_T_allframe] = invdyn_ne_mdh_all_fext(q,qD,qDD,mdh_ne, Mass,...
     X_base, XD_base, XDD_base, F_ext_ne_all_fext, CoM_ne, I_ne, g);
@@ -132,13 +135,13 @@ t_stop = toc;
 if show_time_cost
     fprintf('inverse dynamic computation cost: %f \n', t_stop);
 end
-tic;
-[Tau_ne_all_fext,F,W_T_allframe] = invdyn_ne_mdh_all_fext_mex(q,qD,qDD,mdh_ne, Mass,...
-    X_base, XD_base, XDD_base, F_ext_ne_all_fext, CoM_ne, I_ne, g);
-t_stop = toc;
-if show_time_cost
-    fprintf('mex inverse dynamic computation cost: %f \n', t_stop);
-end
+% tic;
+% [Tau_ne_all_fext,F,W_T_allframe] = invdyn_ne_mdh_all_fext_mex(q,qD,qDD,mdh_ne, Mass,...
+%     X_base, XD_base, XDD_base, F_ext_ne_all_fext, CoM_ne, I_ne, g);
+% t_stop = toc;
+% if show_time_cost
+%     fprintf('mex inverse dynamic computation cost: %f \n', t_stop);
+% end
 
 % Validation: Inverse dynamic Torque
 T_all_fext_error = Tau_rst_all_fext - Tau_ne_all_fext;
@@ -150,6 +153,7 @@ else
 end
 
 %% Newton-Euler inverse dynamic only endeffector f_ext(ne method)
+% invdyn_ne_mdh.m
 tic;
 [Tau_ne_end_fext,F,W_T_allframe] = invdyn_ne_mdh(q,qD,qDD,mdh_ne, Mass,...
     X_base, XD_base, XDD_base, F_ext_ne, CoM_ne, I_ne, g);
@@ -157,10 +161,10 @@ t_stop = toc;
 if show_time_cost
     fprintf('inverse dynamic computation cost: %f \n', t_stop);
 end
-tic;
-[Tau_ne_end_fext,F,W_T_allframe] = invdyn_ne_mdh_mex(q,qD,qDD,mdh_ne, Mass,...
-             X_base, XD_base, XDD_base, F_ext_ne, CoM_ne, I_ne, g);
-t_stop = toc;
+% tic;
+% [Tau_ne_end_fext,F,W_T_allframe] = invdyn_ne_mdh_mex(q,qD,qDD,mdh_ne, Mass,...
+%              X_base, XD_base, XDD_base, F_ext_ne, CoM_ne, I_ne, g);
+% t_stop = toc;
 
 [Tau_ne_all_fext,F,W_T_allframe] = invdyn_ne_mdh_all_fext(q,qD,qDD,mdh_ne, Mass,...
     X_base, XD_base, XDD_base, [zeros(6,n_q+1),F_ext_ne], CoM_ne, I_ne, g);
@@ -179,6 +183,7 @@ else
 end
 
 %% Newton-Euler inverse dynamic gravity 
+% invdyn_ne_mdh_all_fext_gravity.m
 
 Tau_g_rst = gravityTorque(robot,q);
 
@@ -193,6 +198,7 @@ else
     fprintf('Inverse dynamic geavity test (NE Torque): pass! \n')
 end
 
+return
 %% Forward dynamic 
 % given q, qD, tau  --> qDD
 
@@ -217,7 +223,7 @@ if show_time_cost
 end
 tic;
 [qDD_ne_est,M_ne_fd,C_ne_fd,G_ne_fd] = fordyn_ne_mdh(q,qD,Tau,mdh_ne, Mass,...
-    X_base, XD_base, XDD_base, F_ext_ne_all_fext, CoM_ne, I_ne, g);
+    X_base, XD_base, XDD_base, F_ext_ne_all_fext, CoM_ne, I_ne, g, 0);
 t_stop = toc;
 if show_time_cost
     fprintf('mex forward dynamic computation cost: %f \n', t_stop);

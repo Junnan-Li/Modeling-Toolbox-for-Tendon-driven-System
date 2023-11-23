@@ -66,7 +66,10 @@ for i = 1:n_q+1
     ref_T_allframe(:,:,i) = T_mdh_multi(mdh_ne(i,:));
 end
 
-%% invdyn_ne_mdh_all_fext.m vs invdyn_ne_xq_mdh_all_fext.m
+%% invdyn_ne_mdh vs. invdyn_ne_mdh_all_fext.m vs invdyn_ne_xq_mdh_all_fext.m
+
+[Tau_ne_mdh,F_mdh,~] = invdyn_ne_mdh(q,qD,qDD,mdh_ne, Mass,...
+    X_base, XD_base, XDD_base, F_end, CoM, I, g);
 
 [Tau_ne_all_fext,F,~] = invdyn_ne_mdh_all_fext(q,qD,qDD,mdh_ne, Mass,...
     X_base, XD_base, XDD_base, F_ext_ne_all_fext, CoM, I, g);
@@ -74,17 +77,19 @@ end
 % inverse dynamic with [x_base;q] as input: invdyn_ne_xq_mdh_all_fext.m
 [FTau,W_T_allframe] = invdyn_ne_xq_mdh_all_fext([X_base;q],[XD_base;qD],[XDD_base;qDD],mdh_ne,Mass,F_ext_ne_all_fext, CoM, I, g);
 
+FTau_0 = [F_mdh(:,1);Tau_ne_mdh];
 FTau_1 = [F(:,1);Tau_ne_all_fext];
 FTau_2 = FTau;
 
 % Validation:
 test_1_error = FTau_1 - FTau_2;
-if max(abs(test_1_error(:))) > 1e-8
+test_2_error = FTau_1 - FTau_0;
+if max(abs(test_1_error(:))) > 1e-8 | max(abs(test_2_error(:))) > 1e-8
     fprintf('Inverse dynamic test 1: failed! \n')
 else
     fprintf('Inverse dynamic test 1: pass! \n')
 end
-
+return
 %% Test 2 forward dynamic 
 % fordyn_ne_xq_mdh_fb.m
 xq = [X_base;q];

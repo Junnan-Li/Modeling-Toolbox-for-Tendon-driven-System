@@ -1,4 +1,4 @@
-% recursive Newton-Euler method to compute inverse dynamic with mdh
+                                        % recursive Newton-Euler method to compute inverse dynamic with mdh
 % with external forces on all links as input
 % parameters
 % Input:

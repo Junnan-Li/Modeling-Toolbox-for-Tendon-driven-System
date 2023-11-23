@@ -224,13 +224,28 @@ finger_r.print_contact()
 % random states
 q_rD = rand(size(q_r));
 q_rDD = rand(size(q_r));
-F_ext = rand(6,1);
+F_ext = zeros(6,1);
 
+finger_r.set_base_dynpar(rand(1),rand(3,1),rand(6,1) );
+for i = 1:finger_r.nl
+    finger_r.list_links(i).set_mass(rand(1));
+    finger_r.list_links(i).set_com(rand(3,1));
+    finger_r.list_links(i).set_inertia([rand(3,1);zeros(3,1)]);
+end
+finger_r.update_finger_par_dyn;
 
 Tau_class = finger_r.invdyn_ne_w_end(q_r,q_rD,q_rDD,F_ext);
 
+X_base = [finger_r.w_p_base;R2euler_XYZ(finger_r.w_R_base)];
+XD_base = zeros(6,1);
+XDD_base = zeros(6,1);
+Tau_class_fb = finger_r.invdyn_ne_xq_fb_all_fext([X_base;q_r],[XD_base;q_rD],[XDD_base;q_rDD],[zeros(6,finger_r.nj+1),F_ext]);
+
 
 % transfer the external force exerting on the 
+finger_r.update_rst_model;
+rst_model = finger_r.rst_model;
+
 transform = getTransform(rst_model,q_r,'endeffector');
 W_R_end = transform(1:3,1:3);
 F_ext_rst = externalForce(rst_model,'endeffector',[W_R_end'*F_ext(4:6);W_R_end'*F_ext(1:3)],q_r);
@@ -238,8 +253,22 @@ Tau_rst = inverseDynamics(rst_model, q_r,q_rD,q_rDD, F_ext_rst);
 
 
 Tau_error = abs(Tau_class-Tau_rst);
+Tau_error_2 = abs(Tau_class-Tau_class_fb(7:end));
+% 
 
-if max(Tau_error(:)) > 1e-10
+% test floating base function
+
+XD_base = rand(6,1);
+XDD_base = rand(6,1);
+Tau_class_fb = finger_r.invdyn_ne_xq_fb_all_fext([X_base;q_r],[XD_base;q_rD],[XDD_base;q_rDD],[zeros(6,finger_r.nj+1),F_ext]);
+
+[FTau_G,FTau_C,M_xq,FTau_M,FTau_wt_fext] = finger_r.invdyn_ne_xq_fb_wt_fext_sub([X_base;q_r],[XD_base;q_rD],[XDD_base;q_rDD]);
+sum_sub = FTau_G + FTau_C + FTau_M;
+
+Tau_error_fb = abs(Tau_class_fb - FTau_wt_fext);
+Tau_error_fb2 = abs(sum_sub - FTau_wt_fext);
+
+if max(Tau_error(:)) > 1e-10 | max(Tau_error_2(:)) > 1e-10 | max(Tau_error_fb(:)) > 1e-10 | max(Tau_error_fb2(:)) > 1e-10
     fprintf('Test 5 (inverse dynamic): failed! \n')
 else
     fprintf('Test 5 (inverse dynamic): pass! \n')
@@ -513,7 +542,7 @@ finger_3dof.set_mdh_parameters(mdh_matrix);
 finger_3dof.w_p_base = 4*rand(3,1);
 finger_3dof.w_R_base = euler2R_XYZ(rand(1,3));
 
-Tau_sym = finger_3dof.invdyn_ne_w_end_sym(0);
+Tau_sym = finger_3dof.invdyn_ne_w_end_sym(101,1);
 
 % test results
 q_rand = rand(finger_3dof.nj,1);

@@ -66,6 +66,9 @@ W_T_allframe(:,:,1) = [euler2R_XYZ(X_base(4:6)),X_base(1:3);...
 for i = 2:n_f-1
     W_T_allframe(:,:,i) = W_T_allframe(:,:,1)*T_mdh_multi(mdh(1:i-1,:));
 end
+% update VD_c of base
+W_b_r_c = euler2R_XYZ(X_base(4:6))*CoM(:,1);
+VD_c(1:3,1) = VD(1:3,1) + cross(VD(4:6,1),W_b_r_c) + cross(V(4:6,1),cross(V(4:6,1),W_b_r_c));
 
 
 % forward recursion: 
