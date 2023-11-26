@@ -109,6 +109,7 @@ if save_res
     end
     matlabFunction(Tau_sym,"File",func_name,...
         "Vars", var_name);
+    save('./output',Tau_sym)
 end
 
 end

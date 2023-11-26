@@ -1,15 +1,17 @@
 % inverse dynamic of the finger with the endeffector interaction to the
 % environment with respect to the world frame
+% 
 % floating base version 
 % symbolic version
-% call invdyn_ne_xq_mdh_all_fext_sym.m
+% calculate sub-terms
+% parallel computing version
+% call invdyn_ne_xq_mdh_all_fext_sub_sym_par.m
 % 
 % Note: in this function, obj.w_p_base & obj.w_R_base are not passed to the
 % calculation, need to give as input xq
 % input:
 %           sym_type: symbolic variables contains 
 %               1: xq,xqd,xqdd
-%               2: xq,xqd,xqdd,f_ext
 % 
 %               specific versions of definition
 %               101(christ): xq,xqd,xqdd,
@@ -17,12 +19,17 @@
 %           save_res: Bin, save output as .m function 
 % 
 % output:
-%           FTau: [6+obj.nj] 
+%           FTau_G: [6+obj.nj] 
+%           FTau_C: [6+obj.nj] 
+%           M_xq: [6+obj.nj x 6+obj.nj] 
+%           FTau_M: [6+obj.nj] 
+%           FTau_wt_fext: [6+obj.nj] 
+% 
 % 
 % 
 % Junnan Li, 11.2023
 
-function [FTau_sym] = invdyn_ne_xq_fb_all_fext_sym(obj, sym_type, save_res)
+function [FTau_G,FTau_C,M_xq,FTau_M,FTau_wt_fext] = invdyn_ne_xq_fb_wt_fext_sub_sym_par(obj, sym_type, save_res)
 
 % assert(length(xq)== obj.nj+6, 'dimension of joint vector is incorrect!')
 % assert(length(xqD)== obj.nj+6, 'dimension of joint vector is incorrect!')
@@ -32,8 +39,6 @@ function [FTau_sym] = invdyn_ne_xq_fb_all_fext_sym(obj, sym_type, save_res)
 xq_sym = sym('xq',[obj.nj+6,1], 'real');
 xqd_sym = sym('xqd',[obj.nj+6,1], 'real');
 xqdd_sym = sym('xqdd',[obj.nj+6,1], 'real');
-F_ext_sym = sym(zeros(6,obj.nj+2)); % default no external force variables
-
 
 mdh_ne = mdh_struct_to_matrix(obj.mdh_ori, 1);
 mdh_ne(1:obj.nj,3) = mdh_ne(1:obj.nj,3);
@@ -52,9 +57,6 @@ g_sym = sym(g);
 switch sym_type
     case 1
         var_name = {xq_sym,xqd_sym,xqdd_sym};
-    case 2
-        F_ext_sym = sym('F_ext',[6,obj.nj+2], 'real');
-        var_name = {xq_sym,xqd_sym,xqdd_sym,F_ext_sym};
     case 101 % 
         mass_end = sym('m_end','positive');
         Mass_sym = sym([Mass(1:end-1);mass_end]);
@@ -66,17 +68,24 @@ switch sym_type
 end
 
 
-[FTau_sym,~] = invdyn_ne_xq_mdh_all_fext_sym(xq_sym,xqd_sym,xqdd_sym,...
-            mdh_ne_sym,Mass_sym,F_ext_sym, CoM_ne_sym, I_ne_sym, g_sym);
+[FTau_G,FTau_C,M_xq,FTau_M,FTau_wt_fext] = invdyn_ne_xq_mdh_wt_fext_sub_sym_par(xq_sym,xqd_sym,xqdd_sym,...
+            mdh_ne_sym,Mass_sym, CoM_ne_sym, I_ne_sym, g_sym);
 
 if save_res
     func_name = strcat('output/tau_xq_fb_sym_', obj.name);
     if ~exist('./output', 'dir')
        mkdir('./output');
     end
-    matlabFunction(FTau_sym,"File",func_name,...
+    matlabFunction(FTau_G,"File",strcat(func_name,'_FTau_G'),...
         "Vars", var_name);
-    save('./output',FTau_sym)
+    matlabFunction(FTau_C,"File",strcat(func_name,'_FTau_C'),...
+        "Vars", var_name);
+    matlabFunction(M_xq,"File",strcat(func_name,'_M'),...
+        "Vars", var_name);
+    matlabFunction(FTau_M,"File",strcat(func_name,'_FTau_M'),...
+        "Vars", var_name);
+    matlabFunction(FTau_wt_fext,"File",strcat(func_name,'_FTau_wt_fext'),...
+        "Vars", var_name);
 end
 
 end

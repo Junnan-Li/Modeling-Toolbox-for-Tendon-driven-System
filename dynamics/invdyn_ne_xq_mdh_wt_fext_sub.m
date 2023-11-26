@@ -16,6 +16,7 @@
 % output:
 %           FTau: [6+obj.nj] 
 % 
+% use parallel computation
 
 function [FTau_G,FTau_C,M_xq,FTau_M,FTau_wt_fext] = invdyn_ne_xq_mdh_wt_fext_sub(xq,xqD,xqDD,mdh_ne,Mass,CoM_ne, I_ne, g)
 %#codegen

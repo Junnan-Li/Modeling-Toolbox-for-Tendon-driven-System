@@ -23,6 +23,7 @@
 %           FTau_wt_fext: [6+obj.nj] 
 % 
 
+
 function [FTau_G,FTau_C,M_xq,FTau_M,FTau_wt_fext] = invdyn_ne_xq_mdh_wt_fext_sub_sym(xq,xqD,xqDD,mdh_ne,Mass,CoM_ne, I_ne, g)
 %#codegen
 
@@ -37,11 +38,11 @@ f_ext = sym(zeros(6,n_q+2));
 
 %% gravity term
 % xqD = 0; xqDD = 0; F_ext = 0;
-[FTau_G,~] = simplify(invdyn_ne_xq_mdh_all_fext_sym(xq,zeros(n_state,1),zeros(n_state,1),mdh_ne,Mass,f_ext, CoM_ne, I_ne, g));
+[FTau_G,~] = invdyn_ne_xq_mdh_all_fext_sym(xq,sym(zeros(n_state,1)),sym(zeros(n_state,1)),mdh_ne,Mass,f_ext, CoM_ne, I_ne, g);
 
 %% Coriolis term
 % xqD = 0; xqDD = 0; F_ext = 0;
-FTau_CG = invdyn_ne_xq_mdh_all_fext_sym(xq,xqD,zeros(n_state,1),mdh_ne,Mass,f_ext, CoM_ne, I_ne, g);
+FTau_CG = invdyn_ne_xq_mdh_all_fext_sym(xq,xqD,sym(zeros(n_state,1)),mdh_ne,Mass,f_ext, CoM_ne, I_ne, g);
 FTau_C = simplify(FTau_CG - FTau_G);
 
 %% Mass matrix
@@ -50,7 +51,8 @@ M_xq = zeros(n_state,n_state);
 for i = 1:n_state
     xqDD_i = zeros(n_state,1);
     xqDD_i(i) = 1;
-    [FTau_MG,~] = invdyn_ne_xq_mdh_all_fext_sym(xq,zeros(n_state,1),xqDD_i,mdh_ne,Mass,f_ext, CoM_ne, I_ne, g);
+    xqDD_i_sym = sym(xqDD_i);
+    [FTau_MG,~] = invdyn_ne_xq_mdh_all_fext_sym(xq,sym(zeros(n_state,1)),xqDD_i_sym,mdh_ne,Mass,f_ext, CoM_ne, I_ne, g);
     FTau_M = simplify(FTau_MG - FTau_G);
     M_xq(:,i) = FTau_M;
 end

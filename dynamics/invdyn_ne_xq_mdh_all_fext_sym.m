@@ -60,10 +60,11 @@ F(:,end) = -F_ext(:,end);
 W_T_allframe = sym(zeros(4,4,n_f-1));
 mdh(1:n_q,3) = mdh(1:n_q,3)+q; % update mdh parameters with the current q
 % homogeneous transformation from Base to World frame
-W_T_allframe(:,:,1) = [euler2R_XYZ(X_base(4:6)),X_base(1:3);...
+W_T_base = [euler2R_XYZ(X_base(4:6)),X_base(1:3);...
                 0 0 0 1];
-for i = 2:n_f-1
-    W_T_allframe(:,:,i) = W_T_allframe(:,:,1)*T_mdh_multi(mdh(1:i-1,:));
+W_T_allframe(:,:,1) = W_T_base;
+parfor i = 2:n_f-1
+    W_T_allframe(:,:,i) = W_T_base*T_mdh_multi(mdh(1:i-1,:));
 end
 W_T_allframe = simplify(W_T_allframe); 
 % V with respect to the Wolrd Frame 
@@ -139,7 +140,7 @@ end
 
 
 % frame force/moment to joint torque
-for i = 2:n_q+1
+parfor i = 2:n_q+1
     % frame qi to World
     W_T_i = W_T_allframe(:,:,i);
     W_R_i = W_T_i(1:3,1:3);
