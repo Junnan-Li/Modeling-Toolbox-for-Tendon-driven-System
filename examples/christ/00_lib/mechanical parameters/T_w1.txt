@@ -1,0 +1,32 @@
+Mass properties of link_fa
+     Configuration: Standard
+     Coordinate system: T_w1
+
+Mass = 0.01820352 kilograms
+
+Volume = 0.00000230 cubic meters
+
+Surface area = 0.00231070 square meters
+
+Center of mass: ( meters )
+	X = 0.00000000
+	Y = 0.00000000
+	Z = 0.00001259
+
+Principal axes of inertia and principal moments of inertia: ( kilograms * square meters )
+Taken at the center of mass.
+	 Ix = ( 1.00000000,  0.00000000,  0.00000000)   	Px = 0.00000043
+	 Iy = ( 0.00000000,  0.00008083, -1.00000000)   	Py = 0.00000158
+	 Iz = ( 0.00000000,  1.00000000,  0.00008083)   	Pz = 0.00000159
+
+Moments of inertia: ( kilograms * square meters )
+Taken at the center of mass and aligned with the output coordinate system. (Using positive tensor notation.)
+	Lxx = 0.00000043	Lxy = 0.00000000	Lxz = 0.00000000
+	Lyx = 0.00000000	Lyy = 0.00000159	Lyz = 0.00000000
+	Lzx = 0.00000000	Lzy = 0.00000000	Lzz = 0.00000158
+
+Moments of inertia: ( kilograms * square meters )
+Taken at the output coordinate system. (Using positive tensor notation.)
+	Ixx = 0.00000043	Ixy = 0.00000000	Ixz = 0.00000000
+	Iyx = 0.00000000	Iyy = 0.00000159	Iyz = 0.00000000
+	Izx = 0.00000000	Izy = 0.00000000	Izz = 0.00000158

@@ -1,0 +1,48 @@
+Mass properties of link_el
+     Configuration: Standard
+     Coordinate system: T_el
+
+Mass = 0.59595621 kilograms
+
+Volume = 0.00021549 cubic meters
+
+Surface area = 0.23343614 square meters
+
+
+
+Center of mass: ( meters )
+	X = 0.00018453
+	Y = -0.04511247
+	Z = 0.00012761
+
+Principal axes of inertia and principal moments of inertia: ( kilograms * square meters )
+Taken at the center of mass.
+	 Ix = (-0.00121359, -0.99994862, -0.01006380)   	Px = 0.00026032
+	 Iy = (-0.99790354,  0.00186219, -0.06469205)   	Py = 0.00135210
+	 Iz = ( 0.06470747,  0.00996419, -0.99785453)   	Pz = 0.00137170
+
+Moments of inertia: ( kilograms * square meters )
+Taken at the center of mass and aligned with the output coordinate system. (Using positive tensor notation.)
+	Lxx = 0.00135218	Lxy = 0.00000131	Lxz = 0.00000128
+	Lyx = 0.00000131	Lyy = 0.00026044	Lyz = 0.00001118
+	Lzx = 0.00000128	Lzy = 0.00001118	Lzz = 0.00137150
+
+Moments of inertia: ( kilograms * square meters )
+Taken at the output coordinate system. (Using positive tensor notation.)
+	Ixx = 0.00256504	Ixy = -0.00000365	Ixz = 0.00000129
+	Iyx = -0.00000365	Iyy = 0.00026047	Iyz = 0.00000775
+	Izx = 0.00000129	Izy = 0.00000775	Izz = 0.00258437
+
+One or more components have overridden mass properties:
+	ring_a<1><Standard>@elfa02<1><Standard>
+	ring_b<1><Standard>@elfa02<1><Standard>
+	j1505_CPL_14A_50_2A_1<Standard>@_j1505_joint_ass<1><input_side>
+	j1505_ILM50x08_SERVO_KIT_VSP_Rev_101<1><Standard>@_j1505_joint_ass<1><input_side>
+	j1505_RD38-AKSIM_MB029_preliminary<1><Standard>@_j1505_joint_ass<1><input_side>
+	j1505_RD38-AKSIM_MRA029_preliminary<1><Standard>@_j1505_joint_ass<1><input_side>
+	TQ Motor PCB Study@_j1505_joint_ass
+	j1505_CPL_14A_50_2A_1<Standard>@_j1505_joint_ass<2><input_side>
+	j1505_ILM50x08_SERVO_KIT_VSP_Rev_101<1><Standard>@_j1505_joint_ass<2><input_side>
+	j1505_RD38-AKSIM_MB029_preliminary<1><Standard>@_j1505_joint_ass<2><input_side>
+	j1505_RD38-AKSIM_MRA029_preliminary<1><Standard>@_j1505_joint_ass<2><input_side>
+	TQ Motor PCB Study@_j1505_joint_ass

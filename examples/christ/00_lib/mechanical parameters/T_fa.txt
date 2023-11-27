@@ -1,0 +1,44 @@
+Mass properties of link_fa
+     Configuration: Standard
+     Coordinate system: T_fa
+
+Mass = 0.52001621 kilograms
+
+Volume = 0.00016607 cubic meters
+
+Surface area = 0.17601969 square meters
+
+Center of mass: ( meters )
+	X = 0.00002868
+	Y = 0.00002889
+	Z = -0.11828092
+
+Principal axes of inertia and principal moments of inertia: ( kilograms * square meters )
+Taken at the center of mass.
+	 Ix = ( 0.00008799, -0.00010597,  0.99999999)   	Px = 0.00022528
+	 Iy = (-0.85232116, -0.52301877,  0.00001957)   	Py = 0.00106852
+	 Iz = ( 0.52301876, -0.85232116, -0.00013634)   	Pz = 0.00106960
+
+Moments of inertia: ( kilograms * square meters )
+Taken at the center of mass and aligned with the output coordinate system. (Using positive tensor notation.)
+	Lxx = 0.00106882	Lxy = 0.00000048	Lxz = 0.00000007
+	Lyx = 0.00000048	Lyy = 0.00106930	Lyz = -0.00000009
+	Lzx = 0.00000007	Lzy = -0.00000009	Lzz = 0.00022528
+
+Moments of inertia: ( kilograms * square meters )
+Taken at the output coordinate system. (Using positive tensor notation.)
+	Ixx = 0.00834404	Ixy = 0.00000048	Ixz = -0.00000169
+	Iyx = 0.00000048	Iyy = 0.00834453	Iyz = -0.00000187
+	Izx = -0.00000169	Izy = -0.00000187	Izz = 0.00022528
+
+One or more components have overridden mass properties:
+	wr09owr07_s61803-2rsr<1><Default>@wr09owr07_wrist_msrm_study4<4><Standard>@wr09owr07_wrist_msrm_study8<2><Default>
+	wr09owr07_HFUC-5-Einbausatz<1><Standard>@wr09owr07_wrist_msrm_study4<4><Standard>@wr09owr07_wrist_msrm_study8<2><Default>
+	wr09owr07_s61803-2rsr<1><Default>@wr09owr07_wrist_msrm_study4<5><Standard>@wr09owr07_wrist_msrm_study8<2><Default>
+	wr09owr07_HFUC-5-Einbausatz<1><Standard>@wr09owr07_wrist_msrm_study4<5><Standard>@wr09owr07_wrist_msrm_study8<2><Default>
+	wr09owr07_s61803-2rsr<1><Default>@wr09owr07_wrist_msrm_study4<6><Standard>@wr09owr07_wrist_msrm_study8<2><Default>
+	wr09owr07_HFUC-5-Einbausatz<1><Standard>@wr09owr07_wrist_msrm_study4<6><Standard>@wr09owr07_wrist_msrm_study8<2><Default>
+	wr09owr07_2214S_BXTR.stp<1><Standard>@wr09owr07_wrist_msrm_study8<2><Default>
+	wr09owr07_2214S_BXTR.stp<4><Standard>@wr09owr07_wrist_msrm_study8<2><Default>
+	wr09owr07_2214S_BXTR.stp<5><Standard>@wr09owr07_wrist_msrm_study8<2><Default>
+	assembly pcb@assembly full@wr09owr07_wrist_msrm_study8

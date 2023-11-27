@@ -1,0 +1,35 @@
+Mass properties of link_fa
+     Configuration: Standard
+     Coordinate system: T_w2_softhand
+
+Mass = 0.42404375 kilograms
+
+Volume = 0.00012082 cubic meters
+
+Surface area = 0.08945621 square meters
+
+Center of mass: ( meters )
+	X = 0.07632576
+	Y = 0.01916410
+	Z = -0.01037638
+
+Principal axes of inertia and principal moments of inertia: ( kilograms * square meters )
+Taken at the center of mass.
+	 Ix = ( 0.99384916,  0.06547431, -0.08931380)   	Px = 0.00032575
+	 Iy = (-0.03283479, -0.59601585, -0.80230106)   	Py = 0.00094931
+	 Iz = (-0.10576255,  0.80029883, -0.59020002)   	Pz = 0.00118631
+
+Moments of inertia: ( kilograms * square meters )
+Taken at the center of mass and aligned with the output coordinate system. (Using positive tensor notation.)
+	Lxx = 0.00033605	Lxy = 0.00006064	Lxz = -0.00007014
+	Lyx = 0.00006064	Lyy = 0.00109843	Lyz = 0.00010830
+	Lzx = -0.00007014	Lzy = 0.00010830	Lzz = 0.00102689
+
+Moments of inertia: ( kilograms * square meters )
+Taken at the output coordinate system. (Using positive tensor notation.)
+	Ixx = 0.00053744	Ixy = 0.00068089	Ixz = -0.00040598
+	Iyx = 0.00068089	Iyy = 0.00361440	Iyz = 0.00002397
+	Izx = -0.00040598	Izy = 0.00002397	Izz = 0.00365294
+
+One or more components have overridden mass properties:
+	hnd_softhand_pro_no_otto_bock

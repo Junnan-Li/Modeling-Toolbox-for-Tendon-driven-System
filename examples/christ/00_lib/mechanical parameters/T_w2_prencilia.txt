@@ -1,0 +1,35 @@
+Mass properties of link_fa
+     Configuration: Standard
+     Coordinate system: T_w2_prencilia
+
+Mass = 0.74139619 kilograms
+
+Volume = 0.00048628 cubic meters
+
+Surface area = 0.06147127 square meters
+
+Center of mass: ( meters )
+	X = 0.12140206
+	Y = -0.00003180
+	Z = 0.00000798
+
+Principal axes of inertia and principal moments of inertia: ( kilograms * square meters )
+Taken at the center of mass.
+	 Ix = ( 0.99999966,  0.00080176, -0.00021117)   	Px = 0.00047527
+	 Iy = (-0.00008004, -0.16015921, -0.98709119)   	Py = 0.00266194
+	 Iz = (-0.00082523,  0.98709087, -0.16015909)   	Pz = 0.00302312
+
+Moments of inertia: ( kilograms * square meters )
+Taken at the center of mass and aligned with the output coordinate system. (Using positive tensor notation.)
+	Lxx = 0.00047527	Lxy = 0.00000205	Lxz = -0.00000051
+	Lyx = 0.00000205	Lyy = 0.00301385	Lyz = 0.00005710
+	Lzx = -0.00000051	Lzy = 0.00005710	Lzz = 0.00267120
+
+Moments of inertia: ( kilograms * square meters )
+Taken at the output coordinate system. (Using positive tensor notation.)
+	Ixx = 0.00047527	Ixy = -0.00000081	Ixz = 0.00000021
+	Iyx = -0.00000081	Iyy = 0.01394089	Iyz = 0.00005710
+	Izx = 0.00000021	Izy = 0.00005710	Izz = 0.01359824
+
+One or more components have overridden mass properties:
+	Prencilia_Dummy<1><Standard>
