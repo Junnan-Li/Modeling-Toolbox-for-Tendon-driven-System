@@ -565,12 +565,12 @@ Tau_sym_res = double(subs(Tau_sym,symvar(Tau_sym), [F_ext_rand ;q_rand ;qd_rand 
 Tau_error = Tau_num-Tau_sym_res;
 
 % floating base test
+% generate symbolic function
 
 % [FTau_sym] = finger_3dof.invdyn_ne_xq_fb_all_fext_sym(1, 0);
-
 % [FTau_G,FTau_C,M_xq,FTau_M,FTau_wt_fext] = finger_3dof.invdyn_ne_xq_fb_wt_fext_sub_sym_par(1,1);
 
-
+%
 xq = rand(6+finger_3dof.nj,1);
 xqd = rand(6+finger_3dof.nj,1);
 xqdd = rand(6+finger_3dof.nj,1);
@@ -579,22 +579,44 @@ tic
 Tau_fb_num = finger_3dof.invdyn_ne_xq_fb_all_fext(xq, xqd, xqdd, zeros(6,2+finger_3dof.nj));
 t1 = toc;
 tic
-Tau_fb_sym_res = double(subs(FTau_sym,symvar(FTau_sym), [xq(4:end) ;xqd(4:end) ;xqdd]')); 
+Tau_fb_sym_res = double(subs(FTau_wt_fext,symvar(FTau_wt_fext), [xq(4:end) ;xqd(4:end) ;xqdd]')); 
 t2 = toc;
-% tic
-% FTau_fb_sym = tau_xq_fb_sym_finger_3dof(xq,xqd,xqdd);
-% t3 = toc
+tic
+FTau_fb_sym = tau_xq_fb_sym_finger_3dof_FTau_wt_fext(xq,xqd,xqdd);
+t3 = toc;
 Tau_fb_error = Tau_fb_num-Tau_fb_sym_res;
+Tau_fb_error2 = Tau_fb_num - FTau_fb_sym;
 
+fprintf('Test 12 num t: %f! \n',t1)
+fprintf('Test 12 sym sub t: %f! \n',t2)
+fprintf('Test 12 sym t: %f! \n',t3)
 
-
-if max(abs(Tau_error(:))) > 1e-10 | max(abs(Tau_fb_error(:))) > 1e-10
+if max(abs(Tau_fb_error2(:))) > 1e-10 | max(abs(Tau_fb_error(:))) > 1e-10
     test_12_status = 0;
     fprintf('Test 12 (sym torque): failed! \n')
 else
     fprintf('Test 12 (sym torque): pass! \n')
 end
 
+%% test the sub terms of the fb dynamics
+% symbolic vs. fordyn_ne_w_end
+finger_3dof.set_base(xq(1:3),euler2R_XYZ(xq(4:6)));
 
+% test mass coriolis and gravity
+[~,M_fd_1,C_fd_1,G_fd_1] = finger_3dof.fordyn_ne_w_end(xq(7:end),xqd(7:end),zeros(2,1), zeros(6,4),0);
+
+FTau_fb_sym_M = tau_xq_fb_sym_finger_3dof_M(xq,xqd,xqdd);
+FTau_fb_sym_m = tau_xq_fb_sym_finger_3dof_FTau_M(xq,xqd,xqdd);
+FTau_fb_sym_G = tau_xq_fb_sym_finger_3dof_FTau_G(xq,xqd,xqdd);
+FTau_fb_sym_C = tau_xq_fb_sym_finger_3dof_FTau_C(xq,xqd,xqdd);
+FTau_fb_sym_C_0 = tau_xq_fb_sym_finger_3dof_FTau_C(xq,[zeros(6,1);xqd(7:end)],xqdd);
+Tau_fb_all_error = FTau_fb_sym - FTau_fb_sym_m - FTau_fb_sym_G - FTau_fb_sym_C;
+
+Tau_fb_M_error = M_fd_1 - FTau_fb_sym_M(7:end,7:end);
+Tau_fb_G_error = G_fd_1 - FTau_fb_sym_G(7:end);
+Tau_fb_C_error = C_fd_1 - FTau_fb_sym_C_0(7:end);
+
+
+%% 
 
 
