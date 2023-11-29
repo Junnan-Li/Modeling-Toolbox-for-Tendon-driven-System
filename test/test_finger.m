@@ -60,7 +60,7 @@ finger_r.plot_finger(plot_par)
 
 
 %% Test 1:  Transformation matrix test with respect to mdh parameters 
-% mdh parameter from class properties
+% mdh parameter from class properties (end effector)
 mdh = mdh_struct_to_matrix(finger_r.mdh,1);
 b_T_class = T_mdh_multi(mdh);
 W_T_b = finger_r.get_W_T_B();
@@ -69,14 +69,24 @@ T_class = W_T_b * b_T_class;
 % mdh parameters from rst model
 T_rst = getTransform(rst_model,q_r,'endeffector');
 
+% transformnation matrix of each frame test
+w_T_all = finger_r.get_T_all_links;
+w_T_all_rst = zeros(4,4,finger_r.nj+2);
+w_T_all_rst(:,:,1) = rst_model.Bodies{1}.Joint.JointToParentTransform;
+for i = 1:finger_r.nj+1
+    w_T_all_rst(:,:,i+1) = getTransform(rst_model,q_r,rst_model.BodyNames{i});
+end 
+
 % validaiton
 T_error = abs(T_class-T_rst);
-if max(T_error(:)) > 1e-10
+T_error_all = max(abs(w_T_all_rst-w_T_all));
+if max(T_error(:)) > 1e-10 | max(T_error_all(:))> 1e-10
     fprintf('Test 1 (Transformation matrix): failed! \n')
 else
     fprintf('Test 1 (Transformation matrix): pass! \n')
 end
 
+return
 %% Test 2: Jacobian test
 % test the geometric Jacobian matrix of the endeffector
 % Jacobian_geom_b_end.m

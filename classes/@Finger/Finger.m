@@ -398,10 +398,7 @@ classdef Finger < handle & matlab.mixin.Copyable
             
         end
         
-        function W_T_b = get_W_T_B(obj)
-            % get the homogeneous transformation matrix from Base to W
-            W_T_b = [obj.w_R_base,obj.w_p_base; 0 0 0 1];
-        end
+        
         
         function update_rst_model(obj)
             % build/update the rst model of the finger based on the mdh
@@ -506,6 +503,11 @@ classdef Finger < handle & matlab.mixin.Copyable
         end
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         % calculate kinematics 
+        function W_T_b = get_W_T_B(obj)
+            % get the homogeneous transformation matrix from Base to W
+            W_T_b = [obj.w_R_base,obj.w_p_base; 0 0 0 1];
+        end
+
         function [p_link_all_w,p_link_all_b] = get_p_all_links(obj)
             % get the Cartesian position of the base and link ends
             w_R_b = obj.w_R_base; 
@@ -522,6 +524,23 @@ classdef Finger < handle & matlab.mixin.Copyable
             b_T_i = T_mdh_multi(mdh_all_matrix);
             p_link_all_b(:,end) = b_T_i(1:3,4);
             p_link_all_w(:,end) = w_p_b + w_R_b * b_T_i(1:3,4);
+        end
+
+        function w_T_all = get_T_all_links(obj)
+            % get all transformation matrix
+            w_T_b = obj.get_W_T_B();
+            w_T_all = zeros(4,4,obj.nl+2); % base, link1, ... linkn, ee
+            w_T_all(:,:,1) = w_T_b;
+            for i = 1:obj.nl
+                b_p_i = obj.list_links(i).base_p;
+                b_R_i = obj.list_links(i).base_R;
+                b_T_i = [b_R_i,b_p_i; 0 0 0 1];
+                w_T_all(:,:,i+1) = w_T_b*b_T_i;
+            end
+            % fingertip position
+            mdh_all_matrix = mdh_struct_to_matrix(obj.mdh_all, 1);
+            b_T_ee = T_mdh_multi(mdh_all_matrix);
+            w_T_all(:,:,end) = w_T_b*b_T_ee;
         end
         
         function [w_p_ee,w_R_ee] = get_T_ee_w(obj)
