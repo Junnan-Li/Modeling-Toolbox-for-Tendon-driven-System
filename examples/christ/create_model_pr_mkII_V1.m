@@ -48,7 +48,7 @@ prost_low.update_finger(q_0);
 
 %% set dynamic parameters
 
-[m_p, rSges_p, mrSges_p, Ifges_p, Icges_p] = read_SW_inertia_chris(strcat(path_prosthesis, '/00_lib/mechanical parameters'),  ...
+[m_p, rSges_p, mrSges_p, Ifges_p, Icges_p] = read_SW_inertia_chris( './examples/christ/00_lib/mechanical parameters',  ...
             {'T_el', 'T_fa', 'T_w1', 'T_w2_prencilia'});
 
         
