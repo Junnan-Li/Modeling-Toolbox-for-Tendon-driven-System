@@ -32,7 +32,7 @@ function [FTau_sym] = invdyn_ne_xq_fb_all_fext_sym(obj, sym_type, save_res)
 xq_sym = sym('xq',[obj.nj+6,1], 'real');
 xqd_sym = sym('xqd',[obj.nj+6,1], 'real');
 xqdd_sym = sym('xqdd',[obj.nj+6,1], 'real');
-F_ext_sym = sym(zeros(6,obj.nj+2)); % default no external force variables
+F_ext_all_sym = sym(zeros(6,obj.nj+2)); % default no external force variables
 
 
 mdh_ne = mdh_struct_to_matrix(obj.mdh_ori, 1);
@@ -68,7 +68,7 @@ end
 
 
 [FTau_sym,~] = invdyn_ne_xq_mdh_all_fext_sym(xq_sym,xqd_sym,xqdd_sym,...
-            mdh_ne_sym,Mass_sym,F_ext_sym, CoM_ne_sym, I_ne_sym, g_sym);
+            mdh_ne_sym,Mass_sym,F_ext_all_sym, CoM_ne_sym, I_ne_sym, g_sym);
 
 if save_res
     func_name = strcat('output/tau_xq_fb_sym_', obj.name);
