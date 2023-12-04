@@ -53,8 +53,9 @@ switch sym_type
     case 1
         var_name = {xq_sym,xqd_sym,xqdd_sym};
     case 2
-        F_ext_sym = sym('F_ext',[6,obj.nj+2], 'real');
-        var_name = {xq_sym,xqd_sym,xqdd_sym,F_ext_sym};
+        F_ext_sym = sym('F_ext_ee',[6,1], 'real');
+        F_ext_all_sym = [sym(zeros(6,obj.nj+1)),F_ext_sym];
+        var_name = {xq_sym,xqd_sym,xqdd_sym,F_ext_all_sym};
     case 101 % 
         mass_end = sym('m_end','positive');
         Mass_sym = sym([Mass(1:end-1);mass_end]);
