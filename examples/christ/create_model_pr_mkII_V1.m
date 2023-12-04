@@ -80,3 +80,10 @@ prost_low.update_finger_par_dyn;
 
 % Tau = prost_low.invdyn_ne_w_end_sym(1)
 prost_low.plot_finger;
+
+return
+%% generate symbolic terms
+
+prost_low.invdyn_ne_xq_fb_all_fext_sym(2,1);
+
+
