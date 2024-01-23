@@ -86,7 +86,7 @@ else
     fprintf('Test 1 (Transformation matrix): pass! \n')
 end
 
-return
+% return
 %% Test 2: Jacobian test
 % test the geometric Jacobian matrix of the endeffector
 % Jacobian_geom_b_end.m
@@ -553,7 +553,7 @@ finger_3dof.w_p_base = 4*rand(3,1);
 finger_3dof.w_R_base = euler2R_XYZ(rand(1,3));
 
 % % generate the symbolic term
-% Tau_sym = finger_3dof.invdyn_ne_w_end_sym(101,1);
+Tau_sym = finger_3dof.invdyn_ne_w_end_sym(1,1);
 % [FTau_sym] = finger_3dof.invdyn_ne_xq_fb_all_fext_sym(1, 1);
 
 
@@ -608,7 +608,7 @@ else
     fprintf('Test 12 (sym torque): pass! \n')
 end
 
-%% test the sub terms of the fb dynamics
+%% test 13 the sub terms of the fb dynamics 
 % symbolic vs. fordyn_ne_w_end
 finger_3dof.set_base(xq(1:3),euler2R_XYZ(xq(4:6)));
 
@@ -627,6 +627,64 @@ Tau_fb_G_error = G_fd_1 - FTau_fb_sym_G(7:end);
 Tau_fb_C_error = C_fd_1 - FTau_fb_sym_C_0(7:end);
 
 
-%% 
+%% test 14 Lagrange methods
+
+% generate mdh and Finger model
+
+% use mdh to create finger
+mdh_parameter = rand(4,4);
+mdh_parameter(:,3) = 0;
+mdh_parameter(1,1:4) = 0;
+mdh_struct = mdh_matrix_to_struct(mdh_parameter, 1);
+finger_r = Finger('Index', 'mdh',mdh_struct );
+
+% set random base position and orientation
+x_base = rand(6,1);
+finger_r.w_p_base = x_base(1:3);
+finger_r.w_R_base = euler2R_XYZ(x_base(4:6));
+% finger_r.update_rst_model;
+% joint configurations
 
 
+n_q = finger_r.nj;
+
+q_r = rand(n_q,1);
+q_rd = rand(n_q,1);
+q_rdd = rand(n_q,1);
+% udpate finger with given joint configurations
+finger_r.update_finger(q_r);
+finger_r.plot_finger;
+
+
+[qDD,M_fd,C_fd,G_fd] = finger_r.fordyn_ne_w_end(q_r, q_rd, zeros(n_q,1), zeros(6,n_q+2),0);
+
+% Lagranian numeric
+M_num = invdyn_lag_mdh_M(q_r, mdh_parameter, x_base, finger_r.par_dyn_f.mass_all, finger_r.par_dyn_f.com_all, finger_r.par_dyn_f.inertia_all);
+G_num = invdyn_lag_mdh_G(q_r, mdh_parameter, x_base, finger_r.par_dyn_f.mass_all, finger_r.par_dyn_f.com_all, finger_r.par_dyn_f.g);
+
+% Lagranian symbolic 
+[Tau, M, C, G] = invdyn_lag_mdh_sym(sym(q_r),sym(q_rd),sym(q_rdd),sym(mdh_parameter), x_base,...
+                sym(finger_r.par_dyn_f.mass_all), sym(finger_r.par_dyn_f.com_all), sym(finger_r.par_dyn_f.inertia_all), sym(finger_r.par_dyn_f.g));
+
+M_lag_error = [M_fd-M_num;M_fd-M];
+G_lag_error = vpa([G_fd-G_num;G_fd-G],7);
+C_lag_error = vpa(C_fd - C*q_rd,7);
+
+if max(abs(M_lag_error(:))) > 1e-10 |  max(abs(G_lag_error(:))) > 1e-10 | max(abs(C_lag_error(:))) > 1e-10 
+    test_12_status = 0;
+    fprintf('Test 14 (Lagrangian euler): failed! \n')
+else
+    fprintf('Test 14 (Lagrangian euler): pass! \n')
+end
+
+%% Test 15: Lagrange Euler sub symbolic method 
+q_r_sym = sym('q',[n_q,1], 'real');
+q_rd_sym = sym(q_rd);
+
+M = invdyn_lag_mdh_M_sym(q_r_sym, sym(mdh_parameter), sym(finger_r.par_dyn_f.mass_all) , sym(finger_r.par_dyn_f.com_all), sym(finger_r.par_dyn_f.inertia_all))
+
+
+[Tau, M, C, G] = invdyn_lag_mdh_sym(q_r_sym,q_rd_sym,sym(zeros(n_q,1)), sym(mdh_parameter), sym(finger_r.par_dyn_f.mass_all),...
+                        sym(finger_r.par_dyn_f.com_all), sym(finger_r.par_dyn_f.inertia_all)); %
+C_sym = vpa(subs(C,q_r_sym,q_r),4);
+C_sym*q_rd
