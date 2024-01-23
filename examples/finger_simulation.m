@@ -91,25 +91,25 @@ n_t = finger_r.nt;
 q_0 = [0;0.15;0.2;0.2];
 finger_r.update_finger(q_0);
 
-q_desired = [0.1,0.4,1,1.1]';
+q_desired = [0,0.4,1,1.1]';
 qd_desired = zeros(4,1);
 qdd_desired = zeros(4,1);
 
 delta_t = 0.001; % unit s
-end_time = 1*5; % unit s
+end_time = 1.5; % unit s
 tSpan = delta_t .* [0:end_time/delta_t];
 step = length(tSpan); 
 initialState = [q_0;zeros(4,1)]; % [q;qd]
 F_ext = zeros(6,n_q+2);
 
 % controller parameters
-P = 1 * [1;1;1;1];
-D = 0.5 * [1;1;1;1];
+P = 5 * [5;5;1;1];
+D = 1 * [1;1;1;1];
 gravity_com = 1; 
 
 
 % if use mex function
-mex = 1;
+mex = 0;
 % 
 customized_solver = 0;
 opts = odeset('InitialStep',1e-3);
@@ -126,6 +126,19 @@ f_tendon = zeros(n_t,step);
 % f_tendon_pre = 20*ones(n_t,1);
 
 Computation_Cost = zeros(step,1);
+
+
+h = figure(2)
+finger_r.update_finger(q_0);
+par_plot = finger_r.plot_parameter_init;
+par_plot.axis_show = 0;
+par_plot_des = par_plot;
+par_plot_des.linecolor = 'c';
+finger_r.plot_finger(par_plot);
+% hold off
+axis equal
+xlim([-1e-4,1e-2])
+zlim([-8e-3,1e-5])
 
 for i = 1:step
     tic;
@@ -169,7 +182,18 @@ for i = 1:step
     Tau_error(:,i) = Tau_i-tau_real;
     f_tendon(:,i) = f_tendon_i;
 
-    
+    % animation
+    cla
+    finger_r.update_finger(q_i_sat);
+    finger_r.plot_finger(par_plot);
+    finger_r.update_finger(q_desired);
+    finger_r.plot_finger(par_plot_des);
+    drawnow
+
+    % export as gif
+%     if mod(i,10) == 0
+%         exportgraphics(gcf,'testAnimated.gif','Append',true);
+%     end 
     Computation_Cost(i) = toc;
 end
 
@@ -180,7 +204,7 @@ fprintf('average computation cost each step: %f - %f \n', mean(Computation_Cost)
 Color_joint = {'r','c','b','k'};
 
 figure(1)
-subplot(2,1,1)
+subplot(5,1,1)
 F_1 = plot(tSpan,state(1:n_q,1:end-1)); % Joint position
 
 hold on
@@ -195,7 +219,7 @@ xlabel('Time (s)')
 ylabel('Position (rad)')
 legend('simulated','desired')
 
-subplot(2,1,2)
+subplot(5,1,2)
 F_3 = plot(tSpan,state(n_q+1:end,1:end-1)); % Joint velocity
 for i = 1:4
     set(F_3(i), 'color', Color_joint{i});
@@ -204,17 +228,21 @@ title('Joint velocity')
 xlabel('Time (s)')
 ylabel('velocity (rad/s)')
 
-
-% plot tendon force
-figure(2)
-subplot(2,1,1)
+subplot(5,1,3)
 plot(tSpan,Tau) % Joint torque
 title('Joint torque')
 xlabel('Time (s)')
 ylabel('Torque (Nm)')
 
-subplot(2,1,2)
-plot(tSpan,f_tendon) % Joint velocity
+subplot(5,1,4)
+plot(tSpan,f_tendon)
+title('Tendon force')
+xlabel('Time (s)')
+ylabel('Tendon force (N)')
+
+
+subplot(5,1,5)
+plot(tSpan,Tau_error)
 title('Tendon force')
 xlabel('Time (s)')
 ylabel('Tendon force (N)')
