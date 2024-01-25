@@ -636,7 +636,7 @@ mdh_parameter = rand(4,4);
 mdh_parameter(:,3) = 0;
 mdh_parameter(1,1:4) = 0;
 mdh_struct = mdh_matrix_to_struct(mdh_parameter, 1);
-finger_r = Finger('Index', 'mdh',mdh_struct );
+finger_r = Finger('3dof', 'mdh',mdh_struct );
 
 % set random base position and orientation
 x_base = rand(6,1);
@@ -678,13 +678,52 @@ else
 end
 
 %% Test 15: Lagrange Euler sub symbolic method 
+
+% generate mdh and Finger model
+
+% use mdh to create finger
+mdh_parameter = rand(4,4);
+mdh_parameter(:,3) = 0;
+mdh_parameter(1,1:4) = 0;
+mdh_struct = mdh_matrix_to_struct(mdh_parameter, 1);
+finger_r = Finger('Index', 'mdh',mdh_struct );
+
+% set random base position and orientation
+x_base = rand(6,1);
+finger_r.w_p_base = x_base(1:3);
+finger_r.w_R_base = euler2R_XYZ(x_base(4:6));
+% finger_r.update_rst_model;
+% joint configurations
+n_q = finger_r.nj;
+
+q_r = rand(n_q,1);
+q_rd = rand(n_q,1);
+q_rdd = rand(n_q,1);
+% udpate finger with given joint configurations
+finger_r.update_finger(q_r);
+finger_r.plot_finger;
+
+% symbolic variables
 q_r_sym = sym('q',[n_q,1], 'real');
 q_rd_sym = sym(q_rd);
 
-M = invdyn_lag_mdh_M_sym(q_r_sym, sym(mdh_parameter), sym(finger_r.par_dyn_f.mass_all) , sym(finger_r.par_dyn_f.com_all), sym(finger_r.par_dyn_f.inertia_all))
+
+% M = invdyn_lag_mdh_M_sym(q_r_sym, sym(mdh_parameter),sym(x_base), sym(finger_r.par_dyn_f.mass_all) , sym(finger_r.par_dyn_f.com_all), sym(finger_r.par_dyn_f.inertia_all))
+% G = invdyn_lag_mdh_G_sym(q_r_sym, sym(mdh_parameter),sym(x_base), sym(finger_r.par_dyn_f.mass_all) , sym(finger_r.par_dyn_f.com_all), sym(finger_r.par_dyn_f.g))
+[Tau, M, C, G] = invdyn_lag_mdh_sym(q_r_sym,q_rd_sym,sym(zeros(n_q,1)), sym(mdh_parameter),sym(x_base), sym(finger_r.par_dyn_f.mass_all),...
+                        sym(finger_r.par_dyn_f.com_all), sym(finger_r.par_dyn_f.inertia_all), sym(finger_r.par_dyn_f.g)); %
+
+func_name = strcat('output/invdyn_lag_mdh_sym_', finger_r.name);
+matlabFunction(M,"File",strcat(func_name,'_FTau_G'),...
+        "Vars", var_name);
+
+M_sym = vpa(subs(M,q_r_sym,q_r),5);
+G_sym = vpa(subs(G,q_r_sym,q_r),5);
+[qDD,M_fd,C_fd,G_fd] = finger_r.fordyn_ne_w_end(q_r, q_rd, zeros(n_q,1), zeros(6,n_q+2),0);
+
+M_lag_error = M_fd-M_sym;
+G_lag_error = G_fd-G_sym;
 
 
-[Tau, M, C, G] = invdyn_lag_mdh_sym(q_r_sym,q_rd_sym,sym(zeros(n_q,1)), sym(mdh_parameter), sym(finger_r.par_dyn_f.mass_all),...
-                        sym(finger_r.par_dyn_f.com_all), sym(finger_r.par_dyn_f.inertia_all)); %
 C_sym = vpa(subs(C,q_r_sym,q_r),4);
 C_sym*q_rd

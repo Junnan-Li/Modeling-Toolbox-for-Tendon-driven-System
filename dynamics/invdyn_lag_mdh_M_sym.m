@@ -31,7 +31,7 @@ for i = 1:n_q
 end
 base_T_all = simplify(base_T_all);
 w_T_all = w_T_base*base_T_all;
-
+w_T_all = simplify(w_T_all);
 
 for i = 1:n_q
     % for each frame/link, base is fixed,  start from the first link
