@@ -59,7 +59,7 @@ classdef Finger < handle & matlab.mixin.Copyable
         joint_act           % [njx1] logical vector: 1: active joint; 0: fixed joint 
         limits_q            % [njx6] min,max values of q,qd,qdd
         limits_ft           % [ntx2] min,max values of tendon forces
-        limits_t_ma         % [ntx..] min,max values of tendon forces
+        limits_t_ma         % [njx2] min,max values of moment arm for each joint
         par_kin             % all kinematic parameters
         opt_pkin            % kinematic parameters for optimization
         
@@ -704,16 +704,19 @@ classdef Finger < handle & matlab.mixin.Copyable
         end
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         % tendon related:
-        function add_tendon(obj, name, routing)
+        function add_tendon(obj, name, poly3_par)
             % add tendon to class
             % TODO: partition q & qa (current version: using q_a)
-            tendon_tmp = Tendons(name, routing, obj.nt+1);
-            tendon_tmp.init_tendon_par(obj.nj, obj.q_a)
+            
+            assert(all(size(poly3_par)==[4,obj.nj]) == 1, 'tendon parameter for poly3 has wrong dimension !!');
+            tendon_tmp = Tendons(name);
+            tendon_tmp.init_tendon_par(obj.nj, obj.nt+1);
+            tendon_tmp.set_par_MA_poly3(poly3_par,obj.q);
             obj.nt = obj.nt + 1;
             obj.list_tendons = [obj.list_tendons;tendon_tmp];
             obj.update_tendon_ma_limits_from_joints;
             obj.update_M_coupling(obj.q_a);
-            obj.update_tendon_force_limits;
+%             obj.update_tendon_force_limits;
         end
         
         
@@ -729,14 +732,9 @@ classdef Finger < handle & matlab.mixin.Copyable
         end
         
         function update_tendon_ma_limits_from_joints(obj)
-            for i = 1:obj.nt
-                tendon_j_index_i = obj.list_tendons(i).j_index;
-                ma_limits_i = zeros(tendon_j_index_i,2);
-                for j = 1:tendon_j_index_i
-                    ma_limits_i(j,:) = obj.list_tendons(i).routing(j)*obj.list_joints(j).momentarm_limits;
-                    obj.list_tendons(i).update_ma_limits(j,ma_limits_i(j,:))
-                    obj.limits_t_ma(i,2*j-1:2*j) = ma_limits_i(j,:);
-                end
+            obj.limits_t_ma = zeros(obj.nj,2);
+            for i = 1:obj.nj
+                obj.limits_t_ma(i,:) = obj.list_joints(i).momentarm_limits;
             end
         end
         
@@ -746,7 +744,7 @@ classdef Finger < handle & matlab.mixin.Copyable
             M_coupling_tmp = zeros(obj.nj,obj.nt);
             for i = 1:obj.nt
                 obj.list_tendons(i).update_momentarm(q);
-                M_coupling_tmp(:,i) = obj.list_tendons(i).routing.*obj.list_tendons(i).moment_arm_abs;
+                M_coupling_tmp(:,i) = obj.list_tendons(i).ma_value;
             end
             obj.M_coupling = M_coupling_tmp;
             obj.moment_arm_limit;
@@ -759,10 +757,10 @@ classdef Finger < handle & matlab.mixin.Copyable
             for i = 1:obj.nj
                 ma_max_i = obj.list_joints(i).momentarm_limits(2);
                 ma_min_i = obj.list_joints(i).momentarm_limits(1);
-                M_coupling_i = abs(obj.M_coupling(i,:));
+                M_coupling_i = obj.M_coupling(i,:);
                 M_coupling_i(M_coupling_i>ma_max_i) = ma_max_i;
                 M_coupling_i(M_coupling_i<ma_min_i) = ma_min_i;
-                obj.M_coupling(i,:) = sign(obj.M_coupling(i,:)).*M_coupling_i;
+                obj.M_coupling(i,:) = M_coupling_i;
             end
         end
         

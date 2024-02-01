@@ -292,7 +292,7 @@ tau = rand(size(q_r));
 F_ext = [zeros(6,finger_r.nj+1),rand(6,1)];
 
 
-[qDD_class,M_fd,C_fd,G_fd] = finger_r.fordyn_ne_w_end(q_r,q_rD,tau,F_ext);
+[qDD_class,M_fd,C_fd,G_fd] = finger_r.fordyn_ne_w_end(q_r,q_rD,tau,F_ext,0);
 
 
 % transfer the external force exerting on the 
