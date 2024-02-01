@@ -472,35 +472,7 @@ classdef Finger < handle & matlab.mixin.Copyable
             obj.rst_model = rst_model_tmp;
         end
         
-        function delete_all_contacts(obj)
-            % delete all contacts of the finger
-            if obj.nl 
-                for i = 1:obj.nl
-                    obj.list_links(i).delete_all_contacts_link();
-                end
-            end
-            obj.update_list_contacts;
-        end
         
-        function update_list_contacts(obj)
-            % update the Link Class property: Links.nc 
-            % TODO: change name of the function
-            %       update all link contact (optional)
-            obj.list_contacts = []; % init list_contacts
-            num_contact = 0;
-            if obj.nl 
-                for i = 1:obj.nl
-                    num_contact_link_i =  obj.list_links(i).nc;
-                    num_contact = num_contact + num_contact_link_i;
-                    if num_contact_link_i ~= 0
-                        for j = 1:num_contact_link_i
-                            obj.list_contacts = [obj.list_contacts;obj.list_links(i).contacts(j)];
-                        end
-                    end
-                end
-            end
-            obj.nc = num_contact;
-        end
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         % calculate kinematics 
         function W_T_b = get_W_T_B(obj)
@@ -556,6 +528,35 @@ classdef Finger < handle & matlab.mixin.Copyable
             w_p_ee = w_p_b + w_R_b * b_T_i(1:3,4);
             w_R_ee =  w_R_b * b_T_i(1:3,1:3);
         end
+
+        %% contacts
+
+        function contact_obj = add_contact(obj, name, link_index, link_p_obj)
+            % add contact
+            contact_obj = obj.list_links(link_index).add_contact_link(name, link_p_obj);
+            obj.update_list_contacts();
+        end
+
+        
+        function update_list_contacts(obj)
+            % update the Link Class property: Links.nc 
+            % TODO: change name of the function
+            %       update all link contact (optional)
+            obj.list_contacts = []; % init list_contacts
+            num_contact = 0;
+            if obj.nl 
+                for i = 1:obj.nl
+                    num_contact_link_i =  obj.list_links(i).nc;
+                    num_contact = num_contact + num_contact_link_i;
+                    if num_contact_link_i ~= 0
+                        for j = 1:num_contact_link_i
+                            obj.list_contacts = [obj.list_contacts;obj.list_links(i).contacts(j)];
+                        end
+                    end
+                end
+            end
+            obj.nc = num_contact;
+        end
         
         function [w_p_contacts_all,b_p_contacts_all] = get_p_all_contacts(obj)
             % plot 3d contact points
@@ -571,9 +572,19 @@ classdef Finger < handle & matlab.mixin.Copyable
                 w_p_contacts_all(:,i) = w_contact_pos;
             end
         end
-        
+
+        function delete_all_contacts(obj)
+            % delete all contacts of the finger
+            if obj.nl 
+                for i = 1:obj.nl
+                    obj.list_links(i).delete_all_contacts_link();
+                end
+            end
+            obj.update_list_contacts;
+        end
+
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %%%%%%%%% print finger
+        %%%%%%%%% plot finger
         function print_contact(obj) % 
             % plot 3d contact points 
             for i = 1:obj.nl
@@ -693,6 +704,29 @@ classdef Finger < handle & matlab.mixin.Copyable
             end
             p_com_all_w(:,1) = w_R_b * (obj.par_dyn_f.com_all(:,1)) + w_p_b;
             plot3(p_com_all_w(1,:)',p_com_all_w(2,:)',p_com_all_w(3,:)','*','Color',par.markercolor,...
+                                    'MarkerSize',par.markersize);
+            hold on
+            % fingertip position
+%             mdh_all_matrix = mdh_struct_to_matrix(obj.mdh_all, 1);
+%             b_T_i = T_mdh_multi(mdh_all_matrix);
+%             p_link_all_b(:,end) = b_T_i(1:3,4);
+%             p_link_all_w(:,end) = w_p_b + w_R_b * b_T_i(1:3,4);
+
+        end
+
+        function plot_contacts(obj,varargin) 
+            % plot the com of each link in world frame
+            
+            if nargin == 1
+                par = obj.plot_parameter_init;
+            elseif nargin == 2
+                par =  varargin{1};
+            else
+                error('[plot_contact] input dimension is incorrect! \n')
+            end
+            [w_p_contacts_all,b_p_contacts_all] = obj.get_p_all_contacts;
+
+            plot3(w_p_contacts_all(1,:)',w_p_contacts_all(2,:)',w_p_contacts_all(3,:)','*','Color',par.markercolor,...
                                     'MarkerSize',par.markersize);
             hold on
             % fingertip position

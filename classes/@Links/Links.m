@@ -56,14 +56,14 @@ classdef Links < handle
             obj.update_link_contacts
         end
         
-        function new_contact = add_contact(obj,link_p)
+        function new_contact = add_contact_link(obj,name, link_p)
             %add contact point on the link
             % link_p: 
             %       local position of the contact point 
             assert(length(link_p) == 3, 'Function error: input dimension of contact position is incorrect');
             link_p = reshape(link_p,[3,1]); % columewise
             
-            contact_name = ['contact_' num2str(obj.index) '_' num2str(obj.nc+1)];
+            contact_name = name;
             new_contact = Contacts(contact_name,obj.index, link_p);
             
             obj.contacts = [obj.contacts;new_contact];
