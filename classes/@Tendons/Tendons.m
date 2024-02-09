@@ -4,8 +4,18 @@
 
 
 % Comment: 
-%       1. property 'j_index' make the tendon affect all the joints before
-%       i-th joint. 
+%       properties:
+%           attachment point: link, relative position
+%           muscle parameters
+% 
+% 
+%       functions: 
+%           set_via_point
+%           delete_via_point
+%           cal_tendon_length(q)
+%           
+% 
+%           
 
 
 classdef Tendons < handle

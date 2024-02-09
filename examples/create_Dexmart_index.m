@@ -63,7 +63,7 @@ Dexmart_index.plot_com(plot_setting)
 axis equal
 
 
-return
+% return
 
 %% add tendons
 
@@ -86,6 +86,8 @@ Dexmart_index.list_joints(4).q_limits = [0,45]*pi/180; % abduction joints
 
 Dexmart_index.update_joints_info;
 
+
+return
 %% add contact
 if Dexmart_index.nc == 0
     for i = 1:Dexmart_index.nl-1
