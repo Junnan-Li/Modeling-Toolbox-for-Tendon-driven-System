@@ -14,11 +14,17 @@
 % 
 % TODO: need to adapt to the passive joint mode
 
-function Tau = invdyn_ne_w_end(obj, q, qD, qDD, F_ext)
+function Tau = invdyn_ne_w_end(obj, q, qD, qDD, F_ext, varargin)
 
 assert(length(q)== obj.nj, 'dimension of joint vector is incorrect!')
 assert(length(qD)== obj.nj, 'dimension of joint vector is incorrect!')
 assert(length(qDD)== obj.nj, 'dimension of joint vector is incorrect!')
+
+if nargin == 5
+    mex = 0;
+elseif nargin == 6
+    mex = varargin{1};
+end
 
 mdh_ne = mdh_struct_to_matrix(obj.mdh_ori, 1);
 mdh_ne(1:obj.nj,3) = mdh_ne(1:obj.nj,3);
@@ -33,7 +39,12 @@ CoM_ne = obj.par_dyn_f.com_all;
 I_ne = obj.par_dyn_f.inertia_all;
 g = obj.par_dyn_f.g;
 
-[Tau,~,~] = invdyn_ne_mdh(q,qD,qDD,mdh_ne, Mass,...
-             X_base, XD_base, XDD_base, F_ext_ne, CoM_ne, I_ne, g);
+if mex
+    [Tau,~,~] = invdyn_ne_mdh_mex(q,qD,qDD,mdh_ne, Mass,...
+        X_base, XD_base, XDD_base, F_ext_ne, CoM_ne, I_ne, g);
+else
+    [Tau,~,~] = invdyn_ne_mdh(q,qD,qDD,mdh_ne, Mass,...
+        X_base, XD_base, XDD_base, F_ext_ne, CoM_ne, I_ne, g);
+end
 
 end
