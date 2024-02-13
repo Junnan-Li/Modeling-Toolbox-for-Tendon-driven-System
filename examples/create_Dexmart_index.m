@@ -50,7 +50,7 @@ Dexmart_index.list_links(4).set_mass(0.02); % in kg
 Dexmart_index.list_links(4).set_inertia([0.5,0.2,0.2,0,0,0]); 
 % update dynamic parameters
 Dexmart_index.update_finger_par_dyn;
-Dexmart_index.update_rst_model;
+% Dexmart_index.update_rst_model;
 
 
 % plot finger and com
