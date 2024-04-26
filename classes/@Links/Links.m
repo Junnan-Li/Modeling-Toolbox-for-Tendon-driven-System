@@ -16,7 +16,9 @@ classdef Links < handle
         par_dyn             % [1] mass, [3x1] center of mass, [6x1] inertia
         stiffness
         nc
-        contacts
+        contacts            % [1] num of viapoints
+        viapoints
+        nv                  % [1] num of viapoints
         
 
     end
@@ -42,6 +44,8 @@ classdef Links < handle
             obj.index = index; 
             obj.contacts = [];
             obj.nc = 0;
+            obj.viapoints = [];
+            obj.nv = 0;
             obj.base_p = [0;0;0]; 
             obj.base_R = eye(3);
         end
@@ -56,6 +60,7 @@ classdef Links < handle
             obj.update_link_contacts
         end
         
+        %% contacts
         function new_contact = add_contact_link(obj,name, link_p)
             %add contact point on the link
             % link_p: 
@@ -99,6 +104,7 @@ classdef Links < handle
             end
         end
         
+        %% dynamics
         function set_mass(obj, mass)
             % set dynamic parameters
             obj.par_dyn.mass = mass;
@@ -116,6 +122,20 @@ classdef Links < handle
             obj.par_dyn.com = reshape(com,3,1);
         end
         
+        %% Viapoints
+
+        function new_viapoint = add_viapoint_link(obj, name, link_p)
+            % add viapoint on the link
+            % link_p: 
+            %       local position of the viapoint 
+            assert(length(link_p) == 3, 'Function error: input dimension of contact position is incorrect');
+            link_p = reshape(link_p,[3,1]); % columewise
+            
+            new_viapoint = ViaPoint(name, obj.index, link_p);
+            obj.viapoints = [obj.viapoints;new_viapoint];
+            obj.nv = length(obj.viapoints);      
+            obj.update_link_viapoints; % 
+        end
         
     end
 end

@@ -46,7 +46,6 @@ classdef Contacts < handle
             
             obj.base_p = H_tmp(1:3);
             obj.base_R = base_R_link * obj.link_R;
-            
         end
 
     end

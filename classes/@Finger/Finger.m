@@ -20,8 +20,10 @@
 %           
 
 % TODO: 
-%       1. [01/23]: integrate transformation from W to Base in properties
-%       and Jacobian.
+%       1. passive joints
+%       2. function check_finger_properties 
+%       3. dh parameter as another option to define kinematics
+%       4. 
 %       
 % 
 
@@ -38,12 +40,8 @@
 %       update_M_coupling()
 %       set_tendon_par_MA_poly3(obj, tendon_index, joint_index, par)
 %       
-%       
 
-classdef Finger < handle & matlab.mixin.Copyable
-    %FINGER Summary of this class goes here
-    %   Detailed explanation goes here
-    
+classdef Finger < handle & matlab.mixin.Copyable    
     properties (Access = public)
         name                % [char] name of the finger
         type                % [char] finger type: 'RRRR', 'RRRp','RRRs'
@@ -52,10 +50,14 @@ classdef Finger < handle & matlab.mixin.Copyable
         nl                  % [1] number of links
         nc                  % [1] number of contacts
         nt                  % [1] number of tendons
+        nmus                % [1] number of muscles
+        nvia                % [1] number of viapoints
         list_joints         % [njx1] list of all joints
         list_links          % [nlx1] list of all links
         list_contacts       % [ncx1] list of all contacts
         list_tendons        % [ntx1] list of all tendons
+        list_muscles        % [ntx1] list of all muscles
+        list_viapoints      % [ntx1] list of all viapoints
         joint_act           % [njx1] logical vector: 1: active joint; 0: fixed joint 
         limits_q            % [njx6] min,max values of q,qd,qdd
         limits_ft           % [ntx2] min,max values of tendon forces
@@ -66,8 +68,6 @@ classdef Finger < handle & matlab.mixin.Copyable
         w_p_base            % position of the base in world frame. Default: [0,0,0]'
         w_R_base            % rotation of the base in world frame. Default: non rotation
 %         w_T_base   
-
-
     end
     
     properties (SetAccess = private)
@@ -86,9 +86,7 @@ classdef Finger < handle & matlab.mixin.Copyable
             % input syntax with priority:
             %   1. mdh struct: [alpha, a theta, d] without q
             %   2. finger_type: 
-            %
-            
-            
+            %            
             obj.name = name;
             obj.mdh_ori = [];
             
@@ -144,8 +142,7 @@ classdef Finger < handle & matlab.mixin.Copyable
             end
             obj.list_joints = list_joints;
             obj.nja = obj.nj;
-            obj.joint_act = ones(obj.nj,1);% TODO:passive joints
-            
+            obj.joint_act = ones(obj.nj,1); % TODO:passive joints
             
             % update mdh_ori
             if isempty(obj.mdh_ori)
@@ -154,8 +151,6 @@ classdef Finger < handle & matlab.mixin.Copyable
             
             obj.mdh = obj.mdh_ori;
             obj.mdh_all = obj.mdh_ori;
-            
-
             
             % init list of contact and tendon
             % default contacts in the middle of each links
@@ -166,7 +161,12 @@ classdef Finger < handle & matlab.mixin.Copyable
             obj.list_tendons = [];
             obj.limits_t_ma = [];
             
-            
+            obj.nmus = 0;
+            obj.list_muscles = [];   
+
+            obj.nvia = 0;
+            obj.list_viapoints = [];
+
             obj.limits_q = zeros(obj.nj,6);
             % init finger base position and orientation
             obj.w_p_base = [0;0;0];
@@ -188,17 +188,17 @@ classdef Finger < handle & matlab.mixin.Copyable
             % update parameters w.r.t. joint angles
             obj.update_finger(obj.q_a);
             
-            obj.update_rst_model;
-            
+%             obj.update_rst_model;
         end
         
+        %% class property check
         function check_finger_properties(obj)
             % check if all the properties of the Finger class are in the
             % correct form
             % TODO 
-           
         end
         
+        %% kinematic related
         function set_mdh_parameters(obj, mdh_matrix)
             % set the mdh parameters with the given values 
             % sequence: alpha, a theta, d
@@ -214,13 +214,10 @@ classdef Finger < handle & matlab.mixin.Copyable
             for i = obj.nl
                 obj.list_links(i).Length = mdh_ori_new.a(i+1);
             end
-            % with q
             mdh_new = mdh_ori_new;
             mdh_new.theta = [obj.q;0];
             obj.mdh = mdh_new;
             obj.mdh_all = mdh_new;
-            
-            % update rsi model
 %             obj.update_rst_model;
         end
         
@@ -239,9 +236,7 @@ classdef Finger < handle & matlab.mixin.Copyable
                 mdh_ori.a(i+1) = obj.list_links(i).Length;
             end
         end
-        
-        
-        
+
         function update_finger(obj, q_a)
             % update mhl parameters and par_kin, opt_pkin, ...
             assert(length(q_a)== obj.nja, 'dimension of joint vector is incorrect!')
@@ -250,14 +245,11 @@ classdef Finger < handle & matlab.mixin.Copyable
             obj.q = q_a; % update joint angle
             obj.q_a = q_a;
 %             obj.q(obj.joint_act) = q_a; % update joint angle
-            
             % update mdh parameters
 %             [obj.mdh,obj.mdh_all, obj.mdh_ori] = get_finger_mdh(obj, obj.q_a);
             
             obj.mdh_all.theta = obj.mdh_ori.theta +  [obj.q;0];
             obj.mdh = obj.mdh_all;
-            % update par_kin 
-            
             % update all link properties
             for i = 1:obj.nl
                 mdh_all_matrix = mdh_struct_to_matrix(obj.mdh_all, 1);
@@ -284,14 +276,11 @@ classdef Finger < handle & matlab.mixin.Copyable
         function update_joints_info(obj)
             % update joint information
             %   1. limits_q
-            
 %             q = obj.q_a;
             for i = 1:obj.nj
                obj.limits_q(i,1:2) = obj.list_joints(i).q_limits;
                obj.limits_q(i,3:4) = obj.list_joints(i).qd_limits;
                obj.limits_q(i,5:6) = obj.list_joints(i).qdd_limits;
-               
-               
             end 
         end
         
@@ -311,8 +300,8 @@ classdef Finger < handle & matlab.mixin.Copyable
             qdd_sat(qdd > obj.limits_q(:,6)) = obj.limits_q(qdd > obj.limits_q(:,6),6);
             
         end
-        
-%%%%%%%%%%%%%%%%%%%%%%% dynamic parameters
+
+        %% dynamic parameters
         function update_finger_par_dyn(obj)
             % update the finger dynamic parameters (only links, leave the
             % base parameter unchanged
@@ -352,54 +341,8 @@ classdef Finger < handle & matlab.mixin.Copyable
             obj.par_dyn_f.inertia_all(:,1) = reshape(inertia,6,1) ; 
         end
 
- %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%       
-        % to be replaced
-%         function [mdh_reduced,mdh_all,mdh_ori] = get_finger_mdh(obj, q_a)
-%             % get mdh parameter from the given joint angle
-%             % update mhl parameters and par_kin, opt_pkin, ...
-%             % TODO: [01/23] only theta is updated, others are fixed in some
-%             % sense.
-%             assert(length(q_a)== obj.nja, 'dimension of joint vector is incorrect!')
-%             
-%             q_a = reshape(q_a,[obj.nja,1]);
-%             q_all = obj.q;
-%             q_all(obj.joint_act) = q_a;
-% 
-%             % update mdh parameters 
-%             mdh_all = struct;
-%             mdh_all.alpha = [0;-pi/2;0;0;0];
-%             mdh_all.a = [0;0;obj.list_links(1).Length;obj.list_links(2).Length;obj.list_links(3).Length];
-%             mdh_all.theta = [q_all(1);q_all(2);q_all(3);q_all(4);0]; % 
-%             mdh_all.d = [0;0;0;0;0];
-%             mdh_tmp = mdh_all;
-%             fieldname_mdh = fieldnames(mdh_tmp);
-%             if strcmp(obj.type,'RRRR') 
-%                 
-%             elseif strcmp(obj.type,'RRRp') 
-%                 for i = 1:length(fieldname_mdh)
-%                     mdh_tmp.(fieldname_mdh{i}) = mdh_tmp.(fieldname_mdh{i})(2:end);  
-%                 end
-%             elseif strcmp(obj.type,'RRRs')
-%                 for i = 1:length(fieldname_mdh)
-%                     mdh_tmp.(fieldname_mdh{i}) = mdh_tmp.(fieldname_mdh{i})(1:end-1);  
-%                 end
-%             end
-%             mdh_reduced = mdh_tmp;
-%             mdh_ori = mdh_all;
-%             mdh_ori.theta = [0;0;0;0;0];
-%         end
-        
-        function set_base(obj, w_p_base, w_R_base)
-            % set the position and orientation of the base in the world
-            % frame
-            obj.w_p_base = w_p_base;
-            obj.w_R_base = w_R_base;
-            obj.update_finger(obj.q_a);
-            
-        end
-        
-        
-        
+ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%               
+
         function update_rst_model(obj)
             % build/update the rst model of the finger based on the mdh
             % parameters
@@ -475,6 +418,14 @@ classdef Finger < handle & matlab.mixin.Copyable
         
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         % calculate kinematics 
+        function set_base(obj, w_p_base, w_R_base)
+            % set the position and orientation of the base in the world
+            % frame
+            obj.w_p_base = w_p_base;
+            obj.w_R_base = w_R_base;
+            obj.update_finger(obj.q_a);
+        end
+        
         function W_T_b = get_W_T_B(obj)
             % get the homogeneous transformation matrix from Base to W
             W_T_b = [obj.w_R_base,obj.w_p_base; 0 0 0 1];
@@ -499,7 +450,7 @@ classdef Finger < handle & matlab.mixin.Copyable
         end
 
         function w_T_all = get_T_all_links(obj)
-            % get all transformation matrix
+            % get all transformation matrix of all links
             w_T_b = obj.get_W_T_B();
             w_T_all = zeros(4,4,obj.nl+2); % base, link1, ... linkn, ee
             w_T_all(:,:,1) = w_T_b;
@@ -532,11 +483,10 @@ classdef Finger < handle & matlab.mixin.Copyable
         %% contacts
 
         function contact_obj = add_contact(obj, name, link_index, link_p_obj)
-            % add contact
+            % add contact to the specific link 
             contact_obj = obj.list_links(link_index).add_contact_link(name, link_p_obj);
             obj.update_list_contacts();
         end
-
         
         function update_list_contacts(obj)
             % update the Link Class property: Links.nc 
@@ -583,42 +533,33 @@ classdef Finger < handle & matlab.mixin.Copyable
             obj.update_list_contacts;
         end
 
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %%%%%%%%% plot finger
-        function print_contact(obj) % 
-            % plot 3d contact points 
-            for i = 1:obj.nl
-                contact_pos = obj.list_links(i).contacts(1).base_p;
-                W_contact_pos = obj.w_R_base*contact_pos + obj.w_p_base;
-                plot3(W_contact_pos(1),W_contact_pos(2),W_contact_pos(3),'*','Color', 'r', 'MarkerSize',10)
-                hold on
-            end
-        end
-        function print_finger(obj,varargin) % 
-            % plot 3d contact points 
-            % [06.09.2023] new version of plot is avaible: plot_finger
-            if nargin == 1
-                color = 'r';
-                linewidth = 3;
-                markersize = 5;
-            elseif  nargin == 2
-                color = varargin{1};
-                linewidth = 3;
-                markersize = 5;
-            elseif  nargin == 3
-                color = varargin{1};
-                linewidth = varargin{2};
-                markersize = 5;
-            elseif  nargin == 4
-                color = varargin{1};
-                linewidth = varargin{2};
-                markersize = varargin{3};
-            end
-            p_link_all_w_r = obj.get_p_all_links;
-            plot3(p_link_all_w_r(1,:)',p_link_all_w_r(2,:)',p_link_all_w_r(3,:)','o-','Color',color,...
-                                    'LineWidth',linewidth,'MarkerSize',markersize);
-            hold on
-        end
+
+        %% Visualization
+%         function print_finger(obj,varargin) % not used 
+%             % plot 3d contact points 
+%             % [06.09.2023] new version of plot is avaible: plot_finger
+%             if nargin == 1
+%                 color = 'r';
+%                 linewidth = 3;
+%                 markersize = 5;
+%             elseif  nargin == 2
+%                 color = varargin{1};
+%                 linewidth = 3;
+%                 markersize = 5;
+%             elseif  nargin == 3
+%                 color = varargin{1};
+%                 linewidth = varargin{2};
+%                 markersize = 5;
+%             elseif  nargin == 4
+%                 color = varargin{1};
+%                 linewidth = varargin{2};
+%                 markersize = varargin{3};
+%             end
+%             p_link_all_w_r = obj.get_p_all_links;
+%             plot3(p_link_all_w_r(1,:)',p_link_all_w_r(2,:)',p_link_all_w_r(3,:)','o-','Color',color,...
+%                                     'LineWidth',linewidth,'MarkerSize',markersize);
+%             hold on
+%         end
 
         function plot_finger(obj,varargin) 
             % [06.09.2023] plot the finger with paramter structures
@@ -664,7 +605,6 @@ classdef Finger < handle & matlab.mixin.Copyable
                     ylabel('y')
                     zlabel('z')
                 end 
-
             end
         end
 
@@ -680,9 +620,8 @@ classdef Finger < handle & matlab.mixin.Copyable
 %             parstr.linecolor = 'r';
         end
 
-
         function plot_com(obj,varargin) 
-            % plot the com of each link in world frame
+            % plot the center of mass of each link in world frame
             
             if nargin == 1
                 par = obj.plot_parameter_init;
@@ -711,7 +650,6 @@ classdef Finger < handle & matlab.mixin.Copyable
 %             b_T_i = T_mdh_multi(mdh_all_matrix);
 %             p_link_all_b(:,end) = b_T_i(1:3,4);
 %             p_link_all_w(:,end) = w_p_b + w_R_b * b_T_i(1:3,4);
-
         end
 
         function plot_contacts(obj,varargin) 
@@ -736,8 +674,18 @@ classdef Finger < handle & matlab.mixin.Copyable
 %             p_link_all_w(:,end) = w_p_b + w_R_b * b_T_i(1:3,4);
 
         end
+
+%         function print_contact(obj) % not used 
+%             % plot 3d contact points
+%             for i = 1:obj.nl
+%                 contact_pos = obj.list_links(i).contacts(1).base_p;
+%                 W_contact_pos = obj.w_R_base*contact_pos + obj.w_p_base;
+%                 plot3(W_contact_pos(1),W_contact_pos(2),W_contact_pos(3),'*','Color', 'r', 'MarkerSize',10)
+%                 hold on
+%             end
+%         end
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        % tendon related:
+        %% tendon related:
         function add_tendon(obj, name, poly3_par)
             % add tendon to class
             % TODO: partition q & qa (current version: using q_a)
@@ -752,9 +700,7 @@ classdef Finger < handle & matlab.mixin.Copyable
             obj.update_M_coupling(obj.q_a);
 %             obj.update_tendon_force_limits;
         end
-        
-        
-        
+
         function set_tendon_par_MA_poly3(obj, tendon_index, joint_index, par)
             
             assert(length(par)== 4, 'dimension of par_MA_poly3 is incorrect!')
@@ -806,6 +752,63 @@ classdef Finger < handle & matlab.mixin.Copyable
             end 
         end
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %% ViaPoint related 
+
+        function ViaPoint_obj = add_ViaPoint(obj, name, link_index, link_p_obj)
+            % add contact to the specific link 
+            contact_obj = obj.list_links(link_index).add_contact_link(name, link_p_obj);
+            obj.update_list_contacts();
+        end
+        
+        function update_list_viapoint(obj)
+            % update the Link Class property: Links.nc 
+            % TODO: change name of the function
+            %       update all link contact (optional)
+            obj.list_contacts = []; % init list_contacts
+            num_contact = 0;
+            if obj.nl 
+                for i = 1:obj.nl
+                    num_contact_link_i =  obj.list_links(i).nc;
+                    num_contact = num_contact + num_contact_link_i;
+                    if num_contact_link_i ~= 0
+                        for j = 1:num_contact_link_i
+                            obj.list_contacts = [obj.list_contacts;obj.list_links(i).contacts(j)];
+                        end
+                    end
+                end
+            end
+            obj.nc = num_contact;
+        end
+        
+        function [w_p_contacts_all,b_p_contacts_all] = get_p_all_viapoint(obj)
+            % plot 3d contact points
+            w_R_b = obj.w_R_base;
+            w_p_b = obj.w_p_base;
+            %             w_T_b = get_W_T_B(obj);
+            b_p_contacts_all = zeros(3,obj.nc);
+            w_p_contacts_all = zeros(3,obj.nc);
+            for i = 1:obj.nc
+                contact_pos_i = obj.list_contacts(i).base_p;
+                w_contact_pos = w_R_b * contact_pos_i + w_p_b;
+                b_p_contacts_all(:,i) = contact_pos_i;
+                w_p_contacts_all(:,i) = w_contact_pos;
+            end
+        end
+
+        function delete_all_viapoint(obj)
+            % delete all contacts of the finger
+            if obj.nl 
+                for i = 1:obj.nl
+                    obj.list_links(i).delete_all_contacts_link();
+                end
+            end
+            obj.update_list_contacts;
+        end
+
+
+
+
+
     end
 end
 
