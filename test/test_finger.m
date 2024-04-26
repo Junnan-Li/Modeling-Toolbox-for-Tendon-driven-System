@@ -727,3 +727,31 @@ G_lag_error = G_fd-G_sym;
 
 C_sym = vpa(subs(C,q_r_sym,q_r),4);
 C_sym*q_rd
+
+%% Test ViaPoint
+
+clc
+clear all
+run examples\create_shadow_hand.m
+
+VP_1 = ViaPoint('VP_1')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

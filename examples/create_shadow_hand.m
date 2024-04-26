@@ -133,6 +133,7 @@ finger_little.update_finger_par_dyn;
 % finger_thumb.update_finger_par_dyn;
 % finger_r.update_finger(q_0);
 
+return
 %% add tendons
 finger_index_5_tendon = copy(finger_index);
 if finger_index.nt == 0
