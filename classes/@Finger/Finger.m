@@ -662,7 +662,7 @@ classdef Finger < handle & matlab.mixin.Copyable
             else
                 error('[plot_contact] input dimension is incorrect! \n')
             end
-            [w_p_contacts_all,b_p_contacts_all] = obj.get_p_all_contacts;
+            [w_p_contacts_all,~] = obj.get_p_all_contacts;
 
             plot3(w_p_contacts_all(1,:)',w_p_contacts_all(2,:)',w_p_contacts_all(3,:)','*','Color',par.markercolor,...
                                     'MarkerSize',par.markersize);
@@ -672,7 +672,23 @@ classdef Finger < handle & matlab.mixin.Copyable
 %             b_T_i = T_mdh_multi(mdh_all_matrix);
 %             p_link_all_b(:,end) = b_T_i(1:3,4);
 %             p_link_all_w(:,end) = w_p_b + w_R_b * b_T_i(1:3,4);
+        end
 
+        function plot_viapoints(obj,varargin) 
+            % plot the com of each link in world frame
+            
+            if nargin == 1
+                par = obj.plot_parameter_init;
+            elseif nargin == 2
+                par =  varargin{1};
+            else
+                error('[plot_contact] input dimension is incorrect! \n')
+            end
+            [w_p_viapoints_all,~] = obj.get_p_all_viapoints;
+
+            plot3(w_p_viapoints_all(1,:)',w_p_viapoints_all(2,:)',w_p_viapoints_all(3,:)','*','Color',par.markercolor,...
+                                    'MarkerSize',par.markersize);
+            hold on
         end
 
 %         function print_contact(obj) % not used 
@@ -756,54 +772,54 @@ classdef Finger < handle & matlab.mixin.Copyable
 
         function ViaPoint_obj = add_ViaPoint(obj, name, link_index, link_p_obj)
             % add contact to the specific link 
-            contact_obj = obj.list_links(link_index).add_contact_link(name, link_p_obj);
-            obj.update_list_contacts();
+            viapoint_obj = obj.list_links(link_index).add_viapoint_link(name, link_p_obj);
+            obj.update_list_viapoints();
         end
         
-        function update_list_viapoint(obj)
+        function update_list_viapoints(obj)
             % update the Link Class property: Links.nc 
             % TODO: change name of the function
             %       update all link contact (optional)
-            obj.list_contacts = []; % init list_contacts
-            num_contact = 0;
+            obj.list_viapoints = []; % init list_contacts
+            num_viapoints = 0;
             if obj.nl 
                 for i = 1:obj.nl
-                    num_contact_link_i =  obj.list_links(i).nc;
-                    num_contact = num_contact + num_contact_link_i;
-                    if num_contact_link_i ~= 0
-                        for j = 1:num_contact_link_i
-                            obj.list_contacts = [obj.list_contacts;obj.list_links(i).contacts(j)];
+                    num_vp_link_i =  obj.list_links(i).nv;
+                    num_viapoints = num_viapoints + num_vp_link_i;
+                    if num_vp_link_i ~= 0
+                        for j = 1:num_vp_link_i
+                            obj.list_viapoints = [obj.list_viapoints;obj.list_links(i).viapoints(j)];
                         end
                     end
                 end
             end
-            obj.nc = num_contact;
+            obj.nvia = num_viapoints;
         end
         
-        function [w_p_contacts_all,b_p_contacts_all] = get_p_all_viapoint(obj)
+        function [w_p_viapoints_all,b_p_viapoints_all] = get_p_all_viapoints(obj)
             % plot 3d contact points
             w_R_b = obj.w_R_base;
             w_p_b = obj.w_p_base;
             %             w_T_b = get_W_T_B(obj);
-            b_p_contacts_all = zeros(3,obj.nc);
-            w_p_contacts_all = zeros(3,obj.nc);
-            for i = 1:obj.nc
-                contact_pos_i = obj.list_contacts(i).base_p;
-                w_contact_pos = w_R_b * contact_pos_i + w_p_b;
-                b_p_contacts_all(:,i) = contact_pos_i;
-                w_p_contacts_all(:,i) = w_contact_pos;
+            b_p_viapoints_all = zeros(3,obj.nvia);
+            w_p_viapoints_all = zeros(3,obj.nvia);
+            for i = 1:obj.nvia
+                viapoint_pos_i = obj.list_viapoints(i).base_p;
+                w_viapoint_pos = w_R_b * viapoint_pos_i + w_p_b;
+                b_p_viapoints_all(:,i) = viapoint_pos_i;
+                w_p_viapoints_all(:,i) = w_viapoint_pos;
             end
         end
 
-        function delete_all_viapoint(obj)
-            % delete all contacts of the finger
-            if obj.nl 
-                for i = 1:obj.nl
-                    obj.list_links(i).delete_all_contacts_link();
-                end
-            end
-            obj.update_list_contacts;
-        end
+%         function delete_all_viapoint(obj)
+%             % delete all contacts of the finger
+%             if obj.nl 
+%                 for i = 1:obj.nl
+%                     obj.list_links(i).delete_all_contacts_link();
+%                 end
+%             end
+%             obj.update_list_contacts;
+%         end
 
 
 

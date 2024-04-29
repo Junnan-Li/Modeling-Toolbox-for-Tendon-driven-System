@@ -57,7 +57,8 @@ classdef Links < handle
 %             assert(size(base_R) == 3, 'Function error: input dimension of link position is incorrect');           
             obj.base_p = reshape(base_p,[3,1]);
             obj.base_R = base_R;
-            obj.update_link_contacts
+            obj.update_link_contacts;
+            obj.update_link_viapoints;
         end
         
         %% contacts
@@ -135,6 +136,17 @@ classdef Links < handle
             obj.viapoints = [obj.viapoints;new_viapoint];
             obj.nv = length(obj.viapoints);      
             obj.update_link_viapoints; % 
+        end
+
+        function update_link_viapoints(obj)
+            % update obj.nc link.Contact.base_R & base_p
+            
+            obj.nv = length(obj.viapoints);
+            if obj.nv ~=0
+                for i = 1:obj.nv
+                    obj.viapoints(i).update_VP_pose(obj.base_p,obj.base_R)
+                end
+            end
         end
         
     end
