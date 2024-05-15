@@ -86,6 +86,10 @@ classdef Tendons < handle
             obj.par_MA_poly3 = poly3_par;
             obj.update_momentarm(q);
         end
+
+        function par_MA_poly3 = get_par_MA_poly3(obj)            
+            par_MA_poly3 = obj.par_MA_poly3;
+        end
         
         function ma_value = cal_ma_poly3(obj, q)
             % calculate the moment arm value with q using poly3 expression
