@@ -1,10 +1,29 @@
 
 
 Classes:
-1. finger add CMC joints
-2. example script for multi-finger
-3. 
+1. tendon class 
+    change the name of tendon class (robotic, no via point) to distinguish muscle (human, includes pathway, parameters)
+2. muscle class: 
+    includes viapoints, muscle parameters, 
+    list of viapoints & obstacles in sequence, and a function calculate the length with given q
+    
+3. viapoint class: 
+    attached links
+    position in the link coord.
+ 
+4. obstacle classes
+    includes several obstacles (sphere, cylinder, ...)
+    
+    attached links
+    relative position and orientation
+    size parameter
+    
+5. finger class
+    update_list_viapoints: not efficient
 
+6. muscle class
+
+  
 
 Dynamics:
 1. floating base inverse dynamic 
