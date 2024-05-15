@@ -13,7 +13,7 @@ classdef ViaPoint < handle
     end
     properties (SetAccess = private)
         link_index
-        base_p          % position related to base frame
+        base_p          % position related to base frame, need be calculate with given link T matrix
     end
 
     methods
@@ -32,7 +32,8 @@ classdef ViaPoint < handle
         end
 
         function update_VP_pose(obj,base_p_link,base_R_link)
-            % 
+            % calculate the VP position in the base frame with given link
+            % transformation matrix. 
             base_p_link = reshape(base_p_link,[3,1]);
             base_T_VP = [base_R_link,base_p_link;0 0 0 1];
             H_tmp = base_T_VP * [obj.link_p;1];

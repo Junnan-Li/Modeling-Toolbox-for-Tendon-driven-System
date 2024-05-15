@@ -682,7 +682,7 @@ classdef Finger < handle & matlab.mixin.Copyable
             elseif nargin == 2
                 par =  varargin{1};
             else
-                error('[plot_contact] input dimension is incorrect! \n')
+                error('[plot_viapoints] input dimension is incorrect! \n')
             end
             [w_p_viapoints_all,~] = obj.get_p_all_viapoints;
 
@@ -691,15 +691,23 @@ classdef Finger < handle & matlab.mixin.Copyable
             hold on
         end
 
-%         function print_contact(obj) % not used 
-%             % plot 3d contact points
-%             for i = 1:obj.nl
-%                 contact_pos = obj.list_links(i).contacts(1).base_p;
-%                 W_contact_pos = obj.w_R_base*contact_pos + obj.w_p_base;
-%                 plot3(W_contact_pos(1),W_contact_pos(2),W_contact_pos(3),'*','Color', 'r', 'MarkerSize',10)
-%                 hold on
-%             end
-%         end
+        function plot_muscles(obj,varargin) 
+            % plot the com of each link in world frame
+            
+            if nargin == 1
+                par = obj.plot_parameter_init;
+            elseif nargin == 2
+                par =  varargin{1};
+            else
+                error('[plot_muscles] input dimension is incorrect! \n')
+            end
+
+            for i = 1:obj.nmus
+                w_p_viapoints_all = obj.get_p_muscle_viapoints(i);
+                plot3(w_p_viapoints_all(1,:)',w_p_viapoints_all(2,:)',w_p_viapoints_all(3,:)','-*','Color',par.markercolor,...
+                                    'MarkerSize',par.markersize);
+            end
+        end
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %% tendon related:
         function add_tendon(obj, name, poly3_par)
@@ -721,8 +729,10 @@ classdef Finger < handle & matlab.mixin.Copyable
             
             assert(length(par)== 4, 'dimension of par_MA_poly3 is incorrect!')
             assert(tendon_index <= obj.nt, 'index of tendon is incorrect!')
-            assert(joint_index <= obj.list_tendons(tendon_index).j_index, 'index of joint is incorrect!')
-            obj.list_tendons(tendon_index).set_par_MA_poly3(joint_index, par, obj.q_a);
+            assert(joint_index <= obj.list_tendons(tendon_index).nj_finger, 'index of joint is incorrect!')
+            par_MA_poly3_i = obj.list_tendons(tendon_index).get_par_MA_poly3;
+            par_MA_poly3_i(:,joint_index) = par;
+            obj.list_tendons(tendon_index).set_par_MA_poly3(par_MA_poly3_i, obj.q_a);
             obj.update_M_coupling(obj.q_a);
             
         end
@@ -776,6 +786,15 @@ classdef Finger < handle & matlab.mixin.Copyable
             obj.update_list_viapoints();
         end
         
+        function ViaPoint_obj = add_ViaPoint_to_muscle(obj, name, link_index, link_p_obj, muscle_index)
+            % add contact to the specific link 
+            assert(muscle_index <= obj.nmus, 'add_ViaPoint_to_muscle: muscle index exceeds the number of muscles!')
+            viapoint_obj = obj.list_links(link_index).add_viapoint_link(name, link_p_obj);
+            obj.list_muscles(muscle_index).list_vp = [obj.list_muscles(muscle_index).list_vp; viapoint_obj];
+            obj.list_muscles(muscle_index).update_viapoints; 
+            obj.update_list_viapoints();
+        end
+ 
         function update_list_viapoints(obj)
             % update the Link Class property: Links.nc 
             % TODO: change name of the function
@@ -822,6 +841,54 @@ classdef Finger < handle & matlab.mixin.Copyable
 %         end
 
 
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %% Muscle related 
+        function Muscle_obj = add_Muscle(obj, name)
+            % add muscle to the finger
+            Muscle_obj = Muscles(name);
+            obj.list_muscles = [obj.list_muscles;Muscle_obj];
+            obj.nmus = length(obj.list_muscles);
+        end
+
+        function delete_Muscle(obj, index)
+            % delete muscle to the finger
+            obj.list_muscles(index) = [];
+            obj.nmus = length(obj.list_muscles);
+        end
+
+        function [w_p_viapoints_all,b_p_viapoints_all] = get_p_muscle_viapoints(obj, muscle_index)
+            assert(isempty(find(muscle_index - obj.nmus > 0)),'[get_p_muscle_viapoints] muscle index exceeds the number of muscles!')
+            % plot 3d muscle via points
+            w_R_b = obj.w_R_base;
+            w_p_b = obj.w_p_base;
+            n_mus_sel = length(muscle_index);
+            n_vp = 0;
+            for i = 1:n_mus_sel
+                n_vp = n_vp + obj.list_muscles(muscle_index(i)).n_vp;
+            end
+            b_p_viapoints_all = zeros(3*n_mus_sel,n_vp);
+            w_p_viapoints_all = zeros(3*n_mus_sel,n_vp);
+            for i = 1:n_mus_sel
+                muscle_i = obj.list_muscles(muscle_index(i));
+                if muscle_i.n_vp == 0
+                    fprintf('[get_p_muscle_viapoints] muscle %d has no viapoints! \n',i)
+                end
+                for j = 1:muscle_i.n_vp
+                    viapoint_pos_i = muscle_i.list_vp(j).base_p;
+                    w_viapoint_pos = w_R_b * viapoint_pos_i + w_p_b;
+                    b_p_viapoints_all(3*i-2:3*i,j) = viapoint_pos_i;
+                    w_p_viapoints_all(3*i-2:3*i,j) = w_viapoint_pos;
+                end
+            end
+        end
+
+        function Muscle_length = cal_all_Muscle_Length(obj)
+            % calculate the length of all muscles
+            Muscle_length = zeros(obj.nmus,1);
+            for i = 1: obj.nmus
+                Muscle_length(i) = obj.list_muscles(i).cal_muscle_length; 
+            end
+        end
 
 
 
