@@ -15,8 +15,8 @@ classdef Links < handle
         Thick               % [1] Thick in m
         par_dyn             % [1] mass, [3x1] center of mass, [6x1] inertia
         stiffness
-        nc
-        contacts            % [1] num of viapoints
+        nc                  % [1] num of contascts
+        contacts           
         viapoints
         nv                  % [1] num of viapoints
         

@@ -19,8 +19,9 @@ Classes:
     size parameter
     
 5. finger class
-    update_list_viapoints: not efficient
-
+    a. update_list_viapoints: not efficient
+    b. cal_all_Muscle_momentarm:
+        using numeric differentiation method 
 6. muscle class
 
   

@@ -39,7 +39,10 @@
 %       add_tendon();
 %       update_M_coupling()
 %       set_tendon_par_MA_poly3(obj, tendon_index, joint_index, par)
-%       
+%
+%   muscle related:
+%       cal_all_Muscle_momentarm_1st_c: calculate the moment arm using
+%           first order centered numeric differentiation method
 
 classdef Finger < handle & matlab.mixin.Copyable    
     properties (Access = public)
@@ -890,7 +893,62 @@ classdef Finger < handle & matlab.mixin.Copyable
             end
         end
 
+        function Muscle_length = cal_selected_Muscle_Length(obj, muscle_index)
+            % calculate the length of selected muscles
+            assert(isempty(find(muscle_index - obj.nmus > 0)),'[cal_selected_Muscle_Length] muscle index exceeds the number of muscles!')
+           
+            Muscle_length = zeros(length(muscle_index),1);
+            for i = 1: length(muscle_index)
+                Muscle_length(i) = obj.list_muscles(muscle_index(i)).cal_muscle_length; 
+            end
+        end
 
+        function MA = cal_all_Muscle_momentarm_1st_c(obj, step)
+            % calculate the Momentarm matrix of all muscles
+            % MA is a [nj,nmus] matrix
+            % calculate the MA value using first order centered 
+            % numeric differentiation method
+            MA = zeros(obj.nj,obj.nmus);
+            q_ori = obj.q;
+            for i = 1: obj.nj
+                for j = 1: obj.nmus
+                    q_f = q_ori;
+                    q_f(i) = q_f(i) + step;
+                    obj.update_finger(q_f);
+                    l_f = obj.cal_selected_Muscle_Length(j); % forward 
+                    q_b = q_ori;
+                    q_b(i) = q_b(i) - step;
+                    obj.update_finger(q_b);
+                    l_b = obj.cal_selected_Muscle_Length(j); % forward 
+                    MA(i,j) = (l_f-l_b)/(2*step); 
+                end
+            end
+            obj.update_finger(q_ori);
+        end
+
+        function MA = cal_selected_Muscle_momentarm_1st_c(obj, step, muscle_index)
+            % calculate the Momentarm matrix of all muscles
+            % MA is a [nj,length(muscle_index)] matrix
+            % calculate the MA value using first order centered 
+            % numeric differentiation method
+            assert(isempty(find(muscle_index - obj.nmus > 0)),'[cal_selected_Muscle_momentarm_1st_c] muscle index exceeds the number of muscles!')
+            MA = zeros(obj.nj,length(muscle_index));
+            q_ori = obj.q;
+            for i = 1: obj.nj
+                for j = 1: length(muscle_index)
+                    q_f = q_ori;
+                    q_f(i) = q_f(i) + step;
+                    obj.update_finger(q_f);
+                    l_f = obj.cal_selected_Muscle_Length(muscle_index(j)); % forward 
+                    q_b = q_ori;
+                    q_b(i) = q_b(i) - step;
+                    obj.update_finger(q_b);
+                    l_b = obj.cal_selected_Muscle_Length(muscle_index(j)); % forward 
+                    MA(i,j) = (l_f-l_b)/(2*step); 
+                end
+            end
+            obj.update_finger(q_ori);
+        end
 
     end
 end
