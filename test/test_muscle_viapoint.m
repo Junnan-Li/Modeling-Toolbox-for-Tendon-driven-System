@@ -43,8 +43,9 @@ grid on
 [w_p_viapoints_all,~] = finger_index.get_p_all_viapoints;
 [w_p_viapoints_all,~] = finger_index.get_p_muscle_viapoints([1,2]); 
 
-MA = finger_index.cal_all_Muscle_momentarm_1st_c(0.001) % calculate moment arm value with step 0.001
-MA_sub = finger_index.cal_selected_Muscle_momentarm_1st_c(0.001,2);
+% MA = finger_index.cal_all_Muscle_momentarm_1st_c(0.001) % calculate moment arm value with step 0.001
+MA_sub = finger_index.cal_selected_Muscle_momentarm_1st_c(0.001,2)
+MA_sub2 = finger_index.cal_selected_Muscle_momentarm_1st_c(0.01,2)
 return
 %%
 VP_1 = ViaPoint('VP_1');
