@@ -24,13 +24,20 @@ Classes:
         using numeric differentiation method 
 6. muscle class
 
+7. hand class 
+a hand object comprises several fingers and base, enabling hybride kinematic, dynamics,
+floating base, 
+    
+
   
 
 Dynamics:
 1. floating base inverse dynamic 
-2. Mass matric, C torque 
-3. symbolic inverse dynamics
+*2. Mass matric, C torque 
+*3. symbolic inverse dynamics
 4. regressor form for identification
+
+
 
 Optimization:
 1. metrics
