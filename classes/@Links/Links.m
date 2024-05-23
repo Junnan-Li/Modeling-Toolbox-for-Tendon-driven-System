@@ -6,7 +6,7 @@
 
 
 
-classdef Links < handle
+classdef Links < handle & matlab.mixin.Copyable 
     
     properties (Access = public)
         name
