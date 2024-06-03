@@ -483,6 +483,12 @@ classdef Finger < handle & matlab.mixin.Copyable
             w_R_ee =  w_R_b * b_T_i(1:3,1:3);
         end
 
+        function x = get_x_ee_w(obj)
+            % get the Cartesian position of link ends
+            [w_p_ee,w_R_ee] = obj.get_T_ee_w();
+            x = [w_p_ee;R2euler_XYZ(w_R_ee)];
+        end
+
         %% contacts
 
         function contact_obj = add_contact(obj, name, link_index, link_p_obj)
