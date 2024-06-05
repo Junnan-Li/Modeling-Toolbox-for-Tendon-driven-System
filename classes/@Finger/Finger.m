@@ -68,12 +68,13 @@ classdef Finger < handle & matlab.mixin.Copyable
         par_kin             % all kinematic parameters
         opt_pkin            % kinematic parameters for optimization
         
-        w_p_base            % position of the base in world frame. Default: [0,0,0]'
-        w_R_base            % rotation of the base in world frame. Default: non rotation
-%         w_T_base   
     end
     
     properties (SetAccess = private)
+        w_p_base            % position of the base in world frame. Default: [0,0,0]'
+        w_R_base            % rotation of the base in world frame. Default: non rotation
+        w_T_base  
+        w_T_base_inhand        
         mdh                 % mdh parameters: alpha, a theta, d (with q)
         mdh_all
         mdh_ori             % mdh parameters: alpha, a theta, d (without q)
@@ -129,7 +130,7 @@ classdef Finger < handle & matlab.mixin.Copyable
             % generate links
             list_links = [];
             for i = 1:obj.nl
-                link_name_i = strcat('Link',num2str(i));
+                link_name_i = strcat(obj.name,'_Link',num2str(i));
                 Link_new = Links(link_name_i,link_len_input(i), i);
                 list_links = [list_links;Link_new];
             end
@@ -139,7 +140,7 @@ classdef Finger < handle & matlab.mixin.Copyable
             % TODO 
             list_joints = [];
             for i = 1:obj.nj
-                Joint_name_i = strcat('Joints',num2str(i));
+                Joint_name_i = strcat(obj.name,'_Joint',num2str(i));
                 Joint_new = Joints(Joint_name_i,i);
                 list_joints = [list_joints;Joint_new];
             end
@@ -174,6 +175,8 @@ classdef Finger < handle & matlab.mixin.Copyable
             % init finger base position and orientation
             obj.w_p_base = [0;0;0];
             obj.w_R_base = eye(3);
+            obj.w_T_base = pR2T(obj.w_p_base,obj.w_R_base);
+            obj.w_T_base_inhand = obj.w_T_base;
             obj.q_a = zeros(obj.nja,1);
             obj.q = zeros(obj.nj,1);
             % update mdh parameters
@@ -328,7 +331,7 @@ classdef Finger < handle & matlab.mixin.Copyable
             % set dynamic parameter in world frame
             % g is in world frame as input 
             g_reshape = reshape(g,3,1);
-            w_R_b = obj.w_R_base;
+%             w_R_b = obj.w_R_base;
 %             obj.par_dyn_f.g = w_R_b'*g_reshape;
             obj.par_dyn_f.g = g_reshape;
         end
@@ -346,7 +349,7 @@ classdef Finger < handle & matlab.mixin.Copyable
 
  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%               
 
-        function update_rst_model(obj)
+        function rst_model_tmp = update_rst_model(obj)
             % build/update the rst model of the finger based on the mdh
             % parameters
             %
@@ -377,7 +380,7 @@ classdef Finger < handle & matlab.mixin.Copyable
             % virtual first body:  from CS.base to CS.1
             bodyname = obj.list_links(1).name;
             body1 = rigidBody(bodyname);
-            jointname = 'virtual_Base_joints';
+            jointname = strcat(obj.name,'_virtual_Base_joints');
             jnt1 = rigidBodyJoint(jointname,'revolute');          
             W_T_base = obj.get_W_T_B(); % World to Base 
 %             T = T_mdh_multi(mdh_matrix_order_1(1,:));
@@ -392,7 +395,7 @@ classdef Finger < handle & matlab.mixin.Copyable
             for j = 2:obj.nl
                 bodyname = obj.list_links(j).name;
                 body1 = rigidBody(bodyname);
-                jointname = obj.list_joints(j).name;
+                jointname = strcat(obj.name,'_',obj.list_joints(j).name);
                 jnt1 = rigidBodyJoint(jointname,'revolute');
                 setFixedTransform(jnt1,mdh_matrix(j,:),'mdh');
                 body1.Joint = jnt1;
@@ -404,9 +407,9 @@ classdef Finger < handle & matlab.mixin.Copyable
             end
             
             % virtual last body:  fingertip
-            bodyname = 'endeffector';
+            bodyname = strcat(obj.name,'_endeffector');
             body1 = rigidBody(bodyname);
-            jointname = 'Virtual_fingertip';
+            jointname = strcat(obj.name,'Virtual_fingertip');
             jnt1 = rigidBodyJoint(jointname,'fixed');          
             setFixedTransform(jnt1,mdh_matrix(end,:),'mdh');
             body1.Joint = jnt1;
@@ -426,12 +429,16 @@ classdef Finger < handle & matlab.mixin.Copyable
             % frame
             obj.w_p_base = w_p_base;
             obj.w_R_base = w_R_base;
+
+            obj.w_T_base = pR2T(w_p_base,w_R_base);
+            obj.w_T_base_inhand = obj.w_T_base;
+
             obj.update_finger(obj.q_a);
         end
-        
+
         function W_T_b = get_W_T_B(obj)
             % get the homogeneous transformation matrix from Base to W
-            W_T_b = [obj.w_R_base,obj.w_p_base; 0 0 0 1];
+            W_T_b = obj.w_T_base;
         end
 
         function [p_link_all_w,p_link_all_b] = get_p_all_links(obj)
@@ -469,7 +476,7 @@ classdef Finger < handle & matlab.mixin.Copyable
             w_T_all(:,:,end) = w_T_b*b_T_ee;
         end
         
-        function [w_p_ee,w_R_ee] = get_T_ee_w(obj)
+        function [w_p_ee,w_R_ee, w_T_ee] = get_T_ee_w(obj)
             % get the Cartesian position of the base and link ends
             w_R_b = obj.w_R_base; 
             w_p_b = obj.w_p_base;
@@ -481,6 +488,29 @@ classdef Finger < handle & matlab.mixin.Copyable
             b_T_i = T_mdh_multi(mdh_all_matrix);
             w_p_ee = w_p_b + w_R_b * b_T_i(1:3,4);
             w_R_ee =  w_R_b * b_T_i(1:3,1:3);
+            w_T_ee = [w_R_ee,w_p_ee;0,0,0,1];
+        end
+
+        % as a finger in the hand object (use w_T_base_inhand instead w_T_base)
+        function set_w_T_base_inhand(obj, w_T_base_inhand)
+            % set the position and orientation of the base in the world
+            % frame in a hand object
+            obj.w_T_base_inhand = w_T_base_inhand;
+        end
+
+        function w_T_base_inhand = get_w_T_base_inhand(obj)
+            % get the homogeneous transformation matrix from Base to W 
+            % in a hand object
+            w_T_base_inhand = obj.w_T_base_inhand;
+        end
+
+        function w_T_ee_inhand = get_w_T_ee_inhand(obj)
+            % get the Cartesian position of the base and link ends
+%             w_T_base_inhand = obj.get_w_T_base_inhand; 
+            % fingertip position
+            mdh_all_matrix = mdh_struct_to_matrix(obj.mdh_all, 1);
+            b_T_i = T_mdh_multi(mdh_all_matrix);
+            w_T_ee_inhand = obj.w_T_base_inhand*b_T_i;
         end
 
         function x = get_x_ee_w(obj)
@@ -572,7 +602,9 @@ classdef Finger < handle & matlab.mixin.Copyable
 
         function plot_finger(obj,varargin) 
             % [06.09.2023] plot the finger with paramter structures
-            % parameters.linecolor = 'r'
+            % parameters
+            %           .inhand = 0
+            %           .linecolor = 'r'
             %           .linewidth = 3
             %           .markersize = 5
             %           .axis_show = 1
@@ -587,15 +619,19 @@ classdef Finger < handle & matlab.mixin.Copyable
             else
                 error('[plot_finger] input dimension is incorrect! \n')
             end
-
-            w_R_b = obj.w_R_base;
-            w_p_b = obj.w_p_base;
+            if parameters.inhand == 0
+                w_R_b = obj.w_R_base;
+                w_p_b = obj.w_p_base;
+            else
+                [w_p_b,w_R_b] = T2pR(obj.get_w_T_base_inhand);
+            end
 
             color = parameters.linecolor;
             linewidth = parameters.linewidth;
             markersize = parameters.markersize;
 
-            p_link_all_w_r = obj.get_p_all_links;
+            [~,p_link_all_b_r] = obj.get_p_all_links;
+            p_link_all_w_r = w_p_b + w_R_b * p_link_all_b_r;
             plot3(p_link_all_w_r(1,:)',p_link_all_w_r(2,:)',p_link_all_w_r(3,:)','o-','Color',color,...
                                     'LineWidth',linewidth,'MarkerSize',markersize);
             hold on
@@ -619,28 +655,26 @@ classdef Finger < handle & matlab.mixin.Copyable
 
         function parstr = plot_parameter_init(obj)
             % init the parameter struct for plot_finger
-            parstr = struct();
-            parstr.linecolor = 'r';
-            parstr.linewidth = 3;
-            parstr.markersize = 5;
-            parstr.markercolor= 'g';
-            parstr.axis_show = 1;
-            parstr.axis_len = 0.1;
-%             parstr.linecolor = 'r';
+            % check plot_parameter_init.m
+            parstr = plot_parameter_init();
         end
 
         function plot_com(obj,varargin) 
             % plot the center of mass of each link in world frame
             
             if nargin == 1
-                par = obj.plot_parameter_init;
+                par = plot_parameter_init();
             elseif nargin == 2
                 par =  varargin{1};
             else
                 error('[plot_com] input dimension is incorrect! \n')
             end
-            w_R_b = obj.w_R_base; 
-            w_p_b = obj.w_p_base;
+            if par.inhand == 0
+                w_R_b = obj.w_R_base;
+                w_p_b = obj.w_p_base;
+            else
+                [w_p_b,w_R_b] = T2pR(obj.get_w_T_base_inhand);
+            end
 %             p_link_all_b = zeros(3,obj.nl+1);
             p_com_all_b = obj.par_dyn_f.com_all;
             p_com_all_w = zeros(3,obj.nl+1);
@@ -693,8 +727,16 @@ classdef Finger < handle & matlab.mixin.Copyable
             else
                 error('[plot_viapoints] input dimension is incorrect! \n')
             end
-            [w_p_viapoints_all,~] = obj.get_p_all_viapoints;
 
+            if parameters.inhand == 0
+                w_R_b = obj.w_R_base;
+                w_p_b = obj.w_p_base;
+            else
+                [w_p_b,w_R_b] = T2pR(obj.get_w_T_base_inhand);
+            end
+
+            [~,b_p_viapoints_all] = obj.get_p_all_viapoints;
+            w_p_viapoints_all = w_p_b + w_R_b*b_p_viapoints_all;
             plot3(w_p_viapoints_all(1,:)',w_p_viapoints_all(2,:)',w_p_viapoints_all(3,:)','*','Color',par.markercolor,...
                                     'MarkerSize',par.markersize);
             hold on
@@ -717,6 +759,8 @@ classdef Finger < handle & matlab.mixin.Copyable
                                     'MarkerSize',par.markersize);
             end
         end
+
+        % plot function for hand 
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %% tendon related:
         function add_tendon(obj, name, poly3_par)

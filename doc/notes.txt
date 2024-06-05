@@ -27,6 +27,9 @@ Classes:
 7. hand class 
 a hand object comprises several fingers and base, enabling hybride kinematic, dynamics,
 floating base, 
+    a. in test_hand.m, the merge of base and finger need to remove the first row of mdh parameter of 
+finger, and the endeff frame of base should be well-aligned. The first joint of the finger is attached 
+to the endeffector of base. 
     
 
   
