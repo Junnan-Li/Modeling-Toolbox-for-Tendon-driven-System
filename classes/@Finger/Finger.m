@@ -644,7 +644,7 @@ classdef Finger < handle & matlab.mixin.Copyable
                     h = quiver3(W_p_link_i(1),W_p_link_i(2),W_p_link_i(3),...
                             W_p_link_z_i(1),W_p_link_z_i(2),W_p_link_z_i(3),...
                             'Color','b','LineWidth',linewidth);
-                    set(h,'AutoScale','on', 'AutoScaleFactor',1)
+                    set(h,'AutoScale','on', 'AutoScaleFactor',1);
                     hold on
                     xlabel('x')
                     ylabel('y')

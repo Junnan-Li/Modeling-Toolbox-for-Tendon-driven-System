@@ -47,14 +47,15 @@ classdef Hand < handle & matlab.mixin.Copyable
         list_tendons        % [ntx1] list of all tendons
         list_muscles        % [ntx1] list of all muscles
         list_viapoints      % [ntx1] list of all viapoints
-        
-        w_p_base            % position of the base in world frame. Default: [0,0,0]'
-        w_R_base            % rotation of the base in world frame. Default: non rotation
-
+       
         topology
     end
     
     properties (SetAccess = private)
+
+        w_p_base            % position of the base in world frame. Default: [0,0,0]'
+        w_R_base            % rotation of the base in world frame. Default: non rotation
+
 
     end
     
@@ -84,8 +85,6 @@ classdef Hand < handle & matlab.mixin.Copyable
             obj.list_muscles = [];
             obj.nvia = 0;
             obj.list_viapoints = [];
-            
-
             obj.w_p_base = [0;0;0];
             obj.w_R_base = eye(3);
 
@@ -151,11 +150,10 @@ classdef Hand < handle & matlab.mixin.Copyable
 
         function update_hand(obj, q)
             % update hand configuration
-            % and update the w_p_base & w_R_base for all bases and fingers
+            % and update the w_p_base_inhand & w_R_base_inhand for all 
+            % bases and fingers
             assert(length(q) == obj.nj, '[update_hand] dimension of q is incorrect!');
             obj.q = q;
-%             w_p_base_i = obj.w_p_base; % w to base of hand 
-%             w_R_base_i = obj.w_R_base;
             W_T_b_prior = obj.get_W_T_B;
             if obj.njb ~= 0
                 q_b = q(1:obj.njb); % joint of base
@@ -207,12 +205,27 @@ classdef Hand < handle & matlab.mixin.Copyable
 
         function set_figner_base(obj, w_p_base, w_R_base, finger_index)
             % set the position and orientation of the base in the world
-            % frame
+            % need to use hand.update
             assert(finger_index <= obj.nf, '[set_figner_base] finger_index is too large!');
             
             finger_i = obj.list_fingers(finger_index);
             finger_i.set_base( w_p_base, w_R_base);
             finger_i.update_finger(finger_i.q);
+        end
+
+         function w_T_ee_all = get_w_T_ee_all(obj)
+            % get the T of the all figners
+            
+            if obj.nf == 0
+                w_T_ee_all = 0;
+                disp('Hand has no finger element!!')
+            else
+                w_T_ee_all = zeros(4*obj.nf,4);
+                for i = 1:obj.nf
+                    finger_i = obj.list_fingers(i);
+                    w_T_ee_all(4*i-3:4*i,:) = finger_i.get_w_T_ee_inhand;
+                end
+            end
         end
 
         %% rst model
@@ -244,6 +257,10 @@ classdef Hand < handle & matlab.mixin.Copyable
             end
 
         end
+
+        %% kinematics
+
+       
 
 
         %% visualization

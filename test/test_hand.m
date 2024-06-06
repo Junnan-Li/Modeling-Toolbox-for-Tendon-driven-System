@@ -29,9 +29,9 @@ parameters.axis_len = 0.5;
 base_1.plot_finger(parameters);
 base_1.plot_com;
 axis equal
-base_1.update_rst_model
+base_1.update_rst_model;
 rst_model_base = base_1.rst_model;
-rst_model_base.show(q0_1,"Frames","on")
+rst_model_base.show(q0_1,"Frames","on");
 
 %% finger 1
 mdh_parameter2 = [0,0,0,0;pi/2,0.8,0,0;-pi/2,1,0,0;0,0.7,0,0];
@@ -51,9 +51,9 @@ finger_1.update_finger(q0_2);
 finger_1.plot_finger(parameters);
 finger_1.plot_com;
 axis equal
-finger_1.update_rst_model
+finger_1.update_rst_model;
 rst_model_finger_1 = finger_1.rst_model;
-rst_model_finger_1.show(q0_2,"Frames","on")
+rst_model_finger_1.show(q0_2,"Frames","on");
 
 % calculate the gravity torque using both methods 
 gravTorq = gravityTorque(rst_model_finger_1,q0_2);
@@ -106,9 +106,9 @@ finger_2.update_finger(q0_f2);
 finger_2.plot_finger(parameters);
 finger_2.plot_com;
 axis equal
-finger_2.update_rst_model
+finger_2.update_rst_model;
 rst_model_finger_2 = finger_2.rst_model;
-rst_model_finger_2.show(q0_f2,"Frames","on")
+rst_model_finger_2.show(q0_f2,"Frames","on");
 %% merge method 1 (ignore the finger base position and orientation)
 % merge the mdh parameters 
 % remove the first row of the finger mdh parameter
@@ -126,9 +126,9 @@ merge_1.update_finger(q0_merge);
 merge_1.plot_finger(parameters);
 merge_1.plot_com;
 axis equal
-merge_1.update_rst_model
+merge_1.update_rst_model;
 rst_modelmerge = merge_1.rst_model;
-rst_modelmerge.show(q0_merge, "Frames","on")
+rst_modelmerge.show(q0_merge, "Frames","on");
 rst_modelmerge.DataFormat = 'column';
 % rst_modelmerge.Gravity = [0 0 -9.81];
 
@@ -183,7 +183,7 @@ rst_model_finger_1 = finger_1.rst_model;
 finger_1.update_finger(q_finger1)
 finger_1.plot_finger()
 axis equal
-rst_model_finger_1.show(q_finger1)
+rst_model_finger_1.show(q_finger1);
 hold on
 finger_2.set_base([1,1,0]',euler2R_XYZ([-pi/4,0,0]));
 finger_2.update_rst_model;
@@ -191,22 +191,22 @@ rst_model_finger_2 = finger_2.rst_model;
 finger_2.update_finger(q_finger2)
 finger_2.plot_finger()
 hold on
-rst_model_finger_2.show(q_finger2)
+rst_model_finger_2.show(q_finger2);
 
 
 % reset the base pos
 base_1.set_base([0,0,2]',euler2R_XYZ([0,0,0]))
-base_1.update_rst_model
+base_1.update_rst_model;
 rst_model_base = base_1.rst_model;
-rst_model_base.show(q_base)
+rst_model_base.show(q_base);
 rst_merge_2 = rst_model_base.copy; % copy base rst model as merged one
 base_name = rst_merge_2.BodyNames{end};% the name of the endeffector that 
 % will substitute the world origin of fingers
-rst_merge_2.addSubtree(base_name,rst_model_finger_1)
-rst_merge_2.addSubtree(base_name,rst_model_finger_2)
+rst_merge_2.addSubtree(base_name,rst_model_finger_1);
+rst_merge_2.addSubtree(base_name,rst_model_finger_2);
 hold on
 
-rst_merge_2.show(q_merge)
+rst_merge_2.show(q_merge);
 
 
 % calculate the gravity torque using both methods 
@@ -219,67 +219,60 @@ jacobian_f1_mod = [jacobian_f1(4:6,:);jacobian_f1(1:3,:)];
 jacobian_f2 = geometricJacobian(rst_merge_2,q_merge,rst_model_finger_2.BodyNames{end});
 jacobian_f2_mod = [jacobian_f2(4:6,:);jacobian_f2(1:3,:)]; 
 
-return
 %% create hand with two fingers
 
 hand = Hand('hand_exa');
 hand.add_base(base_1);
 hand.add_finger(finger_1);
-% hand.add_finger(finger_2);
+hand.add_finger(finger_2);
 q_hand = rand(hand.nj,1);
 hand.update_hand(q_hand);
 
+par_plot_hand = hand.plot_parameter_init();
+par_plot_hand.axis_len = 0.4;
 hand_rst = hand.update_rst_model;
-hand_rst.show(q_hand)
+hand_rst.show(q_hand,'Frames','on');
 hold on
-hand.plot_hand()
+axis equal
+hand.plot_hand(par_plot_hand)
+
+
+
+
+
+% check if end effector posistion is correct
+
+q_hand = rand(hand.nj,1);
 hand.update_hand(q_hand);
-hand.plot_hand()
-hand.plot_hand()
-return
-%% create hand 
 
-hand = Hand('hand1');
+w_T_ee_all = hand.get_w_T_ee_all;
+T_1_rst = hand_rst.getTransform(q_hand, 'finger1_endeffector');
+T_2_rst = hand_rst.getTransform(q_hand, 'finger2_endeffector');
+T_rst = [T_1_rst;T_2_rst];
 
-finger2 = copy(finger_index)
-finger2.name = 'figner2';
-finger3 = copy(finger_index)
-finger3.name = 'figner3';
+T_error = w_T_ee_all-T_rst;
+if max(abs(T_error(:))) > 1e-10 
+    fprintf('Test (finger position): failed! \n')
+else
+    fprintf('Test (finger position): pass! \n')
+end
 
+%% test the Jacobian of a hand with two fingers
 
-finger_index.update_finger([0.3,1,0.1,0.1]');
-[p_link_all_w1,~] = finger_index.get_p_all_links()
-% [p_link_all_w2,~] = finger2.get_p_all_links()
-finger2.update_finger(4*[0.1,0.1,0.1,0.1]');
-[p_link_all_w1,~] = finger_index.get_p_all_links()
-% [p_link_all_w2,~] = finger2.get_p_all_links()
-
-finger3.update_finger(8*[0.1,0.1,0.1,0.1]');
-[p_link_all_w1,~] = finger_index.get_p_all_links()
-
-[p_link_all_w1,~] = finger_index.get_p_all_links();
-[p_link_all_w2,~] = finger2.get_p_all_links();
-[p_link_all_w3,~] = finger3.get_p_all_links();
-
-return
-
-hand.add_finger(finger_index);
-hand.add_finger(finger2);
-% hand.add_finger(finger3);
-
-% hand.set_figner_base([0;0.01;0],eye(3),1);
-% hand.set_figner_base([0;0;0],eye(3),2)
-% hand.set_figner_base([0;-0.01;0],eye(3),3)
-
-hand.update_hand(rand(hand.nj,1));
-
-% hand.update_hand([0.1,0.1,0.1,0.1,0.2,0.2,0.2,0.2,0.3,0.3,0.3,0.3]');
+q_hand = rand(hand.nj,1);
+hand.update_hand(q_hand);
+hand_rst = hand.update_rst_model;
+jacobian_f1 = geometricJacobian(hand_rst,q_hand,'finger1_endeffector');
+jacobian_f1_mod = [jacobian_f1(4:6,:);jacobian_f1(1:3,:)]
 
 
-a = hand.list_fingers(1);
-b = hand.list_fingers(2);
+J = hand.Jacobian_geom_w_one_finger(1,q_hand)
 
 
-hand.plot_hand()
+
+
+
+
+
 
 
