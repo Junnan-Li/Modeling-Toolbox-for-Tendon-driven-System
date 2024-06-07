@@ -34,18 +34,21 @@ rst_model_base = base_1.rst_model;
 rst_model_base.show(q0_1,"Frames","on");
 
 %% finger 1
-mdh_parameter2 = [0,0,0,0;pi/2,0.8,0,0;-pi/2,1,0,0;0,0.7,0,0];
+mdh_parameter2 = [0,0,0,0;pi/2,0.8,0,0;-pi/2,1,0,0;0,0.5,0,0;0,0.7,0,0];
 mdh_struct = mdh_matrix_to_struct(mdh_parameter2, 1);
 finger_1 = Finger('finger1', 'mdh',mdh_struct );
 finger_1.set_base(rand(3,1),euler2R_XYZ(rand(3,1)));
 
 q0_2 = rand(finger_1.nj,1);
+finger_1.set_base_dynpar(1,[-0.2,0,0]',ones(6,1))
 finger_1.list_links(1).set_mass(0.1);
-finger_1.list_links(1).set_com([0.1,0,0]');
-finger_1.list_links(2).set_mass(1);
-finger_1.list_links(2).set_com([0.5,0,0]');
-finger_1.list_links(3).set_mass(1);
-finger_1.list_links(3).set_com([0.5,0,0]');
+finger_1.list_links(1).set_com([0.05,0,0]');
+finger_1.list_links(2).set_mass(2);
+finger_1.list_links(2).set_com([0.1,0,0]');
+finger_1.list_links(3).set_mass(3);
+finger_1.list_links(3).set_com([0.2,0,0]');
+finger_1.list_links(4).set_mass(4);
+finger_1.list_links(4).set_com([0.1,0,0]');
 finger_1.update_finger_par_dyn;
 finger_1.update_finger(q0_2);
 finger_1.plot_finger(parameters);
@@ -89,18 +92,21 @@ else
 end
 
 %% finger 2
-mdh_parameter3 = [0,0,0,0;0,0.2,0,0;pi/2,1,0,0;-pi/2,1,0,0];
+mdh_parameter3 = [0,0,0,0;0,0.2,0,0;pi/2,1,0,0;-pi/2,1,0,0;0,0.5,0,0];
 mdh_struct = mdh_matrix_to_struct(mdh_parameter3, 1);
 finger_2 = Finger('finger2', 'mdh',mdh_struct );
 finger_2.set_base([2,0,0]',euler2R_XYZ([0,0,0]));
 
-q0_f2 = rand(3,1);
+q0_f2 = rand(finger_2.nj,1);
+finger_2.set_base_dynpar(1,[-0.2,0,0]',ones(6,1))
 finger_2.list_links(1).set_mass(0.2);
-finger_2.list_links(1).set_com([0.2,0,0]');
+finger_2.list_links(1).set_com([0.05,0,0]');
 finger_2.list_links(2).set_mass(2);
-finger_2.list_links(2).set_com([0.5,0,0]');
+finger_2.list_links(2).set_com([0.2,0,0]');
 finger_2.list_links(3).set_mass(2);
-finger_2.list_links(3).set_com([0.5,0,0]');
+finger_2.list_links(3).set_com([0.2,0,0]');
+finger_2.list_links(4).set_mass(3);
+finger_2.list_links(4).set_com([0.1,0,0]');
 finger_2.update_finger_par_dyn;
 finger_2.update_finger(q0_f2);
 finger_2.plot_finger(parameters);
@@ -119,7 +125,7 @@ mdh_struct = mdh_matrix_to_struct(mdh_parameter_merge, 1);
 merge_1 = Finger('merged', 'mdh',mdh_struct );
 merge_1.set_base([0,0,0]',euler2R_XYZ([0,0,0]));
 q0_merge = zeros(merge_1.nj,1);
-q0_merge = [0,0,1.2,0,0]';
+% q0_merge = [0,0,1.2,0,0]';
 merge_1.update_finger(q0_merge);
 
 merge_1.update_finger(q0_merge);
@@ -173,8 +179,8 @@ end
 % 
 close all
 q_base = [20,20]'*pi/180;
-q_finger1 = [20,30,0]'*pi/180;
-q_finger2 = [20,30,0]'*pi/180;
+q_finger1 = rand(finger_1.nj,1);
+q_finger2 =  rand(finger_2.nj,1);
 q_merge = [q_base;q_finger1;q_finger2];
 
 finger_1.set_base([1,0,0]',euler2R_XYZ([pi/4,0,0]));
@@ -235,40 +241,83 @@ hand_rst.show(q_hand,'Frames','on');
 hold on
 axis equal
 hand.plot_hand(par_plot_hand)
-
-
-
-
+hand.plot_hand_com(par_plot_hand);
 
 % check if end effector posistion is correct
+test_failed = 0;
+for i = 1:20
+    q_hand = rand(hand.nj,1);
+    hand.update_hand(q_hand);
 
-q_hand = rand(hand.nj,1);
-hand.update_hand(q_hand);
+    w_T_ee_all = hand.get_w_T_ee_all;
+    T_1_rst = hand_rst.getTransform(q_hand, 'finger1_endeffector');
+    T_2_rst = hand_rst.getTransform(q_hand, 'finger2_endeffector');
+    T_rst = [T_1_rst;T_2_rst];
 
-w_T_ee_all = hand.get_w_T_ee_all;
-T_1_rst = hand_rst.getTransform(q_hand, 'finger1_endeffector');
-T_2_rst = hand_rst.getTransform(q_hand, 'finger2_endeffector');
-T_rst = [T_1_rst;T_2_rst];
-
-T_error = w_T_ee_all-T_rst;
-if max(abs(T_error(:))) > 1e-10 
+    T_error = w_T_ee_all-T_rst;
+    if max(abs(T_error(:))) > 1e-10
+        test_failed = 1;
+    end
+end
+if test_failed == 1
     fprintf('Test (finger position): failed! \n')
 else
     fprintf('Test (finger position): pass! \n')
 end
-
 %% test the Jacobian of a hand with two fingers
+
+test_failed = 0;
+for i = 1:20
+    q_hand = rand(hand.nj,1);
+    hand.update_hand(q_hand);
+    hand_rst = hand.update_rst_model;
+    jacobian_f1 = geometricJacobian(hand_rst,q_hand,'finger1_endeffector');
+    jacobian_f1_mod = [jacobian_f1(4:6,:);jacobian_f1(1:3,:)];
+    
+    jacobian_f2 = geometricJacobian(hand_rst,q_hand,'finger2_endeffector');
+    jacobian_f2_mod = [jacobian_f2(4:6,:);jacobian_f2(1:3,:)];
+
+    J = hand.Jacobian_geom_w_one_finger(1,q_hand);
+    J2 = hand.Jacobian_geom_w_one_finger(2,q_hand);
+    J_error = jacobian_f1_mod-J;
+    J_error2 = jacobian_f2_mod-J2;
+
+    if max(abs(J_error(:))) > 1e-10 | max(abs(J_error2(:))) > 1e-10
+        test_failed = 1;
+    end
+end
+if test_failed == 1
+    fprintf('Test (finger Jacobian): failed! \n')
+else
+    fprintf('Test (finger Jacobian): pass! \n')
+end
+
+%%  IK based on Gauss-Newton
+% singer fingertip 
+par_plot_hand = hand.plot_parameter_init();
+par_plot_hand.axis_len = 0.1;
+par_plot_hand.linecolor = 'b';
+
 
 q_hand = rand(hand.nj,1);
 hand.update_hand(q_hand);
-hand_rst = hand.update_rst_model;
-jacobian_f1 = geometricJacobian(hand_rst,q_hand,'finger1_endeffector');
-jacobian_f1_mod = [jacobian_f1(4:6,:);jacobian_f1(1:3,:)]
+w_T_ee_all = hand.get_w_T_ee_all;
+x_des_1 = [w_T_ee_all(1:3,4);R2euler_XYZ(w_T_ee_all(1:3,1:3))];
+hand.plot_hand(par_plot_hand);
 
+q_hand_init = rand(hand.nj,1);
+hand.update_hand(q_hand_init);
 
-J = hand.Jacobian_geom_w_one_finger(1,q_hand)
+par_plot_hand.linecolor = 'r';
 
+% ik using rst toolbox
+[q_res_rst, solnInfo] = hand.invkin_rst(x_des_1,1);
 
+% [q_res, q_all, x_res,phi_x,iter] = hand.invkin_numeric(x_des_1,1);
+
+%% dynamics
+
+hand.update_finger_par_dyn
 
 
 

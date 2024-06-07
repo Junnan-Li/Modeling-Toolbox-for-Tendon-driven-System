@@ -47,7 +47,8 @@ classdef Hand < handle & matlab.mixin.Copyable
         list_tendons        % [ntx1] list of all tendons
         list_muscles        % [ntx1] list of all muscles
         list_viapoints      % [ntx1] list of all viapoints
-       
+        
+
         topology
     end
     
@@ -55,7 +56,8 @@ classdef Hand < handle & matlab.mixin.Copyable
 
         w_p_base            % position of the base in world frame. Default: [0,0,0]'
         w_R_base            % rotation of the base in world frame. Default: non rotation
-
+        
+        par_dyn_f           % Dynamic parameters from all bases and fingers
 
     end
     
@@ -87,7 +89,8 @@ classdef Hand < handle & matlab.mixin.Copyable
             obj.list_viapoints = [];
             obj.w_p_base = [0;0;0];
             obj.w_R_base = eye(3);
-
+            
+            obj.par_dyn_f = struct();
         end
 
 
@@ -215,6 +218,7 @@ classdef Hand < handle & matlab.mixin.Copyable
 
          function w_T_ee_all = get_w_T_ee_all(obj)
             % get the T of the all figners
+            % [4*nf, 4]
             
             if obj.nf == 0
                 w_T_ee_all = 0;
@@ -226,6 +230,19 @@ classdef Hand < handle & matlab.mixin.Copyable
                     w_T_ee_all(4*i-3:4*i,:) = finger_i.get_w_T_ee_inhand;
                 end
             end
+         end
+
+         function w_x_ee_all = get_w_x_ee_all(obj)
+            % get the T of the all figners
+            % [4*nf, 4]
+            w_x_ee_all = zeros(6,obj.nf);
+            w_T_ee_all = obj.get_w_T_ee_all;
+            for i = 1:obj.nf
+                w_T_ee_i = w_T_ee_all(4*i-3:4*i,:);
+                [p,R] = T2pR(w_T_ee_i);
+                w_x_ee_all(:,i) = [p; R2euler_XYZ(R)];
+            end
+
         end
 
         %% rst model
@@ -297,7 +314,73 @@ classdef Hand < handle & matlab.mixin.Copyable
                     finger_i.plot_finger(pars);
                 end
             end
+        end
 
+        function plot_hand_com(obj,varargin) 
+            % plot the center of mass of each link in world frame
+            
+            if nargin == 1
+                par = obj.plot_parameter_init();
+            elseif nargin == 2
+                par =  varargin{1};
+            else
+                error('[plot_com] input dimension is incorrect! \n')
+            end
+
+            if obj.njb ~= 0
+                for i = 1:obj.nb
+                    base_i = obj.base(i);
+                    base_i.plot_com(par);
+                end
+            end
+            if obj.njf ~= 0
+                for i = 1:obj.nf
+                    finger_i = obj.list_fingers(i);
+                    finger_i.plot_com(par);
+                end
+            end
+        end
+
+        %% Dynamics
+        
+        function update_finger_par_dyn(obj)
+            % update the finger dynamic parameters 
+            
+            if obj.njb ~= 0
+                for i = 1:obj.nb
+                    base_i = obj.base(i);
+                    obj.par_dyn_f.mass_all{i,1} = base_i.par_dyn_f.mass_all;
+                    obj.par_dyn_f.com_all{i,1} = base_i.par_dyn_f.com_all;
+                    obj.par_dyn_f.inertia_all{i,1} = base_i.par_dyn_f.inertia_all;
+                end
+                obj.par_dyn_f.g = obj.base(1).par_dyn_f.g;
+            end
+            if obj.njf ~= 0
+               for i = 1:obj.nf
+                    finger_i = obj.list_fingers(i);
+                    obj.par_dyn_f.mass_all{i,2} = finger_i.par_dyn_f.mass_all;
+                    obj.par_dyn_f.com_all{i,2} = finger_i.par_dyn_f.com_all;
+                    obj.par_dyn_f.inertia_all{i,2} = finger_i.par_dyn_f.inertia_all;
+                end
+            end
+        end
+
+        function set_g_w(obj,g)
+            % g is in world frame as input 
+            g_reshape = reshape(g,3,1);
+            obj.par_dyn_f.g = g_reshape;
+            if obj.njb ~= 0
+                for i = 1:obj.nb
+                    base_i = obj.base(i);
+                    base_i.set_g_w(g);
+                end
+            end
+            if obj.njf ~= 0
+               for i = 1:obj.nf
+                    finger_i = obj.list_fingers(i);
+                    finger_i.set_g_w(g);
+                end
+            end
         end
 
         
