@@ -436,6 +436,13 @@ classdef Finger < handle & matlab.mixin.Copyable
             obj.update_finger(obj.q_a);
         end
 
+        function [w_p_base,w_R_base] = get_base(obj)
+            % set the position and orientation of the base in the world
+            % frame
+            w_p_base = obj.w_p_base;
+            w_R_base = obj.w_R_base;
+        end
+
         function W_T_b = get_W_T_B(obj)
             % get the homogeneous transformation matrix from Base to W
             W_T_b = obj.w_T_base;

@@ -1,193 +1,70 @@
-%   example script for creating an example of finger
+% create an example hand
 
-%% create finger with tendons
 
-clear all 
 close all
-clc
-
-% define a finger
-finger_dimension = [0,0.05,0.03,0.02]; % in meter
-
-finger_r = Finger('Index', 'type','R_RRRR', 'l_links',finger_dimension); 
-finger_t = Finger('thumb', 'type','R_RRRR', 'l_links',finger_dimension);
-
-mdh_default_struct = finger_r.mdh_ori;
-mdh_matrix = mdh_struct_to_matrix(mdh_default_struct, 1);
-mdh_matrix(2,1) = -pi/2;
-finger_r.set_mdh_parameters(mdh_matrix);
-finger_t.set_mdh_parameters(mdh_matrix);
-
-% return
-%% set states
-% set base position and orientation
-finger_r.w_p_base = 4*zeros(3,1);
-finger_r.w_R_base = euler2R_XYZ(zeros(1,3));
-
-finger_t.w_p_base = [0;0;-0.08];
-finger_t.w_R_base = euler2R_XYZ([pi,0,0]);
-% init joint configurations
-q_0 = [0;0;0;0.1];
-
-% udpate finger with given joint configurations
-finger_r.update_finger(q_0);
-finger_t.update_finger(q_0);
-% load rst model from finger class
-rst_model_r = finger_r.rst_model;
-rst_model_t = finger_t.rst_model;
-
-% plot 2 fingers
-p_link_all_w_r = finger_r.get_p_all_links;
-p_link_all_w_t = finger_t.get_p_all_links;
-figure(1)
-
-plot3(p_link_all_w_r(1,:)',p_link_all_w_r(2,:)',p_link_all_w_r(3,:)','o-','Color','r');
-hold on
-plot3(p_link_all_w_t(1,:)',p_link_all_w_t(2,:)',p_link_all_w_t(3,:)','o-','Color','b');
-grid on
-axis equal
-xlabel('x')
-ylabel('y')
-zlabel('z')
-
-%% set dynamic parameters
-% link index:
-%   1: PP
-%   2: MP
-%   3: DP
-
-finger_r.list_links(1).set_mass(0.05); % in kg
-finger_r.list_links(1).set_inertia([0.5,0.2,0.2,0,0,0]); 
-
-finger_r.list_links(2).set_mass(0.03); % in kg
-finger_r.list_links(2).set_inertia([0.5,0.2,0.2,0,0,0]); 
-
-finger_r.list_links(3).set_mass(0.03); % in kg
-finger_r.list_links(3).set_inertia([0.5,0.2,0.2,0,0,0]); 
-
-% update dynamic parameters
-finger_r.update_finger_par_dyn;
-% finger_r.update_finger(q_0);
-
-%% add tendons
-
-if finger_r.nt == 0
-    finger_r.add_tendon('Flex_1', [1,1,1,1]);
-%     finger_r.add_tendon('Flex_2', [1,1,1,0]);
-%     finger_r.add_tendon('Flex_3', [1,1,0,0]);
-    finger_r.add_tendon('Flex_4', [1,0,0,0]);
-    finger_r.add_tendon('Ext_1', [-1,-1,-1,-1]);
-    finger_r.add_tendon('Ext_2', [-1,-1,-1,0]);
-    finger_r.add_tendon('Ext_3', [-1,-1,0,0]);
-    finger_r.add_tendon('Ext_4', [-1,0,0,0]);
-end
-
-% finger_r.set_tendon_par_MA_poly3(1,1,[0,0,0.01,0.03]);
-% finger_r.set_tendon_par_MA_poly3(3,1,[0,0,0.01,0.3]);
-% finger_r.set_tendon_par_MA_poly3(3,2,[0,0,0.01,0.035]);
-% finger_r.set_tendon_par_MA_poly3(4,1,[0,0,0.001,0.02]);
-
-finger_r.update_finger(q_0);
-finger_r.update_M_coupling(q_0);
-finger_r.M_coupling;
-
-
-% set joint limits
-finger_r.list_joints(1).q_limits = [-15,15]*pi/180; % abduction joints
-finger_r.list_joints(1).qd_limits = [-15,15]*pi/180; % abduction joints
-finger_r.list_joints(1).qdd_limits = [-15,15]*pi/180; % abduction joints
-
-finger_r.update_joints_info;
-
-
-% add contacts
-if finger_r.nc == 0
-    for i = 1:finger_r.nl
-        finger_r.list_links(i).add_contact([finger_r.list_links(i).Length/2 0 0]');
-    end
-end
-finger_r.update_list_contacts; % update link
-
-
-return
-%%
-
 clear all
-close all
 clc
 
+%% Create arm
+% 2 dof base with a arbitary alpha in mdh parameters
+% 
+theta_rand = rand(1);
+mdh_parameter1 = [0,0,0,0;theta_rand,0.5,0,0;-theta_rand,1.5,0,0];
+mdh_struct = mdh_matrix_to_struct(mdh_parameter1, 1);
+base_1 = Finger('base_1', 'mdh',mdh_struct );
+base_1.set_base([0,0,0]',euler2R_XYZ([0,0,0]));
 
-%% create fingers
-finger_1 = Finger('Index', 'RRRR', [0.5 0.3 0.2]);
-finger_2 = Finger('Middle', 'RRRR', [0.6 0.4 0.2]);
-finger_3 = Finger('Ring', 'RRRR', [0.5 0.3 0.2]);
-finger_4 = Finger('little', 'RRRR', [0.4 0.25 0.2]);
+% define base dynamic parameters
+base_1.list_links(1).set_mass(2);
+base_1.list_links(1).set_com([0.2,0,0]');
+base_1.list_links(2).set_mass(1);
+base_1.list_links(2).set_com([0.3,0,0]');
+base_1.update_finger_par_dyn;
 
-finger_list = {finger_1,finger_2,finger_3,finger_4};
+%% finger 1
+mdh_parameter2 = [0,0,0,0;pi/2,0.8,0,0;-pi/2,1,0,0;0,0.5,0,0;0,0.3,0,0];
+mdh_struct = mdh_matrix_to_struct(mdh_parameter2, 1);
+finger_1 = Finger('finger1', 'mdh',mdh_struct );
+finger_1.set_base(rand(3,1),euler2R_XYZ(rand(3,1)));
 
-%% set finger init position & orientation
-finger_1.w_p_base = [1,0,0]';
-finger_1.w_R_base = eul2rotm([pi/6,0,0],'ZYZ');
+q0_2 = rand(finger_1.nj,1);
+finger_1.set_base_dynpar(1,[-0.2,0,0]',ones(6,1))
+finger_1.list_links(1).set_mass(0.1);
+finger_1.list_links(1).set_com([0.05,0,0]');
+finger_1.list_links(2).set_mass(2);
+finger_1.list_links(2).set_com([0.1,0,0]');
+finger_1.list_links(3).set_mass(3);
+finger_1.list_links(3).set_com([0.2,0,0]');
+finger_1.list_links(4).set_mass(4);
+finger_1.list_links(4).set_com([0.1,0,0]');
+finger_1.update_finger_par_dyn;
+finger_1.update_finger(q0_2);
 
-% set finger joint configurations
-q = [45 0 0 0]'*pi/180;
+%% finger 2
+mdh_parameter3 = [0,0,0,0;0,0.2,0,0;pi/2,1,0,0;-pi/2,1,0,0;0,0.5,0,0];
+mdh_struct = mdh_matrix_to_struct(mdh_parameter3, 1);
+finger_2 = Finger('finger2', 'mdh',mdh_struct );
+finger_2.set_base([2,0,0]',euler2R_XYZ([0,0,0]));
 
-% update
-finger_1.update_finger(q);
-% finger_1.update_rst_model;
+q0_f2 = rand(finger_2.nj,1);
+finger_2.set_base_dynpar(1,[-0.2,0,0]',ones(6,1))
+finger_2.list_links(1).set_mass(0.2);
+finger_2.list_links(1).set_com([0.05,0,0]');
+finger_2.list_links(2).set_mass(2);
+finger_2.list_links(2).set_com([0.2,0,0]');
+finger_2.list_links(3).set_mass(2);
+finger_2.list_links(3).set_com([0.2,0,0]');
+finger_2.list_links(4).set_mass(3);
+finger_2.list_links(4).set_com([0.1,0,0]');
+finger_2.update_finger_par_dyn;
+finger_2.update_finger(q0_f2);
 
-rst_model_r = finger_1.rst_model;
+%% create hand with two fingers
 
-% rst_model.show
-% showdetails(rst_model)
-
-
-
-mdh = mdh_struct_to_matrix(finger_1.mdh,1);
-T = T_mdh_multi(mdh);
-
-
-% geometric Jacobian of the endeffector
-J_e = finger_1.Jacobian_geom_end;
-
-%% add contact
-
-for i = 1:finger_1.nl
-    finger_1.list_links(i).add_contact([finger_1.list_links(i).Length/2 0 0]');
-%     finger_1.list_links(i).add_contact([finger_1.list_links(i).Length/2 0 0]')
-end
-
-finger_1.update_all_contacts;
-
-
-%% geometric Jacobian of the contact points
-
-J_c = [];
-
-for i = 1:finger_1.nl
-    if finger_1.list_links(i).nc
-        for j = 1:finger_1.list_links(i).nc
-            J_c = [J_c;finger_1.Jacobian_geom_contact(q,finger_1.list_links(i).contacts(j))];
-        end
-    end
-end
-
-
-
-%% visualization
-show(rst_model_r,[q;0],'Collisions','on','Visuals','off');
-hold on
-for i = 1:finger_1.nl
-    
-    contact_pos = finger_1.list_links(i).contacts(1).base_p;
-    plot3(contact_pos(1),contact_pos(2),contact_pos(3),'*','Color', 'r', 'MarkerSize',10)
-end
-
-return
-
-
-
-
-
-
+hand = Hand('hand_example');
+hand.add_base(base_1);
+hand.add_finger(finger_1);
+hand.add_finger(finger_2);
+q_hand = rand(hand.nj,1);
+hand.update_hand(q_hand);
 
