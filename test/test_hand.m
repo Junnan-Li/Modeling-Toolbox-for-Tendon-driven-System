@@ -317,7 +317,7 @@ par_plot_hand.linecolor = 'r';
 
 %% dynamics
 
-hand.update_finger_par_dyn
+hand.update_hand_par_dyn
 
 
 

@@ -1,50 +1,50 @@
-% inverse dynamic of the finger with the endeffector interaction to the
+% Forward dynamic of the finger with the endeffector interaction to the
 % environment with respect to the world frame
 % 
 % input:
 %           qD: 
-%           qDD: 
-%           F_ext_ne: [6xnf] external wrench at each fingertips 
+%           Tau: 
+%           F_ext: [6xn_q+2]
 % 
 % output:
-%           Tau: [obj.nj] 
+%           qDD: [obj.nj] 
 % 
 % 
 % TODO: need to adapt to the passive joint mode
 
-function Tau = invdyn_ne_hand_w_end(obj, q, varargin)
-
+function [qDD,M,C,G] = fordyn_ne_hand_w_end(obj, q,varargin)
+%  qD, Tau, F_ext, 
 if nargin == 2
     qD = zeros(obj.nj,1);
-    qDD = zeros(obj.nj,1);
+    Tau = zeros(obj.nj,1);
     F_ext = zeros(6,obj.nf);
     mex = 0;
 elseif nargin == 3
     qD = varargin{1};
-    qDD = zeros(obj.nj,1);
+    Tau = zeros(obj.nj,1);
     F_ext = zeros(6,obj.nf);
     mex = 0;
 elseif nargin == 4
     qD = varargin{1};
-    qDD = varargin{2};
+    Tau = varargin{2};
     F_ext = zeros(6,obj.nf);
     mex = 0;
 elseif nargin == 5
     qD = varargin{1};
-    qDD = varargin{2};
+    Tau = varargin{2};
     F_ext = varargin{3};
     mex = 0;
 elseif nargin == 6
     qD = varargin{1};
-    qDD = varargin{2};
+    Tau = varargin{2};
     F_ext = varargin{3};
     mex = varargin{4};
 else
-    error('[invdyn_ne_hand_w_end] input is incorrect!')
+    error('[fordyn_ne_hand_w_end] input is incorrect!')
 end
-assert(length(q)== obj.nj, '[invdyn_ne_hand_w_end] dimension of q is incorrect!')
-assert(length(qD)== obj.nj, '[invdyn_ne_hand_w_end] dimension of qd is incorrect!')
-assert(length(qDD)== obj.nj, '[invdyn_ne_hand_w_end] dimension of qdd is incorrect!')
+assert(length(q)== obj.nj, 'dimension of joint vector is incorrect!')
+assert(length(qD)== obj.nj, 'dimension of joint vector is incorrect!')
+assert(length(Tau)== obj.nj, 'dimension of joint vector is incorrect!')
 
 T = obj.get_w_T_all();
 Mass = [];
@@ -75,22 +75,17 @@ if obj.njf ~= 0
         I = [I,obj.par_dyn_h.inertia_all{i,2}];
         kin_str.njf(i) = finger_i.nj;
     end
-end
-
 X_base = zeros(6,1);
 X_base(1:3) = obj.w_p_base;
 X_base(4:6) = R2euler_XYZ(obj.w_R_base);
 XD_base = zeros(6,1);
 XDD_base = zeros(6,1);
+
 g = obj.par_dyn_h.g;
 
-
-if mex
-    [Tau,~,~] = invdyn_ne_mdh_mex(q,qD,qDD,mdh_ne, Mass,...
-        X_base, XD_base, XDD_base, F_ext_ne, CoM_ne, I_ne, g);
-else
-    [Tau,F] = invdyn_ne_T(q,qD,qDD,T, kin_str, Mass, ...
-        X_base, XD_base,XDD_base, F_ext, CoM, I, g);
-end
+[qDD,M,C,G] = fordyn_ne_T(q,qD,Tau,T, kin_str, Mass, X_base, ...
+    XD_base,XDD_base, F_ext, CoM, I, g, mex);
+% [qDD,M_fd,C_fd,G_fd] = fordyn_ne_mdh(q,qD,Tau,mdh_ne, Mass,...
+%              X_base, XD_base, XDD_base, F_ext_ne, CoM_ne, I_ne, g, mex);
 
 end

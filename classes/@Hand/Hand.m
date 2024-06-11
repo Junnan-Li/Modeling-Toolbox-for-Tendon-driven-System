@@ -15,6 +15,7 @@
 % 
 %       njb + njf = nj      
 
+%       
 % 
 % 
 
@@ -54,10 +55,10 @@ classdef Hand < handle & matlab.mixin.Copyable
     
     properties (SetAccess = private)
 
-        w_p_base            % position of the base in world frame. Default: [0,0,0]'
+        w_p_base            % position of the base in world frame. Default: [0,0,0]', always 
+                            % equal to the w_p_base of the first base
         w_R_base            % rotation of the base in world frame. Default: non rotation
-        
-        par_dyn_f           % Dynamic parameters from all bases and fingers
+        par_dyn_h           % Dynamic parameters from all bases and fingers
 
     end
     
@@ -90,7 +91,7 @@ classdef Hand < handle & matlab.mixin.Copyable
             obj.w_p_base = [0;0;0];
             obj.w_R_base = eye(3);
             
-            obj.par_dyn_f = struct();
+            obj.par_dyn_h = struct();
         end
 
 
@@ -157,7 +158,7 @@ classdef Hand < handle & matlab.mixin.Copyable
             % bases and fingers
             assert(length(q) == obj.nj, '[update_hand] dimension of q is incorrect!');
             obj.q = q;
-            W_T_b_prior = obj.get_W_T_B;
+            W_T_b_prior = eye(4);
             if obj.njb ~= 0
                 q_b = q(1:obj.njb); % joint of base
                 q_i_start = 1;% index for bases
@@ -192,13 +193,46 @@ classdef Hand < handle & matlab.mixin.Copyable
         end
         
 
+        
+
+        %% rst model
+
+        function rst_model_hand = update_rst_model(obj)
+            % update the rst model of hand and construct to one robotictree
+            if obj.nb == 0
+                disp('Hand has no base element!!')
+                return
+            end
+
+            base_1 = obj.base(1).update_rst_model;
+            rst_model_hand = base_1.copy;
+            merge_bodyname = rst_model_hand.BodyNames{end};
+            if obj.nb > 2
+                for i = 2:obj.nb
+                    base_i = obj.base(i).update_rst_model;
+                    rst_model_hand.addSubtree(merge_bodyname,base_i);
+                    merge_bodyname = rst_model_hand.BodyNames{end};
+                end
+            end
+            if obj.nf == 0
+                disp('Hand has no finger element!!')
+            else
+                for i = 1:obj.nf
+                    rst_finger_i = obj.list_fingers(i).update_rst_model;
+                    rst_model_hand.addSubtree(merge_bodyname,rst_finger_i);
+                end
+            end
+
+        end
+
+        %% kinematics
         function set_base(obj, w_p_base, w_R_base)
             % set the position and orientation of the base in the world
             % frame
             obj.w_p_base = w_p_base;
             obj.w_R_base = w_R_base;
-            obj.base.setbase(w_p_base,w_R_base);
-%             obj.update_finger(obj.q_a);
+            obj.base(1).set_base(w_p_base,w_R_base);
+%             obj.base(1).set_w_T_base_inhand(obj.base(1));
         end
 
         function W_T_b = get_W_T_B(obj)
@@ -242,40 +276,32 @@ classdef Hand < handle & matlab.mixin.Copyable
                 [p,R] = T2pR(w_T_ee_i);
                 w_x_ee_all(:,i) = [p; R2euler_XYZ(R)];
             end
+         end
 
-        end
-
-        %% rst model
-
-        function rst_model_hand = update_rst_model(obj)
-            % update the rst model of hand and construct to one robotictree
-            if obj.nb == 0
-                disp('Hand has no base element!!')
-                return
-            end
-
-            base_1 = obj.base(1).update_rst_model;
-            rst_model_hand = base_1.copy;
-            merge_bodyname = rst_model_hand.BodyNames{end};
-            if obj.nb > 2
-                for i = 2:obj.nb
-                    base_i = obj.base(i).update_rst_model;
-                    rst_model_hand.addSubtree(merge_bodyname,base_i);
-                    merge_bodyname = rst_model_hand.BodyNames{end};
+         function w_T_all = get_w_T_all(obj)
+            % get the T of the all figners
+            % [4*nf, 4]
+%             W_T_b = obj.get_W_T_B();
+            w_T_all = zeros(4,4,obj.nl+2*(obj.nb+obj.nf)); 
+            % each Finger has base, link1, ... linkn, ee
+            index = 1;
+            if obj.nb ~= 0
+                for i = 1:obj.nb
+                    base_i = obj.base(i);
+                    n_frame_i = base_i.nl+2;
+                    w_T_all(:,:,index:index+n_frame_i-1) = base_i.get_T_all_links_inhand;
+                    index = index+n_frame_i;
                 end
             end
-            if obj.nf == 0
-                disp('Hand has no finger element!!')
-            else
+            if obj.nf ~= 0
                 for i = 1:obj.nf
-                    rst_finger_i = obj.list_fingers(i).update_rst_model;
-                    rst_model_hand.addSubtree(merge_bodyname,rst_finger_i);
+                    finger_i = obj.list_fingers(i);
+                    n_frame_i = finger_i.nl+2;
+                    w_T_all(:,:,index:index+n_frame_i-1) = finger_i.get_T_all_links_inhand;
+                    index = index+n_frame_i;
                 end
             end
-
-        end
-
-        %% kinematics
+         end
 
        
 
@@ -343,24 +369,23 @@ classdef Hand < handle & matlab.mixin.Copyable
 
         %% Dynamics
         
-        function update_finger_par_dyn(obj)
+        function update_hand_par_dyn(obj)
             % update the finger dynamic parameters 
-            
             if obj.njb ~= 0
                 for i = 1:obj.nb
                     base_i = obj.base(i);
-                    obj.par_dyn_f.mass_all{i,1} = base_i.par_dyn_f.mass_all;
-                    obj.par_dyn_f.com_all{i,1} = base_i.par_dyn_f.com_all;
-                    obj.par_dyn_f.inertia_all{i,1} = base_i.par_dyn_f.inertia_all;
+                    obj.par_dyn_h.mass_all{i,1} = base_i.par_dyn_f.mass_all;
+                    obj.par_dyn_h.com_all{i,1} = base_i.par_dyn_f.com_all;
+                    obj.par_dyn_h.inertia_all{i,1} = base_i.par_dyn_f.inertia_all;
                 end
-                obj.par_dyn_f.g = obj.base(1).par_dyn_f.g;
+                obj.par_dyn_h.g = obj.base(1).par_dyn_f.g;
             end
             if obj.njf ~= 0
                for i = 1:obj.nf
                     finger_i = obj.list_fingers(i);
-                    obj.par_dyn_f.mass_all{i,2} = finger_i.par_dyn_f.mass_all;
-                    obj.par_dyn_f.com_all{i,2} = finger_i.par_dyn_f.com_all;
-                    obj.par_dyn_f.inertia_all{i,2} = finger_i.par_dyn_f.inertia_all;
+                    obj.par_dyn_h.mass_all{i,2} = finger_i.par_dyn_f.mass_all;
+                    obj.par_dyn_h.com_all{i,2} = finger_i.par_dyn_f.com_all;
+                    obj.par_dyn_h.inertia_all{i,2} = finger_i.par_dyn_f.inertia_all;
                 end
             end
         end
@@ -368,7 +393,7 @@ classdef Hand < handle & matlab.mixin.Copyable
         function set_g_w(obj,g)
             % g is in world frame as input 
             g_reshape = reshape(g,3,1);
-            obj.par_dyn_f.g = g_reshape;
+            obj.par_dyn_h.g = g_reshape;
             if obj.njb ~= 0
                 for i = 1:obj.nb
                     base_i = obj.base(i);

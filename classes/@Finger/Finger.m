@@ -349,12 +349,80 @@ classdef Finger < handle & matlab.mixin.Copyable
 
  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%               
 
+%         function rst_model_tmp = update_rst_model(obj)
+%             % build/update the rst model of the finger based on the mdh
+%             % parameters
+%             %
+%                          
+%             mdh_matrix = mdh_struct_to_matrix(obj.mdh_ori,2); % mdh order: a,alpha,d,theta
+% %             mdh_matrix_order_1 = mdh_struct_to_matrix(obj.mdh_ori,1);
+%             % create rigid body tree
+%             rst_model_tmp = rigidBodyTree;
+%             rst_model_tmp.DataFormat = 'column';
+%             rst_model_tmp.Gravity = obj.par_dyn_f.g;
+%             
+%             % convert inertia format to rst format
+%             
+%             inertia_all = obj.par_dyn_f.inertia_all;
+%             mass_all = obj.par_dyn_f.mass_all;
+%             com_all = obj.par_dyn_f.com_all;
+%             
+%             inertia_all_rst = zeros(size(obj.par_dyn_f.inertia_all)); % [xx yy zz yz xz xy]
+%             for i = 1:obj.nj
+%                 % transfer inertia into bodyframe
+%                 inertia_all_rst(:,i+1) = inertia_all(:,i+1) + ...
+%                     mass_all(i+1)*[com_all(2,i+1).^2+com_all(3,i+1).^2;com_all(1,i+1).^2+com_all(3,i+1).^2;com_all(1,i+1).^2+com_all(2,i+1).^2;...
+%                     -com_all(2,i+1)*com_all(3,i+1);-com_all(1,i+1)*com_all(3,i+1);-com_all(1,i+1)*com_all(2,i+1)];
+%             end
+% 
+%             % virtual first body:  from CS.base to CS.1
+%             bodyname = obj.list_links(1).name;
+%             body1 = rigidBody(bodyname);
+%             jointname = strcat(obj.name,'_virtual_Base_joints');
+%             jnt1 = rigidBodyJoint(jointname,'revolute');          
+%             W_T_base = obj.get_W_T_B(); % World to Base 
+% %             T = T_mdh_multi(mdh_matrix_order_1(1,:));
+%             setFixedTransform(jnt1,W_T_base);
+%             body1.Joint = jnt1;
+%             body1.Mass = mass_all(2); % first body (virtual)
+%             body1.Inertia = inertia_all_rst(:,2);
+%             body1.CenterOfMass = com_all(:,2);          
+%             addBody(rst_model_tmp,body1,'base');
+%             bodyname_last = bodyname;
+% %             bodyname_last = 'base';
+%             for j = 2:obj.nl
+%                 bodyname = obj.list_links(j).name;
+%                 body1 = rigidBody(bodyname);
+%                 jointname = strcat(obj.name,'_',obj.list_joints(j).name);
+%                 jnt1 = rigidBodyJoint(jointname,'revolute');
+%                 setFixedTransform(jnt1,mdh_matrix(j,:),'mdh');
+%                 body1.Joint = jnt1;
+%                 body1.Mass = mass_all(j+1); % first body (virtual)
+%                 body1.Inertia = inertia_all_rst(:,j+1);
+%                 body1.CenterOfMass = com_all(:,j+1);
+%                 addBody(rst_model_tmp,body1,bodyname_last);
+%                 bodyname_last = bodyname;
+%             end
+%             
+%             % virtual last body:  fingertip
+%             bodyname = strcat(obj.name,'_endeffector');
+%             body1 = rigidBody(bodyname);
+%             jointname = strcat(obj.name,'Virtual_fingertip');
+%             jnt1 = rigidBodyJoint(jointname,'fixed');          
+%             setFixedTransform(jnt1,mdh_matrix(end,:),'mdh');
+%             body1.Joint = jnt1;
+%             body1.Mass = 0;
+%             body1.Inertia = [0,0,0,0,0,0];
+%             body1.CenterOfMass = [0,0,0];
+%             addBody(rst_model_tmp,body1,bodyname_last);
+%             obj.rst_model = rst_model_tmp;
+%         end
+        
         function rst_model_tmp = update_rst_model(obj)
+            % new version of rst model with a vitural base body
             % build/update the rst model of the finger based on the mdh
             % parameters
             %
-            % TODO: integrate the dynamic parameters of the links into
-            % model
                          
             mdh_matrix = mdh_struct_to_matrix(obj.mdh_ori,2); % mdh order: a,alpha,d,theta
 %             mdh_matrix_order_1 = mdh_struct_to_matrix(obj.mdh_ori,1);
@@ -370,7 +438,7 @@ classdef Finger < handle & matlab.mixin.Copyable
             com_all = obj.par_dyn_f.com_all;
             
             inertia_all_rst = zeros(size(obj.par_dyn_f.inertia_all)); % [xx yy zz yz xz xy]
-            for i = 1:obj.nj
+            for i = 0:obj.nj
                 % transfer inertia into bodyframe
                 inertia_all_rst(:,i+1) = inertia_all(:,i+1) + ...
                     mass_all(i+1)*[com_all(2,i+1).^2+com_all(3,i+1).^2;com_all(1,i+1).^2+com_all(3,i+1).^2;com_all(1,i+1).^2+com_all(2,i+1).^2;...
@@ -378,21 +446,21 @@ classdef Finger < handle & matlab.mixin.Copyable
             end
 
             % virtual first body:  from CS.base to CS.1
-            bodyname = obj.list_links(1).name;
+            bodyname = strcat(obj.name,'_virtual_base');
             body1 = rigidBody(bodyname);
-            jointname = strcat(obj.name,'_virtual_Base_joints');
-            jnt1 = rigidBodyJoint(jointname,'revolute');          
+            jointname = strcat(obj.name,'_w_to_base');
+            jnt1 = rigidBodyJoint(jointname,'fixed');          
             W_T_base = obj.get_W_T_B(); % World to Base 
 %             T = T_mdh_multi(mdh_matrix_order_1(1,:));
             setFixedTransform(jnt1,W_T_base);
             body1.Joint = jnt1;
-            body1.Mass = mass_all(2); % first body (virtual)
-            body1.Inertia = inertia_all_rst(:,2);
-            body1.CenterOfMass = com_all(:,2);          
+            body1.Mass = mass_all(1); % first body (virtual)
+            body1.Inertia = inertia_all_rst(:,1);
+            body1.CenterOfMass = com_all(:,1);          
             addBody(rst_model_tmp,body1,'base');
             bodyname_last = bodyname;
 %             bodyname_last = 'base';
-            for j = 2:obj.nl
+            for j = 1:obj.nl
                 bodyname = obj.list_links(j).name;
                 body1 = rigidBody(bodyname);
                 jointname = strcat(obj.name,'_',obj.list_joints(j).name);
@@ -417,11 +485,8 @@ classdef Finger < handle & matlab.mixin.Copyable
             body1.Inertia = [0,0,0,0,0,0];
             body1.CenterOfMass = [0,0,0];
             addBody(rst_model_tmp,body1,bodyname_last);
-            
             obj.rst_model = rst_model_tmp;
         end
-        
-        
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         % calculate kinematics 
         function set_base(obj, w_p_base, w_R_base)
@@ -469,6 +534,23 @@ classdef Finger < handle & matlab.mixin.Copyable
         function w_T_all = get_T_all_links(obj)
             % get all transformation matrix of all links
             w_T_b = obj.get_W_T_B();
+            w_T_all = zeros(4,4,obj.nl+2); % base, link1, ... linkn, ee
+            w_T_all(:,:,1) = w_T_b;
+            for i = 1:obj.nl
+                b_p_i = obj.list_links(i).base_p;
+                b_R_i = obj.list_links(i).base_R;
+                b_T_i = [b_R_i,b_p_i; 0 0 0 1];
+                w_T_all(:,:,i+1) = w_T_b*b_T_i;
+            end
+            % fingertip position
+            mdh_all_matrix = mdh_struct_to_matrix(obj.mdh_all, 1);
+            b_T_ee = T_mdh_multi(mdh_all_matrix);
+            w_T_all(:,:,end) = w_T_b*b_T_ee;
+        end
+
+        function w_T_all = get_T_all_links_inhand(obj)
+            % get all transformation matrix of all links
+            w_T_b = obj.get_w_T_base_inhand();
             w_T_all = zeros(4,4,obj.nl+2); % base, link1, ... linkn, ee
             w_T_all(:,:,1) = w_T_b;
             for i = 1:obj.nl
