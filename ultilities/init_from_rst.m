@@ -3,13 +3,18 @@
 
 
 
-function finger_init = init_from_rst(rst_model)
+function finger_init = init_from_rst(rst_model,varargin)
 % build/update the rst model of the finger based on the mdh
 % parameters
 %
 % TODO: integrate the dynamic parameters of the links into
 % model
 
+if nargin == 1
+    finger_name = char('finger_rst');
+else
+    finger_name = char(varargin(1));
+end
 
 %% rigidbodytree kinematic model to obj
 
@@ -29,9 +34,8 @@ for i = 1:nj
 
 end
 mdh_struct = mdh_matrix_to_struct(mdh_finger, 1);
-finger_init = Finger('finger_rst', 'mdh',mdh_struct );
-finger_init.w_p_base = w_p_base;
-finger_init.w_R_base = w_R_base;
+finger_init = Finger(finger_name, 'mdh',mdh_struct );
+finger_init.set_base(w_p_base,w_R_base);
 finger_init.update_finger(finger_init.q_a);
 %% rigidbodytree dynamic parameters to obj
 

@@ -26,7 +26,7 @@ clc
 % use mdh to create finger
 mdh_parameter = rand(5,4);
 mdh_parameter(:,3) = 0;
-mdh_parameter(1,1:4) = 0;
+% mdh_parameter(1,1:4) = 0;
 mdh_struct = mdh_matrix_to_struct(mdh_parameter, 1);
 finger_r = Finger('Index', 'mdh',mdh_struct );
 
@@ -242,7 +242,7 @@ q_rD = rand(size(q_r));
 q_rDD = rand(size(q_r));
 F_ext = zeros(6,1);
 
-finger_r.set_base_dynpar(rand(1),rand(3,1),rand(6,1) );
+finger_r.set_base_dynpar(rand(1),rand(3,1),[rand(3,1);zeros(3,1)] );
 for i = 1:finger_r.nl
     finger_r.list_links(i).set_mass(rand(1));
     finger_r.list_links(i).set_com(rand(3,1));
@@ -399,7 +399,7 @@ for i_9 = 1:10
     finger_r.update_finger(q_init);
     hold on
     [q_mex,status_mex, q_all_mex,x_res_mex,phi_x_mex,iter_mex] = finger_r.invkin_trans_numeric_joint_limits(x_des,iter_max,tol,alpha,1);
-    finger_r.print_finger('k');
+    finger_r.plot_finger();
     hold on
 
     mdh_matrix = mdh_struct_to_matrix(finger_r.mdh_ori, 1);
@@ -449,8 +449,7 @@ for i_10 = 1:40
     
     % give a pose inside its workspace as the x_des
     q_init = rand(4,1).*(q_limit(:,2)-q_limit(:,1)) + q_limit(:,1);
-    finger_r.w_p_base = rand(3,1);
-    finger_r.w_R_base = euler2R_XYZ(rand(1,3));
+    finger_r.set_base(rand(3,1),euler2R_XYZ(rand(1,3)));
     finger_r.update_finger(q_init);
     p_link_all_w_r = finger_r.get_p_all_links;
     x_init = p_link_all_w_r(:,end);
@@ -476,14 +475,14 @@ for i_10 = 1:40
     [q_kin, status, ~, x_res,phi_x,iter,q_null,phi_x_null] = finger_r.invkin_trans_numeric_joint_limits_nullspace(x_des,iter_max,tol,alpha,q_diff_min,1);
 
     finger_r.update_finger(q_kin);
-    finger_r.print_finger('r');
+    finger_r.plot_finger();
     hold on
     p_link_all_w_r_1 = finger_r.get_p_all_links;
 
     x_error = x_des-p_link_all_w_r_1(:,end);
 
     finger_r.update_finger(q_null);
-    finger_r.print_finger('b')
+    finger_r.plot_finger();
     hold off
 
     p_link_all_w_r = finger_r.get_p_all_links;
@@ -646,8 +645,8 @@ finger_r = Finger('3dof', 'mdh',mdh_struct );
 
 % set random base position and orientation
 x_base = rand(6,1);
-finger_r.w_p_base = x_base(1:3);
-finger_r.w_R_base = euler2R_XYZ(x_base(4:6));
+finger_r.set_base(x_base(1:3),euler2R_XYZ(x_base(4:6)));
+
 % finger_r.update_rst_model;
 % joint configurations
 
