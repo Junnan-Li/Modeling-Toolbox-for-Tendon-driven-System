@@ -15,39 +15,40 @@ finger_urdf.DataFormat = "column";
 % 
 
 %%
-r = rateControl(100);
-figure
-xlim([-0.05, 0.05])
-for i = 1:length(out_q.time)
-    finger_urdf.show(out_q.signals.values(i,:)','Frame','off','PreservePlot',0);
-    hold on
-    xlim([-0.1, 0.1])
-    ylim([-0.1, 0.1])
-    zlim([-0.1, 0.1])
-    grid off
-    drawnow;
-    exportgraphics(gcf,'testAnimated.gif','Append',true);
-%     waitfor(r);
-end
+% r = rateControl(100);
+% figure
+% xlim([-0.05, 0.05])
+% for i = 1:length(out_q.time)
+%     finger_urdf.show(out_q.signals.values(i,:)','Frame','off','PreservePlot',0);
+%     hold on
+%     xlim([-0.1, 0.1])
+%     ylim([-0.1, 0.1])
+%     zlim([-0.1, 0.1])
+%     grid off
+%     drawnow;
+%     exportgraphics(gcf,'testAnimated.gif','Append',true);
+% %     waitfor(r);
+% end
 %%
-finger_urdf.show(out_q.signals.values(i,:)','Frame','off','PreservePlot',0);
-view
+q = [1,1,1,1]';
+finger_urdf.show(q,'Frame','off','PreservePlot',0);
+% return
 %%
 
 % config = homeConfiguration(finger);
-config = [pi/4 pi/4 pi/4 pi/8]';
+% config = [pi/4 pi/4 pi/4 pi/8]';
 % config = [0 0 0 0]';
 
-global finger_handone
+% global finger_handone
 finger_handone = init_from_rst(finger_urdf);
 mdh_ori = finger_handone.mdh_ori;
 mdh_matrix = mdh_struct_to_matrix(mdh_ori,1);
 mdh_matrix(5,2) = 0.014;
 
 finger_handone.set_mdh_parameters(mdh_matrix);
-finger_handone.w_p_base = 4*zeros(3,1);
-finger_handone.w_R_base = euler2R_XYZ([pi,0,0]);
-finger_handone.update_finger(config);
+% finger_handone.w_p_base = 4*zeros(3,1);
+% finger_handone.w_R_base = euler2R_XYZ([pi,0,0]);
+% finger_handone.update_finger(config);
 
 % load rst model from finger class
 rst_model_r = finger_handone.rst_model;
