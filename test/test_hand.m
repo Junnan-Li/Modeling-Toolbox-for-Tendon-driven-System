@@ -292,7 +292,7 @@ else
     fprintf('Test (finger Jacobian): pass! \n')
 end
 
-%%  IK based on Gauss-Newton
+%%  IK 
 % singer fingertip 
 par_plot_hand = hand.plot_parameter_init();
 par_plot_hand.axis_len = 0.1;
@@ -310,10 +310,38 @@ hand.update_hand(q_hand_init);
 
 par_plot_hand.linecolor = 'r';
 
-% ik using rst toolbox
-[q_res_rst, solnInfo] = hand.invkin_rst(x_des_1,1);
+% close all
+% figure(1)
+% hand.plot_hand(par_plot_hand);
+% plot3(x_des_1(1),x_des_1(2),x_des_1(3),'b*','MarkerSize',10)
 
-% [q_res, q_all, x_res,phi_x,iter] = hand.invkin_numeric(x_des_1,1);
+% ik using rst toolbox
+tic
+[q_res_rst, solnInfo] = hand.invkin_rst(x_des_1,1);
+t1 = toc;
+% 
+hand.update_hand(q_hand_init);
+invkin_par = hand.invkin_numeric_par;
+invkin_par.visual = 0;
+tic
+[q_res1, info2] = hand.invkin_numeric(x_des_1,1,invkin_par);
+t2 = toc;
+% hand.plot_hand(par_plot_hand);
+
+% LM method
+hand.update_hand(q_hand_init);
+invkin_LM_par = hand.invkin_numeric_LM_par;
+invkin_LM_par.visual = 0;
+tic
+[q_res2, info3] = hand.invkin_numeric_LM(x_des_1,1,invkin_LM_par);
+t3 = toc;
+
+
+fprintf('IK test: \n')
+fprintf('Method 1 (RST): status: %d; time: %f; iter: %d \n', solnInfo.ExitFlag==1,t1,solnInfo.Iterations)
+fprintf('Method 2 (NR): status: %d; time: %f; iter: %d \n', info2.status,t2,info2.iter)
+fprintf('Method 3 (LM): status: %d; time: %f; iter: %d \n', info3.status,t3,info3.iter)
+
 
 %% dynamics
 

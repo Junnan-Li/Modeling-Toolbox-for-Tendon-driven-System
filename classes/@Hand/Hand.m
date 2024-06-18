@@ -167,7 +167,6 @@ classdef Hand < handle & matlab.mixin.Copyable
                     W_T_bi = base_i.get_W_T_B;
                     W_T_bi_new = W_T_b_prior*W_T_bi;
                     base_i.set_w_T_base_inhand(W_T_bi_new);
-
                     nj_i = base_i.nj;
                     q_i = q_b(q_i_start:q_i_start+nj_i-1);
                     base_i.update_finger(q_i);
@@ -180,7 +179,6 @@ classdef Hand < handle & matlab.mixin.Copyable
                 q_i_start = 1; % index for fingers
                 for i = 1:obj.nf
                     finger_i = obj.list_fingers(i);
-
                     W_T_bi = finger_i.get_W_T_B;
                     W_T_bi_new = W_T_b_prior*W_T_bi;
                     finger_i.set_w_T_base_inhand(W_T_bi_new);
