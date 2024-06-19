@@ -22,6 +22,9 @@ Classes:
     a. update_list_viapoints: not efficient
     b. cal_all_Muscle_momentarm:
         using numeric differentiation method 
+    c. change the invkin functions to the new version as for the hand object
+
+
 6. muscle class
 
 7. hand class 

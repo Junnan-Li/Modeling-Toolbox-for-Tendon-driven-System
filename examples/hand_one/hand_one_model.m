@@ -14,89 +14,27 @@ finger_urdf = importrobot('.\examples\hand_one\URDF_FINGERS_4DOF-torsion_modifie
 finger_urdf.DataFormat = "column";
 % 
 
-%%
-% r = rateControl(100);
-% figure
-% xlim([-0.05, 0.05])
-% for i = 1:length(out_q.time)
-%     finger_urdf.show(out_q.signals.values(i,:)','Frame','off','PreservePlot',0);
-%     hold on
-%     xlim([-0.1, 0.1])
-%     ylim([-0.1, 0.1])
-%     zlim([-0.1, 0.1])
-%     grid off
-%     drawnow;
-%     exportgraphics(gcf,'testAnimated.gif','Append',true);
-% %     waitfor(r);
-% end
-%%
-q = [1,1,1,1]';
-finger_urdf.show(q,'Frame','off','PreservePlot',0);
-% return
-%%
-
-% config = homeConfiguration(finger);
-% config = [pi/4 pi/4 pi/4 pi/8]';
-% config = [0 0 0 0]';
-
-% global finger_handone
-finger_handone = init_from_rst(finger_urdf);
-mdh_ori = finger_handone.mdh_ori;
-mdh_matrix = mdh_struct_to_matrix(mdh_ori,1);
-mdh_matrix(5,2) = 0.014;
-
-finger_handone.set_mdh_parameters(mdh_matrix);
-% finger_handone.w_p_base = 4*zeros(3,1);
-% finger_handone.w_R_base = euler2R_XYZ([pi,0,0]);
-% finger_handone.update_finger(config);
-
-% load rst model from finger class
-rst_model_r = finger_handone.rst_model;
-
-% finger_handone.compile_functions
-
-%% simulation setting
-
-q_init = [0,0,0,0]';
-qD_init = [0,0,0,0]';
-
-
-% joint stiffness 
-q_stiff_init = [0,0,0,0]';
-S_j = 1e-4 * [1,1,1,1]';
-D_j = 1e-4 * [1,1,1,1]';
-
-% coupling tendon stiffness
-k_coupling = 1e-1;
-d_coupling = 1e-5;
+finger_index = create_handone_finger_from_urdf(finger_urdf,'index');
+finger_mid = create_handone_finger_from_urdf(finger_urdf,'mid');
+finger_ring = create_handone_finger_from_urdf(finger_urdf,'ring');
+finger_little = create_handone_finger_from_urdf(finger_urdf,'little');
+finger_thumb = create_handone_finger_from_urdf(finger_urdf,'thumb');
 
 
 
 return
+%%
 
-%% show model
-% figure(1)
-% subplot(1,2,1)
-% show(finger_urdf,config,'visuals','on','collision','off','Frames', 'off');
-% hold on
-% % plot3(p_link_all_w_r(1,:)',p_link_all_w_r(2,:)',p_link_all_w_r(3,:)','o-','Color','r');
-% 
-% axis equal
-% xlabel('x')
-% ylabel('y')
-% zlabel('z')
-% [caz,cel] = view;
-% subplot(1,2,2)
-% finger_handone.print_finger('r',5)
-% hold on
-% grid on
-% axis equal
-% xlabel('x')
-% ylabel('y')
-% zlabel('z')
-% view(caz,cel)
+handone = Hand('handone');
+handone.add_base(wrist);
+handone.add_finger(finger_index);
+handone.add_finger(finger_middle);
+handone.add_finger(finger_ring);
+handone.add_finger(finger_little);
+handone.add_finger(finger_thumb);
 
 
+return
 %% add tendons
 
 if finger_r.nt == 0

@@ -13,10 +13,14 @@
 % 
 % Junnan Li, junnan.li@tum.de, 01.2023
 
-function J_all = Jacobian_geom_w_all_fingers(obj,q)
+function J_all = Jacobian_geom_w_all_fingers(obj,varargin)
+
+error('use [Jacobian_geom_w_one_finger.m] to calculate Jacobian of one fingertip')
 
 if nargin == 1
     q = obj.q;
+else
+    q = varargin{1};
 end
 assert(length(q)== obj.nj, '[Jacobian_geom_w_all_fingers]: dimension of joint vector is incorrect!')
 q = reshape(q,[obj.nj,1]);

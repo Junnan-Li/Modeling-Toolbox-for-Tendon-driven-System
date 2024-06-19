@@ -14,10 +14,12 @@
 % 
 % Junnan Li, junnan.li@tum.de, 01.2023
 
-function J = Jacobian_geom_w_one_finger(obj,finger_index,q)
+function J = Jacobian_geom_w_one_finger(obj,finger_index,varargin)
 
-if nargin == 1
+if nargin == 2
     q = obj.q;
+else
+    q = varargin{1};
 end
 assert(length(q)== obj.nj, '[Jacobian_geom_w_one_finger]: dimension of joint vector is incorrect!')
 assert(finger_index <= obj.nf, '[Jacobian_geom_w_one_finger]: dimension of joint vector is incorrect!')
