@@ -1,11 +1,23 @@
 Classes:
 
-*Hand
-  Finger
-    links
-    joints
-    tendons
-    contacts
+Hand:
+    The hand is composed by base and fingers. The base is assumed as serial structure, while
+    the fingers are assumed connecting to the ee of the last base.
+
+Finger:
+    w_T_base: private property. using set_base
+    w_T_base_inhand: this is used when the finger is connect to the hand object, 
+                     as the world frame is changed to the previous finger
+                    
+    set_joint_limits_on/off: consider the limits_q while update_finger
+
+links:
+
+joints:
+    joint_limits 
+tendons
+
+contacts
 
 Functionalities:
 

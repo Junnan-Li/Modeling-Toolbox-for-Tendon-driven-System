@@ -25,8 +25,8 @@ finger_r.set_mdh_parameters(mdh_matrix);
 
 %% basic settings
 % set base position and orientation
-finger_r.w_p_base = 4*rand(3,1);
-finger_r.w_R_base = euler2R_XYZ(zeros(1,3));
+finger_r.set_base(4*rand(3,1),euler2R_XYZ(zeros(1,3)));
+
 % init joint configurations
 q_0 = [pi/4;pi/4;1;1];
 
@@ -52,6 +52,8 @@ finger_r.update_finger_par_dyn;
 finger_r.update_rst_model;
 % finger_r.update_finger(q_0);
 
+
+return
 %% add tendons
 
 if finger_r.nt == 0

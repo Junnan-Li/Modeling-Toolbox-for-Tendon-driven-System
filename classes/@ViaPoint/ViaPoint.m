@@ -12,22 +12,18 @@ classdef ViaPoint < handle
         link_p              % [3x1] position in the link frame
     end
     properties (SetAccess = private)
-        link_index
+%         link_index
+        link_name
         base_p          % position related to base frame, need be calculate with given link T matrix
     end
 
     methods
-        function obj = ViaPoint(name, link_index, link_p)
+        function obj = ViaPoint(name, link_name, link_p)
             % ViaPoint initialize
             obj.name = name;
-            obj.link_index = 0;
-            obj.link_p = zeros(3,1);
-            if nargin == 2
-                obj.link_index = link_index;
-            elseif nargin == 3
-                obj.link_index = link_index;
-                obj.link_p = link_p;
-            end
+            obj.link_name = link_name;
+%             obj.link_index = 0;
+            obj.link_p = link_p;
 
         end
 
@@ -39,8 +35,6 @@ classdef ViaPoint < handle
             H_tmp = base_T_VP * [obj.link_p;1];
             obj.base_p = H_tmp(1:3);
         end
-
-
     end
 end
 

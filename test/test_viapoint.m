@@ -1,4 +1,4 @@
-% test viapoints of fingers and hand
+% test script for viapoint and muscle object functionalities within the fingers and hand
 
 
 clear all

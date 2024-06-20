@@ -23,6 +23,7 @@ Classes:
     b. cal_all_Muscle_momentarm:
         using numeric differentiation method 
     c. change the invkin functions to the new version as for the hand object
+    d. 
 
 
 6. muscle class

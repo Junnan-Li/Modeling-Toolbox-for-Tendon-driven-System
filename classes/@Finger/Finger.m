@@ -62,9 +62,13 @@ classdef Finger < handle & matlab.mixin.Copyable
         list_muscles        % [ntx1] list of all muscles
         list_viapoints      % [ntx1] list of all viapoints
         joint_act           % [njx1] logical vector: 1: active joint; 0: fixed joint 
-        limits_q            % [njx6] min,max values of q,qd,qdd
+        limits_q            % [njx2] min,max values of q
+        limits_qd           % [njx2] min,max values of qd
+        limits_qdd          % [njx2] min,max values of qdd
+        
         limits_ft           % [ntx2] min,max values of tendon forces
         limits_t_ma         % [njx2] min,max values of moment arm for each joint
+        
         par_kin             % all kinematic parameters
         opt_pkin            % kinematic parameters for optimization
         
@@ -74,7 +78,8 @@ classdef Finger < handle & matlab.mixin.Copyable
         w_p_base            % position of the base in world frame. Default: [0,0,0]'
         w_R_base            % rotation of the base in world frame. Default: non rotation
         w_T_base  
-        w_T_base_inhand        
+        w_T_base_inhand     
+        limit_joint_on          % [1] activate the joint limits
         mdh                 % mdh parameters: alpha, a theta, d (with q)
         mdh_all
         mdh_ori             % mdh parameters: alpha, a theta, d (without q)
@@ -170,8 +175,11 @@ classdef Finger < handle & matlab.mixin.Copyable
 
             obj.nvia = 0;
             obj.list_viapoints = [];
-
-            obj.limits_q = zeros(obj.nj,6);
+            
+            obj.limit_joint_on = 0;
+            obj.limits_q = zeros(obj.nj,2);
+            obj.limits_qd = zeros(obj.nj,2);
+            obj.limits_qdd = zeros(obj.nj,2);
             % init finger base position and orientation
             obj.w_p_base = [0;0;0];
             obj.w_R_base = eye(3);
@@ -243,13 +251,27 @@ classdef Finger < handle & matlab.mixin.Copyable
             end
         end
 
-        function update_finger(obj, q_a)
+        function update_finger(obj, varargin)
             % update mhl parameters and par_kin, opt_pkin, ...
-            assert(length(q_a)== obj.nja, 'dimension of joint vector is incorrect!')
             
-            q_a = reshape(q_a,[obj.nj,1]);
-            obj.q = q_a; % update joint angle
-            obj.q_a = q_a;
+            if nargin == 1
+                q_new = obj.q;
+            elseif nargin == 2
+                q_new = varargin{1};
+                assert(length(q_new)== obj.nja, '[update_finger]: dinput dimension is incorrect!')
+                q_new = reshape(q_new,[obj.nj,1]);
+            end
+            
+            if obj.limit_joint_on
+                % saturate q with joint limits
+                q_sat = vec_saturation(q_new,obj.limits_q);
+                obj.q = q_sat; 
+                obj.q_a = q_sat;
+            else
+                obj.q = q_new; % update joint angle
+                obj.q_a = q_new;
+            end
+
 %             obj.q(obj.joint_act) = q_a; % update joint angle
             % update mdh parameters
 %             [obj.mdh,obj.mdh_all, obj.mdh_ori] = get_finger_mdh(obj, obj.q_a);
@@ -278,20 +300,42 @@ classdef Finger < handle & matlab.mixin.Copyable
 %             obj.update_rst_model;
         end
         
-        % joint related functinos
+        %% joint related functinos
         function update_joints_info(obj)
             % update joint information
-            %   1. limits_q
-%             q = obj.q_a;
             for i = 1:obj.nj
                obj.limits_q(i,1:2) = obj.list_joints(i).q_limits;
-               obj.limits_q(i,3:4) = obj.list_joints(i).qd_limits;
-               obj.limits_q(i,5:6) = obj.list_joints(i).qdd_limits;
+               obj.limits_qd(i,1:2) = obj.list_joints(i).qd_limits;
+               obj.limits_qdd(i,1:2) = obj.list_joints(i).qdd_limits;
             end 
+        end
+
+        function set_onejoint_limits_q(obj, joint_index, q_limits)
+            % update joint information
+            obj.list_joints(joint_index).set_limit_q(q_limits);
+            obj.update_joints_info;
+        end
+        function set_onejoint_limits_qd(obj, joint_index, qd_limits)
+            % update joint information
+            obj.list_joints(joint_index).set_limit_qd(qd_limits);
+            obj.update_joints_info;
+        end
+        function set_onejoint_limits_qdd(obj, joint_index, qdd_limits)
+            % update joint information
+            obj.list_joints(joint_index).set_limit_qdd(qdd_limits);
+            obj.update_joints_info;
+        end
+
+        function set_joint_limits_on(obj)
+            % update joint information
+            obj.limit_joint_on = 1;
+        end
+        function set_joint_limits_off(obj)
+            % update joint information
+            obj.limit_joint_on = 0;
         end
         
         function [q_sat, qd_sat, qdd_sat] = check_joints_limits(obj, q, qd, qdd)
-            
             assert(length(q)== obj.nja, 'dimension of joint vector is incorrect!')
             assert(length(qd)== obj.nja, 'dimension of joint vector is incorrect!')
             assert(length(qdd)== obj.nja, 'dimension of joint vector is incorrect!')
@@ -304,7 +348,6 @@ classdef Finger < handle & matlab.mixin.Copyable
             qdd_sat = qdd;
             qdd_sat(qdd < obj.limits_q(:,5)) = obj.limits_q(qdd < obj.limits_q(:,5),5);
             qdd_sat(qdd > obj.limits_q(:,6)) = obj.limits_q(qdd > obj.limits_q(:,6),6);
-            
         end
 
         %% dynamic parameters

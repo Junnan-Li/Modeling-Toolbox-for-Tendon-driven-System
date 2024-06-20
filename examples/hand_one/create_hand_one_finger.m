@@ -14,21 +14,32 @@ finger_urdf.DataFormat = "column";
 %% seperated finger model
 
 finger_index = create_handone_finger_from_urdf(finger_urdf,'index');
-finger_index.set_base([0.15,0.02,0]', euler2R_XYZ([0,0,0]));
+finger_index.set_base([0.103,0.02,0]', euler2R_XYZ([3,5.8,5]*pi/180));
 
 finger_middle = create_handone_finger_from_urdf(finger_urdf,'middle');
-finger_middle.set_base([0.15,-0,0]', euler2R_XYZ([0,0,0]));
+finger_middle.set_base([0.105,-0.004,0]', euler2R_XYZ([0,0,0]));
 
 finger_ring = create_handone_finger_from_urdf(finger_urdf,'ring');
-finger_ring.set_base([0.15,-0.02,0]', euler2R_XYZ([0,0,0]));
+finger_ring.set_base([0.106,-0.027,0]', euler2R_XYZ([3,5.8,5]*pi/180));
 
 finger_little = create_handone_finger_from_urdf(finger_urdf,'little');
-finger_little.set_base([0.15,-0.04,0]', euler2R_XYZ([0,0,0]));
+finger_little.set_base([0.1,-0.05,0]', euler2R_XYZ([5,8.6,7]*pi/180));
 
 finger_thumb = create_handone_finger_from_urdf(finger_urdf,'thumb');
-finger_thumb.set_base([0.05,0.03,-0.015]', euler2R_XYZ([-pi*2/3,-pi/4,0]));
+finger_thumb.set_base([0.06,0.047,-0.024]', eul2rotm([48,122,78]*pi/180,'ZYX'));
 
 finger_list = {finger_index,finger_middle,finger_ring,finger_little,finger_thumb};
+
+% set the joint limits
+
+for i = 1:length(finger_list)
+    finger_list{i}.set_onejoint_limits_q(1,[-15,15]*pi/180);
+    finger_list{i}.set_onejoint_limits_q(2,[0,90]*pi/180);
+    finger_list{i}.set_onejoint_limits_q(3,[0,100]*pi/180);
+    finger_list{i}.set_onejoint_limits_q(4,[0,90]*pi/180);
+end
+
+
 %% plot
 plot_par = finger_index.plot_parameter_init;
 plot_par.axis_len = 0.01;
@@ -79,15 +90,16 @@ handone.add_finger(finger_ring);
 handone.add_finger(finger_little);
 handone.add_finger(finger_thumb);
 
-% q = [0;0;zeros(handone.nj-2,1)];
-q = rand(handone.nj,1);
+q = [0;0;zeros(handone.nj-2,1)];
+% q = zeros(handone.nj,1);
+handone.set_joint_limits_on;
 handone.update_hand(q);
 plot_par = handone.plot_parameter_init;
-plot_par.axis_len = 0.3;
+plot_par.axis_len = 0.02;
 figure(2)
 handone.plot_hand(plot_par)
 axis equal
 hand_rst = handone.update_rst_model;
-hand_rst.show(q,"Frames","on");
+% hand_rst.show(q,"Frames","on");
 
 J = handone.Jacobian_geom_w_one_finger(1,q);

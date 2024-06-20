@@ -4,7 +4,7 @@
 
 
 
-classdef Joints
+classdef Joints < handle
     %JOINTS Summary of this class goes here
     %   Detailed explanation goes here
     
@@ -36,10 +36,23 @@ classdef Joints
         end
         
         function set_fixed(obj)
-            %METHOD1 Summary of this method goes here
-            %   Detailed explanation goes here
+            %
             obj.fixed = 1;
         end
+        function set_limit_q(obj, q_limit)
+            assert(length(q_limit) == 2, '[set_limit_q] incorrect input')
+            obj.q_limits = [min(q_limit), max(q_limit)];
+        end
+
+        function set_limit_qd(obj, qd_limit)
+            assert(length(qd_limit) == 2, '[set_limit_qd] incorrect input')
+            obj.qd_limits = [min(qd_limit), max(qd_limit)];
+        end
+        function set_limit_qdd(obj, qdd_limit)
+            assert(length(qdd_limit) == 2, '[set_limit_qdd] incorrect input')
+            obj.qdd_limits = [min(qdd_limit), max(qdd_limit)];
+        end
+
     end
 end
 

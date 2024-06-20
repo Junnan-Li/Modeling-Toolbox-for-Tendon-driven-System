@@ -19,8 +19,6 @@ classdef Links < handle & matlab.mixin.Copyable
         contacts           
         viapoints
         nv                  % [1] num of viapoints
-        
-
     end
     properties (SetAccess = private)
         index  

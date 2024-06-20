@@ -49,6 +49,13 @@ classdef Hand < handle & matlab.mixin.Copyable
         list_muscles        % [ntx1] list of all muscles
         list_viapoints      % [ntx1] list of all viapoints
         
+        limits_q            % [njx2] min,max values of q
+        limits_qd           % [njx2] min,max values of qd
+        limits_qdd          % [njx2] min,max values of qdd
+        limit_j_on          % [1] activate the joint limits
+
+        index_q_b           % [njb,2] start and end index of base joint in q
+        index_q_f           % [njf,2] start and end index of base joint in q
 
         topology
     end
@@ -59,7 +66,7 @@ classdef Hand < handle & matlab.mixin.Copyable
                             % equal to the w_p_base of the first base
         w_R_base            % rotation of the base in world frame. Default: non rotation
         par_dyn_h           % Dynamic parameters from all bases and fingers
-
+        limit_joint_on      % [1] activate the joint limits
     end
     
     methods
@@ -90,6 +97,15 @@ classdef Hand < handle & matlab.mixin.Copyable
             obj.list_viapoints = [];
             obj.w_p_base = [0;0;0];
             obj.w_R_base = eye(3);
+
+
+            obj.limit_joint_on = 0;
+            obj.limits_q = [];
+            obj.limits_qd = [];
+            obj.limits_qdd = [];
+
+            obj.index_q_b = [];
+            obj.index_q_f = [];
             
             obj.par_dyn_h = struct();
         end
@@ -124,32 +140,58 @@ classdef Hand < handle & matlab.mixin.Copyable
             obj.nt = 0;
             obj.nmus = 0;
             obj.nvia = 0;
+            obj.limits_q = [];
+            obj.limits_qd = [];
+            obj.limits_qdd = [];
 
+            obj.index_q_b = [];
+            obj.index_q_f = [];
+            
+            i_q = 1;
             % update base information
-            for i = 1:obj.nb
-                base_i  = obj.base(i);
-                obj.nj = obj.nj + base_i.nj;
-                obj.njb = obj.njb + base_i.nj;
-                obj.nl = obj.nl + base_i.nl;
-                obj.nc = obj.nc + base_i.nc;
-                obj.nt = obj.nt + base_i.nt;
-                obj.nmus = obj.nmus + base_i.nmus;
-                obj.nvia = obj.nvia + base_i.nvia;
-                obj.q = [obj.q;base_i.q];
-                
+            if obj.nb ~= 0
+                obj.index_q_b = zeros(obj.nb,2);
+                for i = 1:obj.nb
+
+                    base_i  = obj.base(i);
+
+                    obj.nj = obj.nj + base_i.nj;
+                    obj.njb = obj.njb + base_i.nj;
+                    obj.nl = obj.nl + base_i.nl;
+                    obj.nc = obj.nc + base_i.nc;
+                    obj.nt = obj.nt + base_i.nt;
+                    obj.nmus = obj.nmus + base_i.nmus;
+                    obj.nvia = obj.nvia + base_i.nvia;
+                    obj.q = [obj.q;base_i.q];
+                    obj.limits_q = [obj.limits_q;base_i.limits_q];
+                    obj.limits_qd = [obj.limits_qd;base_i.limits_qd];
+                    obj.limits_qdd = [obj.limits_qdd;base_i.limits_qdd];
+
+                    obj.index_q_b(i,:) = [i_q,i_q+ base_i.nj-1];
+                    i_q = i_q + base_i.nj;
+                end
             end
-            for i = 1:obj.nf
-                finger_i = obj.list_fingers(i);
-                obj.nj = obj.nj + finger_i.nj;
-                obj.njf = obj.njf + finger_i.nj;
-                obj.nl = obj.nl + finger_i.nl;
-                obj.nc = obj.nc + finger_i.nc;
-                obj.nt = obj.nt + finger_i.nt;
-                obj.nmus = obj.nmus + finger_i.nmus;
-                obj.nvia = obj.nvia + finger_i.nvia;
-                obj.q = [obj.q;finger_i.q];
+            if obj.nf ~= 0
+                obj.index_q_f = zeros(obj.nf,2);
+                for i = 1:obj.nf
+                    finger_i = obj.list_fingers(i);
+                    obj.nj = obj.nj + finger_i.nj;
+                    obj.njf = obj.njf + finger_i.nj;
+                    obj.nl = obj.nl + finger_i.nl;
+                    obj.nc = obj.nc + finger_i.nc;
+                    obj.nt = obj.nt + finger_i.nt;
+                    obj.nmus = obj.nmus + finger_i.nmus;
+                    obj.nvia = obj.nvia + finger_i.nvia;
+                    obj.q = [obj.q;finger_i.q];
+                    obj.limits_q = [obj.limits_q;finger_i.limits_q];
+                    obj.limits_qd = [obj.limits_qd;finger_i.limits_qd];
+                    obj.limits_qdd = [obj.limits_qdd;finger_i.limits_qdd];
+
+                    obj.index_q_f(i,:) = [i_q,i_q+ finger_i.nj-1];
+                    i_q = i_q + finger_i.nj;
+                end
             end
-%             obj.update_hand(obj.q);
+            %             obj.update_hand(obj.q);
         end
 
         function update_hand(obj, q)
@@ -190,9 +232,58 @@ classdef Hand < handle & matlab.mixin.Copyable
             end
         end
         
+        %% joints
+        function set_joint_limits_on(obj)
+            % update joint information
+            obj.limit_joint_on = 1;
+            % update base information
+            if obj.nb ~= 0
+                for i = 1:obj.nb
+                    obj.base(i).set_joint_limits_on();
+                end
+            end
+            if obj.nf ~= 0
+                for i = 1:obj.nf
+                    obj.list_fingers(i).set_joint_limits_on();
+                end
+            end
+        end
+        function set_joint_limits_off(obj)
+            % update joint information
+            obj.limit_joint_on = 1;
+            % update base information
+            if obj.nb ~= 0
+                for i = 1:obj.nb
+                    obj.base(i).set_joint_limits_off;
+                end
+            end
+            if obj.nf ~= 0
+                for i = 1:obj.nf
+                    obj.list_fingers(i).set_joint_limits_off;
+                end
+            end
+        end
 
+        function update_joint_limits(obj)
+            % update joint information
+            if obj.nb ~= 0
+                for i = 1:obj.nb
+                    base_i  = obj.base(i);
+                    obj.limits_q = [obj.limits_q;base_i.limits_q];
+                    obj.limits_qd = [obj.limits_qd;base_i.limits_qd];
+                    obj.limits_qdd = [obj.limits_qdd;base_i.limits_qdd];
+                end
+            end
+            if obj.nf ~= 0
+                for i = 1:obj.nf
+                    finger_i = obj.list_fingers(i);
+                    obj.limits_q = [obj.limits_q;finger_i.limits_q];
+                    obj.limits_qd = [obj.limits_qd;finger_i.limits_qd];
+                    obj.limits_qdd = [obj.limits_qdd;finger_i.limits_qdd];
+                end
+            end
+        end
         
-
         %% rst model
 
         function rst_model_hand = update_rst_model(obj)
@@ -405,9 +496,6 @@ classdef Hand < handle & matlab.mixin.Copyable
                 end
             end
         end
-
-        
-
     end
 end
 
