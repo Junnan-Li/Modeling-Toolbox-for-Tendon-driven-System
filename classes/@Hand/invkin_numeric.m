@@ -23,14 +23,15 @@
 function [q_res, info] = invkin_numeric(obj,x_des_i,finger_index,varargin)
 
 if nargin == 3
-    par = obj.invkin_numeric_par();
+    ikpar = IK_par();
 elseif nargin == 4
-    par = varargin{1};
+    ikpar = varargin{1};
 else
     error('[invkin_numeric]: input dimension is incorrect! ')
 end
 assert(all(size(x_des_i) == [6,1]), 'Hand.invkin_numeric: wrong dimension of X_des_all')
 
+par = ikpar.ikpar_NR;
 iter_max = par.iter_max;
 tol = par.tol;
 alpha = par.alpha;
@@ -46,6 +47,10 @@ info.phi_x = zeros(size(x_des_i));
 info.iter = 0;
 info.retry_iter = 0;
 
+if par.visual % visualization
+    figure()
+end
+
 for retry_i = 0:retry_num
     try
         for i = 1:iter_max
@@ -56,6 +61,7 @@ for retry_i = 0:retry_num
 
             if par.visual % visualization
                 obj.plot_hand;
+                drawnow
             end
 
             % error
@@ -72,7 +78,7 @@ for retry_i = 0:retry_num
             J_w = obj.Jacobian_geom_w_one_finger(finger_index,q_i);
             J_inv = pinv(J_w);
             if rank(J_w) < min(size(J_w)) | rank(J_inv) < min(size(J_inv))
-                disp('invkin_numeric: Jacobian rank deficit')
+                disp('[Hand.invkin_numeric]: Jacobian rank deficit')
             end
 
             delta_q = alpha * J_inv * delta_x_i;
@@ -80,7 +86,7 @@ for retry_i = 0:retry_num
             obj.update_hand(q_i_new);
         end
     catch ME
-%         q_value = rand(size(q_value));
+        disp('[Hand.invkin_numeric]: catch error!')
 %         obj.update_hand();
     end
     if info.status % IK solved

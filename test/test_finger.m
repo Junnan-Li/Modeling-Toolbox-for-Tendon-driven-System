@@ -18,39 +18,18 @@ clc
 
 
 symbolic_test = 0;
-%%
 
-% define different types of fingers
+%% create random finger
+finger_r = create_finger_random('finger_example', 4);
 
-% finger_list = {finger_r,finger_s,finger_p};
-
-% finger_r = Finger('Index', 'type','R_RRRR', 'l_links',rand(1,4));
-
-% use mdh to create finger
-mdh_parameter = rand(5,4);
-mdh_parameter(:,3) = 0;
-% mdh_parameter(1,1:4) = 0;
-mdh_struct = mdh_matrix_to_struct(mdh_parameter, 1);
-finger_r = Finger('Index', 'mdh',mdh_struct );
-
-mdh_default_struct = finger_r.mdh_ori;
-mdh_matrix = mdh_struct_to_matrix(mdh_default_struct, 1);
-mdh_matrix(2,1) = -pi/2;
-finger_r.set_mdh_parameters(mdh_matrix);
 %% set random states
 % set random base position and orientation
-finger_r.set_base(4*rand(3,1),euler2R_XYZ(rand(1,3)))
-% finger_r.w_p_base = 4*rand(3,1);
-% finger_r.w_R_base = euler2R_XYZ(rand(1,3));
 finger_r.update_rst_model;
 % joint configurations
-
-q_r = rand(4,1);
+q_r = rand(finger_r.nj,1);
 
 % udpate finger with given joint configurations
 finger_r.update_finger(q_r);
-% finger_r.update_finger([0;0;0;0]);
-
 
 % load rst model from finger class
 rst_model = finger_r.rst_model;
@@ -91,7 +70,6 @@ else
     fprintf('Test 1 (Transformation matrix): pass! \n')
 end
 
-% return
 %% Test 2: Jacobian test
 % test the geometric Jacobian matrix of the endeffector
 % Jacobian_geom_b_end.m
@@ -164,8 +142,6 @@ if test_3_error == 1
 else
     fprintf('Test 3 (Frame position): pass! \n')
 end
-
-
 %% Test 4: Contact test
 % set the contact point at the end of the link (next frame)
 % then compare the J_frame (rst) to the J_contact
@@ -228,22 +204,21 @@ show(rst_model,q_r,'Collisions','on','Visuals','off');
 hold on
 finger_r.plot_contacts
 
-
-
-% Test 4-2 delete all contacts
-% delete_all_contacts()
-
-
-% finger_r.delete_all_contacts();
-
-
 % return
 %% Test 5 inverse dynamic test
+% method 1: 
+%       class function (fixed base): Finger.invdyn_ne_w_end(q_r,q_rD,q_rDD,F_ext)
+% method 2: 
+%       rst toolbox(fixed base): inverseDynamics(rst_model, q_r,q_rD,q_rDD, F_ext_rst);
+% method 3: 
+%       class function (floating base):  Finger.invdyn_ne_xq_fb_all_fext
+% method 4:
+%       class function (floating base, wt f_ext):  Finger.invdyn_ne_xq_fb_wt_fext_sub
 
 % random states
 q_rD = rand(size(q_r));
 q_rDD = rand(size(q_r));
-F_ext = zeros(6,1);
+F_ext = rand(6,1);
 
 finger_r.set_base_dynpar(rand(1),rand(3,1),[rand(3,1);zeros(3,1)] );
 for i = 1:finger_r.nl
@@ -255,27 +230,26 @@ finger_r.update_finger_par_dyn;
 
 Tau_class = finger_r.invdyn_ne_w_end(q_r,q_rD,q_rDD,F_ext);
 
+% floating base method
 X_base = [finger_r.w_p_base;R2euler_XYZ(finger_r.w_R_base)];
 XD_base = zeros(6,1);
 XDD_base = zeros(6,1);
 Tau_class_fb = finger_r.invdyn_ne_xq_fb_all_fext([X_base;q_r],[XD_base;q_rD],[XDD_base;q_rDD],[zeros(6,finger_r.nj+1),F_ext]);
 
-
 % transfer the external force exerting on the 
 rst_model = finger_r.update_rst_model;
-
 
 transform = getTransform(rst_model,q_r,rst_model.BodyNames{end});
 W_R_end = transform(1:3,1:3);
 F_ext_rst = externalForce(rst_model,rst_model.BodyNames{end},[W_R_end'*F_ext(4:6);W_R_end'*F_ext(1:3)],q_r);
 Tau_rst = inverseDynamics(rst_model, q_r,q_rD,q_rDD, F_ext_rst);
 
-
 Tau_error = abs(Tau_class-Tau_rst);
 Tau_error_2 = abs(Tau_class-Tau_class_fb(7:end));
-% 
 
-% test floating base function
+
+% test floating base function 
+F_ext = zeros(6,1);
 X_base = rand(6,1);
 XD_base = rand(6,1);
 XDD_base = rand(6,1);
@@ -294,15 +268,14 @@ else
 end
 % return
 %% Test 6 Forward dynamic test
+% test Finger.fordyn_ne_w_end function with random F_ee 
 
 % random states
 q_rD = rand(size(q_r));
 tau = rand(size(q_r));
 F_ext = [zeros(6,finger_r.nj+1),rand(6,1)];
 
-
 [qDD_class,M_fd,C_fd,G_fd] = finger_r.fordyn_ne_w_end(q_r,q_rD,tau,F_ext,0);
-
 
 % transfer the external force exerting on the 
 transform = getTransform(rst_model,q_r,rst_model.BodyNames{end});
@@ -317,8 +290,6 @@ if max(qDD_error(:)) > 1e-10
 else
     fprintf('Test 6 (forward dynamic): pass! \n')
 end
-
-
 
 
 %% Test 7 Tendon moment arm properties
@@ -338,6 +309,7 @@ finger_r.M_coupling;
 
 
 %% Test 8: inverse kinematic
+% move to test_IK
 
 p_link_all_w_r = finger_r.get_p_all_links;
 figure(1)
@@ -365,6 +337,7 @@ p_link_all_w_r = finger_r.get_p_all_links;
 plot3(p_link_all_w_r(1,:)',p_link_all_w_r(2,:)',p_link_all_w_r(3,:)','o-','Color','c');
 
 %% Test 9: inverse kinematic with joint limits
+% move to test_IK
 
 test_9_status = 1; % 1: success; 0: failed
 

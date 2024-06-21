@@ -17,15 +17,9 @@ mdh_matrix(2,1) = -pi/2;
 % mdh_matrix(2,4) = 1;
 finger_r.set_mdh_parameters(mdh_matrix);
 
-%%
-
-% mdh_struct = mdh_matrix_to_struct(mdh_parameter, 1);
-% finger_r = Finger('Index', 'mdh',mdh_struct );
-
-
 %% basic settings
 % set base position and orientation
-finger_r.set_base(4*rand(3,1),euler2R_XYZ(zeros(1,3)));
+finger_r.set_base(4*rand(3,1),euler2R_XYZ(rand(1,3)));
 
 % init joint configurations
 q_0 = [pi/4;pi/4;1;1];

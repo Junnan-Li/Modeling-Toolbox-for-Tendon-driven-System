@@ -122,7 +122,7 @@ classdef Hand < handle & matlab.mixin.Copyable
         function add_base(obj, finger)
             % add finger to hand  
             assert(isa(finger,'Finger'), '[add_finger] input is not a Finger object!');
-            obj.base = finger.copy;
+            obj.base = [obj.base;finger.copy];
             obj.update_hand_list; 
             obj.update_hand(obj.q); 
         end
@@ -296,7 +296,7 @@ classdef Hand < handle & matlab.mixin.Copyable
             base_1 = obj.base(1).update_rst_model;
             rst_model_hand = base_1.copy;
             merge_bodyname = rst_model_hand.BodyNames{end};
-            if obj.nb > 2
+            if obj.nb > 1
                 for i = 2:obj.nb
                     base_i = obj.base(i).update_rst_model;
                     rst_model_hand.addSubtree(merge_bodyname,base_i);

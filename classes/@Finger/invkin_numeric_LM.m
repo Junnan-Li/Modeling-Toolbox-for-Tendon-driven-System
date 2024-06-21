@@ -12,21 +12,22 @@
 % 
 % Junnan Li, junnan.li@tum.de, 04.2024
 
-function [q_res, info] = invkin_numeric(obj,x_des,varargin)
+function [q_res, info] = invkin_numeric_LM(obj,x_des,varargin)
 
 if nargin == 2
     ikpar = IK_par();
 elseif nargin == 3
     ikpar = varargin{1};
 else
-    error('[Finger.invkin_numeric]: input dimension is incorrect!')
+    error('[Finger.invkin_numeric_LM]: input dimension is incorrect!')
 end
-assert(all(size(x_des) == [6,1]), '[Finger.invkin_numeric]: wrong dimension of X_des')
+assert(all(size(x_des) == [6,1]), '[Finger.invkin_numeric_LM]: wrong dimension of X_des')
 
-par = ikpar.ikpar_NR;
+par = ikpar.ikpar_LM;
+W_e = par.W_e;
+W_d = par.W_d*eye(obj.nj);
 iter_max = par.iter_max;
 tol = par.tol;
-alpha = par.alpha;
 retry_num = par.retry_num;
 
 q_all = zeros(iter_max,obj.nja);
@@ -65,18 +66,19 @@ for retry_i = 0:retry_num
                 info.status = 1;
                 break
             end
-            J = obj.Jacobian_analytic_b_end;
-%             J = obj.Jacobian_geom_b_end;
+%             J = obj.Jacobian_analytic_b_end;
+            J = obj.Jacobian_geom_b_end;
             J_w = blkdiag(obj.w_R_base,obj.w_R_base) * J;
             if rank(J_w) < min(size(J_w)) 
-                disp('[Finger.invkin_numeric]: Jacobian rank deficit')
+                disp('[Finger.invkin_numeric_LM]: Jacobian rank deficit')
             end
-            delta_q = alpha * pinv(J_w) * delta_x_i;
+            g_i = J_w'* W_e *delta_x_i;
+            delta_q = inv(J_w'*W_e*J_w + W_d) * g_i;
             q_i_new = q_i + delta_q;
             obj.update_finger(q_i_new);
         end
     catch ME
-            disp('[Finger.invkin_numeric]: catch error!')
+        disp('[Finger.invkin_numeric_LM]: catch error!')
         %         obj.update_hand();
     end
     if info.status % IK solved

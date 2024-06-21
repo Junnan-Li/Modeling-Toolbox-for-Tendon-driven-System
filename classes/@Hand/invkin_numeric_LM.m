@@ -23,16 +23,17 @@
 function [q_res, info] = invkin_numeric_LM(obj,x_des_i,finger_index,varargin)
 
 if nargin == 3
-    par = obj.invkin_numeric_LM_par();
+    ikpar = IK_par();
 elseif nargin == 4
-    par = varargin{1};
+    ikpar = varargin{1};
 else
     error('[invkin_numeric_LM]: input dimension is incorrect! ')
 end
 assert(all(size(x_des_i) == [6,1]), '[invkin_numeric_LM]: wrong dimension of X_des_all')
 
+par = ikpar.ikpar_LM;
 W_e = par.W_e;
-W_d = par.W_d;
+W_d = par.W_d*eye(obj.nj);
 iter_max = par.iter_max;
 tol = par.tol;
 retry_num = par.retry_num;
@@ -47,6 +48,9 @@ info.phi_x = zeros(size(x_des_i));
 info.iter = 0;
 info.retry_iter = 0;
 
+if par.visual % visualization
+    figure()
+end
 
 for retry_i = 0:retry_num
     try
@@ -81,7 +85,7 @@ for retry_i = 0:retry_num
             obj.update_hand(q_i_new);
         end
     catch ME
-        %         q_value = rand(size(q_value));
+        disp('[Hand.invkin_numeric_LM]: catch error!')
         %         obj.update_hand();
     end
     if info.status % IK solved
