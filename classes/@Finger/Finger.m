@@ -970,20 +970,9 @@ classdef Finger < handle & matlab.mixin.Copyable
             viapoint_obj = obj.list_links(link_index).add_viapoint_link(name, link_p_obj);
             obj.update_list_viapoints();
         end
-        
-        function ViaPoint_obj = add_ViaPoint_to_muscle(obj, name, link_index, link_p_obj, muscle_index)
-            % add contact to the specific link 
-            assert(muscle_index <= obj.nmus, 'add_ViaPoint_to_muscle: muscle index exceeds the number of muscles!')
-            viapoint_obj = obj.list_links(link_index).add_viapoint_link(name, link_p_obj);
-            obj.list_muscles(muscle_index).list_vp = [obj.list_muscles(muscle_index).list_vp; viapoint_obj];
-            obj.list_muscles(muscle_index).update_viapoints; 
-            obj.update_list_viapoints();
-        end
- 
+
         function update_list_viapoints(obj)
             % update the Link Class property: Links.nc 
-            % TODO: change name of the function
-            %       update all link contact (optional)
             obj.list_viapoints = []; % init list_contacts
             num_viapoints = 0;
             if obj.nl 
@@ -1013,6 +1002,31 @@ classdef Finger < handle & matlab.mixin.Copyable
                 b_p_viapoints_all(:,i) = viapoint_pos_i;
                 w_p_viapoints_all(:,i) = w_viapoint_pos;
             end
+        end
+
+        function [w_p_viapoints_all,b_p_viapoints_all] = get_p_all_viapoints_inhand(obj)
+            % plot 3d viapoints
+            w_T_b = obj.w_T_base_inhand;
+            w_R_b = w_T_b(1:3,1:3);
+            w_p_b = w_T_b(1:3,4);
+
+            b_p_viapoints_all = zeros(3,obj.nvia);
+            w_p_viapoints_all = zeros(3,obj.nvia);
+            for i = 1:obj.nvia
+                viapoint_pos_i = obj.list_viapoints(i).base_p;
+                w_viapoint_pos = w_R_b * viapoint_pos_i + w_p_b;
+                b_p_viapoints_all(:,i) = viapoint_pos_i;
+                w_p_viapoints_all(:,i) = w_viapoint_pos;
+            end
+        end
+
+        function ViaPoint_obj = add_ViaPoint_to_muscle(obj, name, link_index, link_p_obj, muscle_index)
+            % add contact to the specific link 
+            assert(muscle_index <= obj.nmus, 'add_ViaPoint_to_muscle: muscle index exceeds the number of muscles!')
+            viapoint_obj = obj.list_links(link_index).add_viapoint_link(name, link_p_obj);
+            obj.list_muscles(muscle_index).list_vp = [obj.list_muscles(muscle_index).list_vp; viapoint_obj];
+            obj.list_muscles(muscle_index).update_viapoints; 
+            obj.update_list_viapoints();
         end
 
 %         function delete_all_viapoint(obj)

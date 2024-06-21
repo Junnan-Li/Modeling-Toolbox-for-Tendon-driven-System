@@ -496,6 +496,53 @@ classdef Hand < handle & matlab.mixin.Copyable
                 end
             end
         end
+
+        %% viapoints
+        function update_list_viapoints(obj)
+            % update the Link Class property: Links.nc 
+            
+            obj.list_viapoints = []; % init list_contacts
+            num_viapoints = 0;
+            if obj.nb ~= 0
+                for i = 1:obj.nb
+                    base_i = obj.base(i);
+                    obj.list_viapoints = [obj.list_viapoints;base_i.list_viapoints];
+                    num_viapoints = num_viapoints + base_i.nvia;
+                end
+            end
+            if obj.nf ~= 0
+               for i = 1:obj.nf
+                    finger_i = obj.list_fingers(i);
+                    obj.list_viapoints = [obj.list_viapoints;finger_i.list_viapoints];
+                    num_viapoints = num_viapoints + finger_i.nvia;
+                end
+            end
+            obj.nvia = num_viapoints;
+        end
+        
+        function w_p_viapoints_all = get_p_all_viapoints_inhand(obj)
+            % plot 3d viapoints
+            w_p_viapoints_all = NaN(3,obj.nvia);
+            vp_index = 1;
+            if obj.nb ~= 0
+                for i = 1:obj.nb
+                    base_i = obj.base(i);
+                    w_p_viapoints_all(3,vp_index:vp_index+base_i.nvia-1) = ...
+                        base_i.get_p_all_viapoints_inhand;
+                    vp_index = vp_index + base_i.nvia;
+                end
+            end
+            if obj.nf ~= 0
+               for i = 1:obj.nf
+                    finger_i = obj.list_fingers(i);
+                    w_p_viapoints_all(3,vp_index:vp_index+base_i.nvia-1) = ...
+                        finger_i.get_p_all_viapoints_inhand;
+                    vp_index = vp_index + finger_i.nvia;
+                end
+            end
+        end
+
+        
     end
 end
 
