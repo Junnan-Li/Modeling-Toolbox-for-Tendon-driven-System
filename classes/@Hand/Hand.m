@@ -404,7 +404,6 @@ classdef Hand < handle & matlab.mixin.Copyable
             parstr.inhand = 1;
         end
 
-
         function plot_hand(obj,varargin)
             % plot the hand with parameter.inhand = 1;
             if nargin == 1
@@ -433,13 +432,12 @@ classdef Hand < handle & matlab.mixin.Copyable
 
         function plot_hand_com(obj,varargin) 
             % plot the center of mass of each link in world frame
-            
             if nargin == 1
                 par = obj.plot_parameter_init();
             elseif nargin == 2
                 par =  varargin{1};
             else
-                error('[plot_com] input dimension is incorrect! \n')
+                error('[Hand:plot_hand_com] input dimension is incorrect! \n')
             end
 
             if obj.njb ~= 0
@@ -453,6 +451,49 @@ classdef Hand < handle & matlab.mixin.Copyable
                     finger_i = obj.list_fingers(i);
                     finger_i.plot_com(par);
                 end
+            end
+        end
+
+        function plot_hand_viapoints(obj,varargin) 
+            % plot the center of mass of each link in world frame
+            if nargin == 1
+                par = obj.plot_parameter_init();
+            elseif nargin == 2
+                par =  varargin{1};
+            else
+                error('[Hand:plot_hand_via] input dimension is incorrect! \n')
+            end
+
+            if obj.njb ~= 0
+                for i = 1:obj.nb
+                    base_i = obj.base(i);
+                    base_i.plot_viapoints(par);
+                end
+            end
+            if obj.njf ~= 0
+                for i = 1:obj.nf
+                    finger_i = obj.list_fingers(i);
+                    finger_i.plot_viapoints(par);
+                end
+            end
+        end
+
+        function plot_hand_muscles(obj,varargin) 
+            % plot the com of each link in world frame
+            
+            if nargin == 1
+                par = obj.plot_parameter_init;
+            elseif nargin == 2
+                par =  varargin{1};
+            else
+                error('[Hand:plot_hand_muscles] input dimension is incorrect! \n')
+            end
+
+            for i = 1:obj.nmus
+                w_p_viapoints_all = obj.get_p_muscle_viapoint(i);
+                plot3(w_p_viapoints_all(1,:)',w_p_viapoints_all(2,:)',w_p_viapoints_all(3,:)','-*','Color',par.markercolor,...
+                                    'MarkerSize',par.markersize);
+                hold on
             end
         end
 
@@ -542,7 +583,102 @@ classdef Hand < handle & matlab.mixin.Copyable
             end
         end
 
-        
+        function delete_all_viapoint(obj)
+            % delete all viapoints
+            if obj.nb ~= 0
+                for i = 1:obj.nb
+                    base_i = obj.base(i);
+                    base_i.delete_all_viapoint;
+                end
+            end
+            if obj.nf ~= 0
+               for i = 1:obj.nf
+                    finger_i = obj.list_fingers(i);
+                    finger_i.delete_all_viapoint;
+                end
+            end
+            obj.update_list_viapoints;
+        end
+        %% Muscle  
+        function Muscle_obj = add_Muscle(obj, name)
+            % add muscle to the finger
+            Muscle_obj = Muscles(name);
+            obj.list_muscles = [obj.list_muscles;Muscle_obj];
+            obj.nmus = length(obj.list_muscles);
+        end
+
+        function delete_Muscle(obj, index)
+            % delete muscle to the finger
+            obj.list_muscles(index) = [];
+            obj.nmus = length(obj.list_muscles);
+        end
+
+        function w_p_viapoints_all = get_p_muscle_viapoint(obj, muscle_index)
+            assert(isempty(find(muscle_index - obj.nmus > 0)),'[Hand:get_p_muscle_viapoints] muscle index exceeds the number of muscles!')
+            % plot 3d muscle via points
+            muscle_i = obj.list_muscles(muscle_index);
+            w_p_viapoints_all = zeros(3,muscle_i.n_vp);
+            if muscle_i.n_vp == 0
+                fprintf('[Hand:get_p_muscle_viapoints] muscle %d has no viapoints! \n',muscle_index)
+            end
+            for j = 1:muscle_i.n_vp
+                w_p_VP_inhand_i = muscle_i.list_vp(j).get_w_p_VP_inhand;
+                w_p_viapoints_all(:,j) = w_p_VP_inhand_i;
+            end
+        end
+
+
+        function l_muscle = get_muscle_length(obj, muscle_index)
+            assert(isempty(find(muscle_index - obj.nmus > 0)),'[Hand:get_p_muscle_viapoints] muscle index exceeds the number of muscles!')
+            % 
+            l_muscle = zeros(length(muscle_index),1);
+            for i = 1:length(muscle_index)
+                muscle_i = obj.list_muscles(muscle_index(i));
+                if muscle_i.n_vp == 0
+                    fprintf('[Hand:get_p_muscle_viapoints] muscle %d has no viapoints! \n',muscle_index(i))
+                end
+                l_muscle(i) = muscle_i.cal_muscle_length_inhand;
+            end
+        end
+
+        function l_muscle_all = get_muscle_length_all(obj)
+            % 
+            l_muscle_all = zeros(obj.nmus,1);
+            for i = 1:obj.nmus
+                l_muscle_all(i) = obj.get_muscle_length(i);
+            end
+        end
+
+        function MA = get_Muscle_Momentarm_1st_c(obj, muscle_index, varargin)
+            % calculate the Momentarm matrix of all muscles
+            % MA is a [nj,length(muscle_index)] matrix
+            % calculate the MA value using first order centered 
+            % numeric differentiation method
+
+            if nargin == 2
+                step = 1e-3;
+            elseif nargin == 3
+                step = varargin{1};
+            end
+            
+            MA = zeros(obj.nj,length(muscle_index));
+            q_ori = obj.q;
+            for i = 1: obj.nj
+%                 for j = 1: length(muscle_index)
+                    q_f = q_ori;
+                    q_f(i) = q_f(i) + step;
+                    obj.update_hand(q_f);
+                    l_f = obj.get_muscle_length(muscle_index); % forward 
+                    q_b = q_ori;
+                    q_b(i) = q_b(i) - step;
+                    obj.update_hand(q_b);
+                    l_b = obj.get_muscle_length(muscle_index); % forward 
+                    MA(i,:) = (l_f-l_b)./(2*step); 
+%                 end
+            end
+            obj.update_hand(q_ori);
+        end
+
     end
 end
 

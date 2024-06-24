@@ -14,7 +14,10 @@ classdef ViaPoint < handle
     properties (SetAccess = private)
 %         link_index
         link_name
-        base_p          % position related to base frame, need be calculate with given link T matrix
+        base_p          % not usually used
+        w_p_VP          
+        w_p_VP_inhand
+    
     end
 
     methods
@@ -31,10 +34,26 @@ classdef ViaPoint < handle
             % calculate the VP position in the base frame with given link
             % transformation matrix. 
             base_p_link = reshape(base_p_link,[3,1]);
-            base_T_VP = [base_R_link,base_p_link;0 0 0 1];
-            H_tmp = base_T_VP * [obj.link_p;1];
+            base_T_link = [base_R_link,base_p_link;0 0 0 1];
+            H_tmp = base_T_link * [obj.link_p;1];
             obj.base_p = H_tmp(1:3);
         end
+
+        function update_w_p_VP(obj,w_p_VP_new)
+            obj.w_p_VP = w_p_VP_new;
+        end
+        function w_p_VP = get_w_p_VP(obj)
+            w_p_VP = obj.w_p_VP;
+        end
+
+        function update_w_p_VP_inhand(obj,w_p_VP_inhand_new)
+            obj.w_p_VP_inhand = w_p_VP_inhand_new;
+        end
+        function w_p_VP_inhand = get_w_p_VP_inhand(obj)
+            w_p_VP_inhand = obj.w_p_VP_inhand;
+        end
+
+
     end
 end
 

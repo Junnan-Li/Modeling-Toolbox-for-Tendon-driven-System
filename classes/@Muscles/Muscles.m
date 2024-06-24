@@ -25,8 +25,9 @@ classdef Muscles < handle
         name                 % [char] name of tendon
         list_vp              % [] list of the via points
         n_vp                 % [1] number of the viapoints
-        stiffness            % [1] stiffness
-        damping              % [1] damping
+        dyn_par              % [struct] dynamic parameter
+%         stiffness            % [1] stiffness
+%         damping              % [1] damping
         
 
     end
@@ -44,10 +45,18 @@ classdef Muscles < handle
 %             obj.nj_finger = 0;
             obj.list_vp = [];
             obj.ma_value = [];
-            obj.stiffness = 0; %
-            obj.damping = 0; %
+%             obj.stiffness = 0; %
+%             obj.damping = 0; %
             obj.n_vp = 0; %
+            obj.dyn_par = struct();
+            obj.dyn_par.stiffness = 1e3;
+            obj.dyn_par.damping = 0;
+        end
 
+        function add_viapoints(obj, viapoint_obj)
+            % update the number of the viapoint
+            obj.list_vp = [obj.list_vp; viapoint_obj];
+            obj.update_viapoints;
 
         end
 
@@ -61,13 +70,23 @@ classdef Muscles < handle
             % calculate the muscle length (L2 norm)
             l = 0;
             for i = 1:obj.n_vp-1
-                p_vp_i = obj.list_vp(i).base_p;
-                p_vp_inext = obj.list_vp(i+1).base_p;
+                p_vp_i = obj.list_vp(i).w_p_VP;
+                p_vp_inext = obj.list_vp(i+1).w_p_VP;
                 p_dis_i = norm(p_vp_inext-p_vp_i);
                 l = l + p_dis_i;
             end
         end
           
+        function l = cal_muscle_length_inhand(obj)
+            % calculate the muscle length (L2 norm)
+            l = 0;
+            for i = 1:obj.n_vp-1
+                p_vp_i = obj.list_vp(i).w_p_VP_inhand;
+                p_vp_inext = obj.list_vp(i+1).w_p_VP_inhand;
+                p_dis_i = norm(p_vp_inext-p_vp_i);
+                l = l + p_dis_i;
+            end
+        end
         
 
     end

@@ -138,7 +138,6 @@ classdef Links < handle & matlab.mixin.Copyable
 
         function update_link_viapoints(obj)
             % update obj.nc link.Contact.base_R & base_p
-            
             obj.nv = length(obj.viapoints);
             if obj.nv ~=0
                 for i = 1:obj.nv
@@ -146,6 +145,22 @@ classdef Links < handle & matlab.mixin.Copyable
                 end
             end
         end
+
+        function delete_all_viapoints_link(obj)
+            % delete all contacts of the link
+            obj.viapoints = [];
+            obj.update_link_viapoints();
+        end
+
+%         function update_w_p_viapoints(obj, )
+%             % update obj.nc link.Contact.base_R & base_p
+%             obj.nv = length(obj.viapoints);
+%             if obj.nv ~=0
+%                 for i = 1:obj.nv
+%                     obj.viapoints(i).update_VP_pose(obj.base_p,obj.base_R)
+%                 end
+%             end
+%         end
         
     end
 end

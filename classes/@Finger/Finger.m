@@ -23,8 +23,6 @@
 %       1. passive joints
 %       2. function check_finger_properties 
 %       3. dh parameter as another option to define kinematics
-%       4. 
-%       
 % 
 
 %   functions:
@@ -287,6 +285,8 @@ classdef Finger < handle & matlab.mixin.Copyable
                 obj.list_links(i).update(base_p_link_i,base_R_link_i);
             end
             
+            % update viapoints
+            obj.update_viapoints;
             % update joints info
 %             obj.update_joints_info;
             % update the list of tendons
@@ -857,10 +857,10 @@ classdef Finger < handle & matlab.mixin.Copyable
             elseif nargin == 2
                 par =  varargin{1};
             else
-                error('[plot_viapoints] input dimension is incorrect! \n')
+                error('[Finger:plot_viapoints] input dimension is incorrect! \n')
             end
 
-            if parameters.inhand == 0
+            if par.inhand == 0
                 w_R_b = obj.w_R_base;
                 w_p_b = obj.w_p_base;
             else
@@ -965,9 +965,10 @@ classdef Finger < handle & matlab.mixin.Copyable
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %% ViaPoint related 
 
-        function ViaPoint_obj = add_ViaPoint(obj, name, link_index, link_p_obj)
+        function new_viapoint = add_ViaPoint(obj, name, link_index, link_p_obj)
             % add contact to the specific link 
-            viapoint_obj = obj.list_links(link_index).add_viapoint_link(name, link_p_obj);
+            link_name = obj.list_links(link_index).name;
+            new_viapoint = obj.list_links(link_index).add_viapoint_link(strcat(link_name,'_',name), link_p_obj);
             obj.update_list_viapoints();
         end
 
@@ -988,6 +989,17 @@ classdef Finger < handle & matlab.mixin.Copyable
             end
             obj.nvia = num_viapoints;
         end
+
+        function update_viapoints(obj)
+            % update position of all viapoints
+            for i = 1:obj.nvia
+                viapoint_i = obj.list_viapoints(i);
+                w_p_viapoint = obj.get_p_viapoint(i);
+                w_p_viapoint_inhand = obj.get_p_viapoint_inhand(i);
+                viapoint_i.update_w_p_VP(w_p_viapoint);
+                viapoint_i.update_w_p_VP_inhand(w_p_viapoint_inhand);
+            end
+        end
         
         function [w_p_viapoints_all,b_p_viapoints_all] = get_p_all_viapoints(obj)
             % plot 3d contact points
@@ -1002,6 +1014,17 @@ classdef Finger < handle & matlab.mixin.Copyable
                 b_p_viapoints_all(:,i) = viapoint_pos_i;
                 w_p_viapoints_all(:,i) = w_viapoint_pos;
             end
+        end
+
+        function [w_p_viapoint,b_p_viapoint] = get_p_viapoint(obj, VP_index)
+            % plot 3d contact points
+            w_R_b = obj.w_R_base;
+            w_p_b = obj.w_p_base;
+
+            viapoint_pos_i = obj.list_viapoints(VP_index).base_p;
+            w_viapoint_pos = w_R_b * viapoint_pos_i + w_p_b;
+            b_p_viapoint = viapoint_pos_i;
+            w_p_viapoint = w_viapoint_pos;
         end
 
         function [w_p_viapoints_all,b_p_viapoints_all] = get_p_all_viapoints_inhand(obj)
@@ -1020,24 +1043,36 @@ classdef Finger < handle & matlab.mixin.Copyable
             end
         end
 
-        function ViaPoint_obj = add_ViaPoint_to_muscle(obj, name, link_index, link_p_obj, muscle_index)
-            % add contact to the specific link 
-            assert(muscle_index <= obj.nmus, 'add_ViaPoint_to_muscle: muscle index exceeds the number of muscles!')
-            viapoint_obj = obj.list_links(link_index).add_viapoint_link(name, link_p_obj);
-            obj.list_muscles(muscle_index).list_vp = [obj.list_muscles(muscle_index).list_vp; viapoint_obj];
-            obj.list_muscles(muscle_index).update_viapoints; 
-            obj.update_list_viapoints();
+        function [w_p_viapoint_inhand,b_p_viapoint_inhand] = get_p_viapoint_inhand(obj, VP_index)
+            % plot 3d contact points
+            w_T_b = obj.w_T_base_inhand;
+            w_R_b = w_T_b(1:3,1:3);
+            w_p_b = w_T_b(1:3,4);
+
+            viapoint_pos_i = obj.list_viapoints(VP_index).base_p;
+            w_viapoint_pos = w_R_b * viapoint_pos_i + w_p_b;
+            b_p_viapoint_inhand = viapoint_pos_i;
+            w_p_viapoint_inhand = w_viapoint_pos;
         end
 
-%         function delete_all_viapoint(obj)
-%             % delete all contacts of the finger
-%             if obj.nl 
-%                 for i = 1:obj.nl
-%                     obj.list_links(i).delete_all_contacts_link();
-%                 end
-%             end
-%             obj.update_list_contacts;
+%         function add_ViaPoint_to_muscle(obj, name, link_index, link_p_obj, muscle_index)
+%             % add contact to the specific link 
+%             assert(muscle_index <= obj.nmus, 'add_ViaPoint_to_muscle: muscle index exceeds the number of muscles!')
+%             obj.list_links(link_index).add_viapoint_link(name, link_p_obj);
+%             obj.list_muscles(muscle_index).list_vp = [obj.list_muscles(muscle_index).list_vp; viapoint_obj];
+%             obj.list_muscles(muscle_index).update_viapoints; 
+%             obj.update_list_viapoints();
 %         end
+
+        function delete_all_viapoint(obj)
+            % delete all contacts of the finger
+            if obj.nl 
+                for i = 1:obj.nl
+                    obj.list_links(i).delete_all_contacts_link();
+                end
+            end
+            obj.update_list_contacts;
+        end
 
 
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
