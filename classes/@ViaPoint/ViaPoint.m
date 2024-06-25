@@ -5,7 +5,7 @@
 %           
 
 
-classdef ViaPoint < handle
+classdef ViaPoint < handle & matlab.System
 
     properties (Access = public)
         name                 % [char] name of ViaPoint
@@ -17,7 +17,6 @@ classdef ViaPoint < handle
         base_p          % not usually used
         w_p_VP          
         w_p_VP_inhand
-    
     end
 
     methods
@@ -52,7 +51,6 @@ classdef ViaPoint < handle
         function w_p_VP_inhand = get_w_p_VP_inhand(obj)
             w_p_VP_inhand = obj.w_p_VP_inhand;
         end
-
 
     end
 end

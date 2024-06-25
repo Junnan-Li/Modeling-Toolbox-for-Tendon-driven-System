@@ -1,5 +1,5 @@
 %% Class of Muscles:
-% Muscle object with pathway informations enabling obstacle-set algorithms
+% Base Muscle object with pathway informations enabling obstacle-set algorithms
 
 
 % Comment: 
@@ -17,25 +17,18 @@
 %           update_viapoints()
 %           cal_muscle_length(q)
 
-
-
 classdef Muscles < handle
     
     properties (Access = public)
         name                 % [char] name of tendon
         list_vp              % [] list of the via points
         n_vp                 % [1] number of the viapoints
-        dyn_par              % [struct] dynamic parameter
-%         stiffness            % [1] stiffness
-%         damping              % [1] damping
-        
-
     end
     properties (SetAccess = private)
 %         nj_finger            % [1] number of joints from finger.nj 
 %         index                % [1] index of the tendon of a finger
-        ma_value             % [nj_fingerx1] moment arms in m, + for flexion 
-        ma_limits            % [4xnj_fingerx2] minimal and maximal abs value of tendon
+%         ma_value             % [nj_fingerx1] moment arms in m, + for flexion 
+%         ma_limits            % [4xnj_fingerx2] minimal and maximal abs value of tendon
     end
     
     methods
@@ -44,13 +37,13 @@ classdef Muscles < handle
             obj.name = name;
 %             obj.nj_finger = 0;
             obj.list_vp = [];
-            obj.ma_value = [];
+%             obj.ma_value = [];
 %             obj.stiffness = 0; %
 %             obj.damping = 0; %
             obj.n_vp = 0; %
-            obj.dyn_par = struct();
-            obj.dyn_par.stiffness = 1e3;
-            obj.dyn_par.damping = 0;
+%             obj.dyn_par = struct();
+%             obj.dyn_par.stiffness = 1e3;
+%             obj.dyn_par.damping = 0;
         end
 
         function add_viapoints(obj, viapoint_obj)

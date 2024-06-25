@@ -74,4 +74,6 @@ hand.plot_hand_viapoints(par_plot);
 hand.plot_hand_muscles(par_plot);
 
 l_mus_1 = hand.get_muscle_length_all;
+tic
 MA = hand.get_Muscle_Momentarm_1st_c([1,2]);
+t1 = toc;

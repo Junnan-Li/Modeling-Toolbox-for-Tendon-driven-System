@@ -67,6 +67,7 @@ classdef Hand < handle & matlab.mixin.Copyable
         w_R_base            % rotation of the base in world frame. Default: non rotation
         par_dyn_h           % Dynamic parameters from all bases and fingers
         limit_joint_on      % [1] activate the joint limits
+        state               % state for simulation: q, qd, l_mus, alpha
     end
     
     methods
