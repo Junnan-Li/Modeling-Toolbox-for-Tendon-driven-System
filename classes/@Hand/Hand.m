@@ -68,6 +68,7 @@ classdef Hand < handle & matlab.mixin.Copyable
         par_dyn_h           % Dynamic parameters from all bases and fingers
         limit_joint_on      % [1] activate the joint limits
         state               % state for simulation: q, qd, l_mus, alpha
+                            %   [obj.nj] q; [obj.nj] qd; [obj.nmus] l_mus; [obj.nmus] alpha;
     end
     
     methods
@@ -650,18 +651,22 @@ classdef Hand < handle & matlab.mixin.Copyable
             end
         end
 
-        function MA = get_Muscle_Momentarm_1st_c(obj, muscle_index, varargin)
+        function MA = get_Muscle_Momentarm_1st_c(obj,  varargin)
             % calculate the Momentarm matrix of all muscles
             % MA is a [nj,length(muscle_index)] matrix
             % calculate the MA value using first order centered 
             % numeric differentiation method
 
-            if nargin == 2
+            if nargin == 1
+                muscle_index = (1:obj.nmus)';
+                step = 1e-3;
+            elseif nargin == 2
+                muscle_index = varargin{1};
                 step = 1e-3;
             elseif nargin == 3
-                step = varargin{1};
+                muscle_index = varargin{1};
+                step = varargin{2};
             end
-            
             MA = zeros(obj.nj,length(muscle_index));
             q_ori = obj.q;
             for i = 1: obj.nj
@@ -679,6 +684,36 @@ classdef Hand < handle & matlab.mixin.Copyable
             end
             obj.update_hand(q_ori);
         end
+
+        function tau_mus = get_muscle_torque(obj, f_mus)
+            % temporary function for calculate torque_muscle
+            assert(length(f_mus) == obj.nmus, '[Hand.get_muscle_torque] input dimension is incorrect!')
+            MA = obj.get_Muscle_Momentarm_1st_c;
+            tau_mus = MA * f_mus;
+        end
+
+        %% state
+        function state = init_state(obj)
+            % 
+            q_init = obj.q;
+            qd_init = zeros(obj.nj,1);
+            l_mus_init = obj.get_muscle_length_all;
+            alpha_init = zeros(obj.nmus,1);
+            state = [q_init;qd_init;l_mus_init;alpha_init];
+            obj.state = state;
+        end
+
+        function set_state(obj,state)
+            % 
+            obj.state = state;
+            obj.update_hand(state(1:obj.nj));
+        end
+
+        function state = get_state(obj)
+            % 
+            state = obj.state;
+        end
+
 
     end
 end

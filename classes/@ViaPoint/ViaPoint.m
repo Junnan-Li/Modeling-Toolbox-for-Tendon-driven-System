@@ -5,7 +5,7 @@
 %           
 
 
-classdef ViaPoint < handle & matlab.System
+classdef ViaPoint < handle %& matlab.System
 
     properties (Access = public)
         name                 % [char] name of ViaPoint

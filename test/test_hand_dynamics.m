@@ -6,22 +6,20 @@ clear all
 clc
 
 
-run examples\create_hand.m
-%%
+%% 
 
-
-hand_rst = hand.update_rst_model;
-
-q = rand(hand.nj,1);
-hand.update_hand(q);
-
+run examples\create_hand_vp_mus.m
 plot_par = hand.plot_parameter_init;
 plot_par.axis_len = 0.5;
+hand.update_hand_par_dyn
+hand_rst = hand.update_rst_model;
+
 figure(1)
 hand.plot_hand(plot_par)
+hand.plot_hand_com(plot_par)
 axis equal
 hand_rst.show(q,'Frames','on');
-hand.update_hand_par_dyn
+
 %% ID test
 
 q_init = zeros(hand.nj,1);
@@ -106,5 +104,35 @@ else
     fprintf('Test (FD): pass! \n')
 end
 
+%% forward dynamics
+
+
+q_init = zeros(hand.nj,1);
+hand.update_hand(q_init);
+hand.init_state;
+f_mus = zeros(hand.nmus,1);
+
+sim_t_end = 10; 
+sim_step = 0.005;
+
+data = struct();
+data.time = [];
+data.state = [];
+for i = 0:sim_step:sim_t_end
+    data.time = [data.time;i];
+    ma = hand.get_Muscle_Momentarm_1st_c;
+    tau_mus = ma*f_mus;
+    state_i = hand.fordyn_step(sim_step,tau_mus);
+    data.state = [data.state;reshape(state_i,1,length(state_i))]; 
+end
+
+%%
+figure(10)
+for i = 1:length(data.time)
+    hand.update_hand(data.state(i,1:hand.nj));
+    hand.plot_hand(plot_par);
+    drawnow
+    hold off
+end
 
 

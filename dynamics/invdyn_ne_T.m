@@ -147,10 +147,10 @@ for base_i = 1:n_b
 
         % update frame velocity
         V(4:6,i_frame) = V(4:6,i_frame-1) + qD_i*W_R_i*[0 0 1]';
-        V(1:3,i_frame) = V(1:3,i_frame-1) + cross(V(4:6,i-1),W_i_1_r_i);
+        V(1:3,i_frame) = V(1:3,i_frame-1) + cross(V(4:6,i_frame-1),W_i_1_r_i);
         % update frame acceleration
         VD(4:6,i_frame) = VD(4:6,i_frame-1) + qDD_i*W_R_i*[0 0 1]' + qD_i*cross(V(4:6,i_frame-1),W_R_i*[0 0 1]');
-        VD(1:3,i_frame) = VD(1:3,i_frame-1) + cross(VD(4:6,i-1),W_i_1_r_i)+cross(V(4:6,i_frame-1),cross(V(4:6,i_frame-1),W_i_1_r_i));
+        VD(1:3,i_frame) = VD(1:3,i_frame-1) + cross(VD(4:6,i_frame-1),W_i_1_r_i)+cross(V(4:6,i_frame-1),cross(V(4:6,i_frame-1),W_i_1_r_i));
         % calculate acceleration with respect to the center of mass
         VD_c(4:6,i_frame) = VD(4:6,i_frame);
         VD_c(1:3,i_frame) = VD(1:3,i_frame) + cross(VD(4:6,i_frame),W_i_r_c) + cross(V(4:6,i_frame),cross(V(4:6,i_frame),W_i_r_c));
