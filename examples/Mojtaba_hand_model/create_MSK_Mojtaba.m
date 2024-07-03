@@ -50,10 +50,6 @@ for finger = 1:5
                 [data_axes{i,9}+10*data_axes{i,5};data_axes{i,9} - 10*data_axes{i,5}]* 0.001,...
                 '--','LineWidth',2, 'Color',fingers_plot_color{finger});
             hold on
-%             quiver3(data_axes{i,7},data_axes{i,8},data_axes{i,9},...
-%             5*data_axes{i,3},5*data_axes{i,4},5*data_axes{i,5},...
-%             'LineWidth',4,'Color',fingers_plot_color{finger})
-%             hold on
         end
 
     end
@@ -76,67 +72,23 @@ for finger = 1:5
     end
 end
 axis equal
+xlabel('x')
+ylabel('y')
+zlabel('z')
 %% create middle finger
-finger_i = 3;
-cylinder_position_middle = [];
-cylinder_axis_middle = [];
-for i = 3:size(data_cylinder,1)
-    if contains(data_cylinder{i,1},num2str(finger_i)) ...
-            && isnumeric(data_cylinder{i,3})
-        cylinder_position_middle = [cylinder_position_middle; ...
-        [data_cylinder{i,5},data_cylinder{i,6},data_cylinder{i,7}]*0.001];
-        cylinder_axis_middle = [cylinder_axis_middle; ...
-        [data_cylinder{i,2},data_cylinder{i,3},data_cylinder{i,4}]];
-    end
-end
-length_MP3 = norm(cylinder_position_middle(2,:)'- cylinder_position_middle(1,:)',2);
-length_PP3 = norm(cylinder_position_middle(3,:)'- cylinder_position_middle(2,:)',2);
-length_DP3 = 0.02; % set DP length is 0.02 m
-finger_dimension_3 = [0,length_MP3,length_PP3,length_DP3]; % in meter
-finger_m = Finger('Middle', 'type','R_RRRR', 'l_links',finger_dimension_3);
-mdh_default_struct = finger_m.mdh_ori;
-mdh_matrix = mdh_struct_to_matrix(mdh_default_struct, 1);
-mdh_matrix(2,1) = -pi/2;
-% mdh_matrix(2,4) = 1;
-finger_m.set_mdh_parameters(mdh_matrix);
+finger_m = create_Mojtaba_finger_from_csv(3, 'Middle');
+finger_i = create_Mojtaba_finger_from_csv(2, 'Index');
+finger_r = create_Mojtaba_finger_from_csv(4, 'Ring');
+finger_l = create_Mojtaba_finger_from_csv(5, 'Little');
 
-% set base information
-p_32 = cylinder_position_middle(2,1:2)'- cylinder_position_middle(1,1:2)';
-eul_base = -acos(([1,0]*p_32)/norm(p_32));
-finger_m.set_base(cylinder_position_middle(1,:)',euler2R_XYZ([0,0,eul_base]));
-finger_m.update_finger(zeros(finger_m.nj,1));
-
+thumb = create_Mojtaba_thumb_from_csv('Thumb');
 plot_par = finger_m.plot_parameter_init;
-finger_m.plot_finger(plot_par);
-return
-%% create index finger
-% transfer to finger length
-finger_i = 2;
-landmarker_position_index = [];
-for i = 2:size(data_landmarker,1)
-    if contains(data_landmarker{i,1},num2str(finger_i)) && contains(data_landmarker{i,1},{'h','b'}) ...
-            && isnumeric(data_landmarker{i,3})
-        landmarker_position_index = [landmarker_position_index; ...
-        [data_landmarker{i,3},data_landmarker{i,4},data_landmarker{i,5}]*0.001];
-    end
-end
-length_MP2 = norm(landmarker_position_index(2,:)'- landmarker_position_index(3,:)',2);
-length_PP2 = norm(landmarker_position_index(3,:)'- landmarker_position_index(4,:)',2);
-length_DP2 = length_DP3; % Due to the lack of data in reference
-finger_dimension_2 = [0,length_MP2,length_PP2,length_DP2]; % in meter
-finger_i = Finger('Index', 'type','R_RRRR', 'l_links',finger_dimension_3);
-mdh_default_struct = finger_i.mdh_ori;
-mdh_matrix = mdh_struct_to_matrix(mdh_default_struct, 1);
-mdh_matrix(2,1) = -pi/2;
-finger_i.set_mdh_parameters(mdh_matrix);
 
-% set base
-p_32 = landmarker_position_index(3,1:2)'- landmarker_position_index(2,1:2)';
-eul_base = -acos(([1,0]*p_32)/norm(p_32));
-finger_i.set_base(landmarker_position_index(2,:)',euler2R_XYZ([0,0,eul_base]));
-finger_i.update_finger(zeros(finger_i.nj,1));
-
-finger_i.plot_finger(plot_par);
+finger_m.plot_finger(plot_par)
+finger_i.plot_finger(plot_par)
+finger_r.plot_finger(plot_par)
+finger_l.plot_finger(plot_par)
+thumb.plot_finger(plot_par)
 
 return
 %% basic settings
