@@ -23,7 +23,8 @@ Classes:
     b. cal_all_Muscle_momentarm:
         using numeric differentiation method 
     c. change the invkin functions to the new version as for the hand object
-    d. 
+    d. The way of defining the kinematic chain is limited. maybe define links and associated frame and then
+        define the joint axes within the frame
 
 
 6. muscle class

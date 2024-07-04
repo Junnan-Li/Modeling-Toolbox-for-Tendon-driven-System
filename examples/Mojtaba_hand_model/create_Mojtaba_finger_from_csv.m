@@ -38,8 +38,11 @@ for i = 2:size(data_landmarker,1)
         [data_landmarker{i,3},data_landmarker{i,4},data_landmarker{i,5}]*0.001];
     end
 end
-length_MP = norm(cylinder_position(2,:)'- cylinder_position(1,:)',2);
-length_PP = norm(cylinder_position(3,:)'- cylinder_position(2,:)',2);
+% length_MP = norm(cylinder_position(2,:)'- cylinder_position(1,:)',2);
+% length_PP = norm(cylinder_position(3,:)'- cylinder_position(2,:)',2);
+
+length_MP = norm(landmarker_position(2,:)'- landmarker_position(1,:)',2);
+length_PP = norm(landmarker_position(3,:)'- landmarker_position(2,:)',2);
 
 if finger_index == 2 % index finger has no fingertip data
     length_DP = 0.02;  % set DP length is 0.02 m
@@ -53,15 +56,18 @@ mdh_matrix = mdh_struct_to_matrix(mdh_default_struct, 1);
 
 mdh_matrix(1,1) = acos(([0,1] * cylinder_axis(1,[1,3])')/norm( cylinder_axis(1,[1,3])')) - pi; % MCP_Flex
 mdh_matrix(2,1) = -mdh_matrix(1,1) + acos([0,1] * cylinder_axis(2,[1,3])'/norm(cylinder_axis(2,[1,3])')) - pi;% MCP_abd
+if mdh_matrix(2,1) < 0
+    mdh_matrix(2,1) = mdh_matrix(2,1)+pi;
+end
 mdh_matrix(3,1) = - mdh_matrix(1,1) - mdh_matrix(2,1) + acos([0,1] * cylinder_axis(3,[1,3])'/norm( cylinder_axis(3,[1,3])')) - pi;% PIP
 mdh_matrix(4,1) = - mdh_matrix(1,1) - mdh_matrix(2,1) - mdh_matrix(3,1) ...
                 + acos([0,1] * cylinder_axis(4,[1,3])'/norm( cylinder_axis(4,[1,3])')) - pi;% PIP
 finger.set_mdh_parameters(mdh_matrix);
 
 % set base information
-p_32 = cylinder_position(2,1:2)'- cylinder_position(1,1:2)';
+p_32 = landmarker_position(2,1:2)'- landmarker_position(1,1:2)';
 eul_base = -acos(([1,0]*p_32)/norm(p_32));
-finger.set_base(cylinder_position(1,:)',euler2R_XYZ([0,0,eul_base]));
+finger.set_base(landmarker_position(1,:)',euler2R_XYZ([0,0,eul_base]));
 finger.update_finger(zeros(finger.nj,1));
 
 end

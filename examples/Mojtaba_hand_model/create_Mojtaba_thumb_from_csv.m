@@ -47,7 +47,7 @@ mdh_matrix = mdh_struct_to_matrix(mdh_default_struct, 1);
 
 theta1 = -acos(([1,0]*(landmarker_position(2,1:2)'- landmarker_position(1,1:2)'))/norm(landmarker_position(2,1:2)'- landmarker_position(1,1:2)'));
 R_base = euler2R_XYZ([0,0,theta1]);
-cylinder_axis_rotated = (R_base * cylinder_axis')';
+cylinder_axis_rotated = (R_base' * cylinder_axis')';
 mdh_matrix(1,1) = -acos(([0,1] * cylinder_axis_rotated(1,[2,3])')/norm( cylinder_axis_rotated(1,[2,3])')) ; % MCP_Flex
 mdh_matrix(2,1) = -mdh_matrix(1,1) + acos([0,1] * cylinder_axis_rotated(2,[2,3])'/norm(cylinder_axis_rotated(2,[2,3])')) - pi;% MCP_abd
 mdh_matrix(3,1) = - mdh_matrix(1,1) - mdh_matrix(2,1) + acos([0,1] * cylinder_axis_rotated(3,[2,3])'/norm( cylinder_axis_rotated(3,[2,3])')) - pi;% PIP
@@ -56,9 +56,16 @@ mdh_matrix(4,1) = - mdh_matrix(1,1) - mdh_matrix(2,1) - mdh_matrix(3,1) ...
 finger.set_mdh_parameters(mdh_matrix);
 
 % set base information
-% p_32 = cylinder_position(2,1:2)'- cylinder_position(1,1:2)';
-% eul_base = -acos(([1,0]*p_32)/norm(p_32));
-finger.set_base(landmarker_position(1,:)',R_base);
+p_32_y = landmarker_position(2,[1,3])'- landmarker_position(1,[1,3])';
+eul_base_y = -acos(([1,0]*p_32_y)/norm(p_32_y));
+p_32_z = landmarker_position(2,[1,2])'- landmarker_position(1,[1,2])';
+eul_base_z = -acos(([1,0]*p_32_z)/norm(p_32_z));
+% minor correlation of the base orientation
+R_yz = euler2R_XYZ([0,eul_base_y,eul_base_z]);
+p_32_x = cylinder_axis(1,[2,3])';
+eul_base_x = acos(([1,0]*p_32_x)/norm(p_32_x));
+% R_z = -euler2R_XYZ([0,0,eul_base_x]);
+finger.set_base(landmarker_position(1,:)', R_base);
 finger.update_finger(zeros(finger.nj,1));
 
 end

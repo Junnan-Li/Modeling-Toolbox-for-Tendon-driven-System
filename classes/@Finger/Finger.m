@@ -535,10 +535,28 @@ classdef Finger < handle & matlab.mixin.Copyable
         function set_base(obj, w_p_base, w_R_base)
             % set the position and orientation of the base in the world
             % frame
-            obj.w_p_base = w_p_base;
+            obj.w_p_base = reshape(w_p_base,3,1);
             obj.w_R_base = w_R_base;
 
             obj.w_T_base = pR2T(w_p_base,w_R_base);
+            obj.w_T_base_inhand = obj.w_T_base;
+
+            obj.update_finger(obj.q_a);
+        end
+        function set_base_p(obj, w_p_base)
+            % set the position and orientation of the base in the world
+            % frame
+            obj.w_p_base = reshape(w_p_base,3,1);
+            obj.w_T_base = pR2T(w_p_base,obj.w_R_base);
+            obj.w_T_base_inhand = obj.w_T_base;
+
+            obj.update_finger(obj.q_a);
+        end
+        function set_base_R(obj, w_R_base)
+            % set the position and orientation of the base in the world
+            % frame
+            obj.w_R_base = w_R_base;
+            obj.w_T_base = pR2T(obj.w_p_base,w_R_base);
             obj.w_T_base_inhand = obj.w_T_base;
 
             obj.update_finger(obj.q_a);
@@ -550,6 +568,17 @@ classdef Finger < handle & matlab.mixin.Copyable
             w_p_base = obj.w_p_base;
             w_R_base = obj.w_R_base;
         end
+        function w_p_base = get_base_p(obj)
+            % set the position and orientation of the base in the world
+            % frame
+            w_p_base = obj.w_p_base;
+        end
+        function w_R_base = get_base_R(obj)
+            % set the position and orientation of the base in the world
+            % frame
+            w_R_base = obj.w_R_base;
+        end
+
 
         function W_T_b = get_W_T_B(obj)
             % get the homogeneous transformation matrix from Base to W
