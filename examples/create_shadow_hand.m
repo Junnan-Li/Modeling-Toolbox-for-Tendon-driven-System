@@ -48,14 +48,20 @@ finger_little.set_mdh_parameters(mdh_matrix_l);
 %% set states
 % set base position and orientation
 R = euler2R_XYZ([0,-pi/6,0]);
-finger_index.w_p_base = R*[0.129;0.034;0]; 
-finger_index.w_R_base = R*euler2R_XYZ([0,0,0]);
+finger_index.set_base_p(R*[0.129;0.034;0]);
+% .w_p_base = R*[0.129;0.034;0]; 
+finger_index.set_base_R(R*euler2R_XYZ([0,0,0]));
+% w_R_base = R*euler2R_XYZ([0,0,0]);
 
-finger_thumb.w_p_base = R*[0.063;0.034;0];
-finger_thumb.w_R_base = R*euler2R_XYZ([0,pi/2,0])*euler2R_XYZ([-pi/4,0,0]);
+finger_thumb.set_base_p(R*[0.063;0.034;0]);
+% w_p_base = R*[0.063;0.034;0];
+finger_thumb.set_base_R(R*euler2R_XYZ([0,pi/2,0])*euler2R_XYZ([-pi/4,0,0]));
+% .w_R_base = R*euler2R_XYZ([0,pi/2,0])*euler2R_XYZ([-pi/4,0,0]);
 
-finger_little.w_p_base = R*[0.05471;-0.032;0];
-finger_little.w_R_base = R*euler2R_XYZ([-pi/2,55/180*pi,0]);
+finger_little.set_base_p(R*[0.05471;-0.032;0]);
+% w_p_base = R*[0.05471;-0.032;0];
+finger_little.set_base_R(R*euler2R_XYZ([-pi/2,55/180*pi,0]));
+% w_R_base = R*euler2R_XYZ([-pi/2,55/180*pi,0]);
 % init joint configurations
 q_I_0 = [0;0;0;0]*pi/180;
 q_T_0 = [0;0;0;0;0]*pi/180;

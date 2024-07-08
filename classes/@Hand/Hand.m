@@ -152,6 +152,8 @@ classdef Hand < handle & matlab.mixin.Copyable
             i_q = 1;
             % update base information
             if obj.nb ~= 0
+                obj.w_p_base = obj.base(1).w_p_base;
+                obj.w_R_base = obj.base(1).w_R_base;
                 obj.index_q_b = zeros(obj.nb,2);
                 for i = 1:obj.nb
 

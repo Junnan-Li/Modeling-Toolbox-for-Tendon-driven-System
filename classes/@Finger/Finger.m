@@ -69,6 +69,7 @@ classdef Finger < handle & matlab.mixin.Copyable
         
         par_kin             % all kinematic parameters
         opt_pkin            % kinematic parameters for optimization
+        base                % base link                
         
     end
     
@@ -138,7 +139,9 @@ classdef Finger < handle & matlab.mixin.Copyable
                 list_links = [list_links;Link_new];
             end
             obj.list_links = list_links;
-            
+
+            obj.base = Links(strcat(obj.name,'_base'),0,0);
+            obj.base.update([0,0,0]',eye(3));
             % generate joints 
             % TODO 
             list_joints = [];
@@ -996,8 +999,13 @@ classdef Finger < handle & matlab.mixin.Copyable
 
         function new_viapoint = add_ViaPoint(obj, name, link_index, link_p_obj)
             % add contact to the specific link 
-            link_name = obj.list_links(link_index).name;
-            new_viapoint = obj.list_links(link_index).add_viapoint_link(strcat(link_name,'_',name), link_p_obj);
+            if link_index == 0
+                link_name = obj.base.name;
+                new_viapoint = obj.base.add_viapoint_link(strcat(link_name,'_',name), link_p_obj);
+            else
+                link_name = obj.list_links(link_index).name;
+                new_viapoint = obj.list_links(link_index).add_viapoint_link(strcat(link_name,'_',name), link_p_obj);
+            end
             obj.update_list_viapoints();
         end
 
@@ -1005,6 +1013,15 @@ classdef Finger < handle & matlab.mixin.Copyable
             % update the Link Class property: Links.nc 
             obj.list_viapoints = []; % init list_contacts
             num_viapoints = 0;
+            % add viapoint from base
+            num_vp_link_i =  obj.base.nv;
+            num_viapoints = num_viapoints + num_vp_link_i;
+            if num_vp_link_i ~= 0
+                for j = 1:num_vp_link_i
+                    obj.list_viapoints = [obj.list_viapoints;obj.base.viapoints(j)];
+                end
+            end
+            % add viapoint from links
             if obj.nl 
                 for i = 1:obj.nl
                     num_vp_link_i =  obj.list_links(i).nv;

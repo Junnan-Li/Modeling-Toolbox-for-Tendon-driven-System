@@ -2,6 +2,11 @@
 %
 % data from the literature supplementary documents
 %
+%   wrist:      
+%   fingers:
+%   dof sequence:       wrist radial deviation, flexion, ...
+%                       index MCP flexion, MCP abduction, PIP, DIP, ...
+%                       middle,..., ring, ..., little, ..., thumb
 % references:
 %   M. Mirakhorlo et al., "Anatomical parameters for musculoskeletal
 %   modeling of the hand and wrist," International Biomechanics, vol. 3,
@@ -40,21 +45,59 @@ axis equal
 
 data_axes = readcell('Mojtaba_model_data_axes.csv');
 
-figure(1)
-fingers_plot_color = {'r','b','c', 'g', 'k'};
-for finger = 1:5
-    for i = 3:size(data_axes,1)
-        if contains(data_axes{i,1},num2str(finger)) && isnumeric(data_axes{i,3})
-            plot3([data_axes{i,7}+10*data_axes{i,3};data_axes{i,7} - 10*data_axes{i,3}]* 0.001,...
-                [data_axes{i,8}+10*data_axes{i,4};data_axes{i,8} - 10*data_axes{i,4}]* 0.001,...
-                [data_axes{i,9}+10*data_axes{i,5};data_axes{i,9} - 10*data_axes{i,5}]* 0.001,...
-                '--','LineWidth',2, 'Color',fingers_plot_color{finger});
-            hold on
-        end
+% figure(1)
+% fingers_plot_color = {'r','b','c', 'g', 'k'};
+% for finger = 1:5
+%     for i = 3:size(data_axes,1)
+%         if contains(data_axes{i,1},num2str(finger)) && isnumeric(data_axes{i,3})
+%             plot3([data_axes{i,7}+10*data_axes{i,3};data_axes{i,7} - 10*data_axes{i,3}]* 0.001,...
+%                 [data_axes{i,8}+10*data_axes{i,4};data_axes{i,8} - 10*data_axes{i,4}]* 0.001,...
+%                 [data_axes{i,9}+10*data_axes{i,5};data_axes{i,9} - 10*data_axes{i,5}]* 0.001,...
+%                 '--','LineWidth',2, 'Color',fingers_plot_color{finger});
+%             hold on
+%         end
+% 
+%     end
+% end
+% axis equal
 
+%% muscle path data
+close all
+data_muscle = readcell('Mojtaba_model_data_muscle_path.csv');
+
+muscle_list = {'PL'};
+figure(1)
+
+fingers_plot_color = {'r','b','c', 'g', 'k'};
+
+for i = 2:size(data_landmarker,1)
+    if isnumeric(data_landmarker{i,3})
+        plot3(data_landmarker{i,3}* 0.001,data_landmarker{i,4}* 0.001,data_landmarker{i,5}* 0.001, ...
+            '.','MarkerSize',20, 'Color','b');
+        hold on
+    end
+
+end
+
+for muscle_i = 1:length(muscle_list)
+    for i = 4:size(data_muscle,1)
+        try
+            if contains(data_muscle{i,2},muscle_list{muscle_i}) && isnumeric(data_muscle{i,5})
+                plot3(data_muscle{i,5}* 0.001,data_muscle{i,6}* 0.001,data_muscle{i,7}* 0.001, ...
+                    '.','MarkerSize',20, 'Color','r');
+                hold on
+            end
+        catch
+            break
+        end
     end
 end
+
 axis equal
+xlabel('x')
+ylabel('y')
+% return
+
 %% cylinder data
 
 data_cylinder = readcell('Mojtaba_model_data_cylinder.csv');
@@ -75,7 +118,9 @@ data_cylinder = readcell('Mojtaba_model_data_cylinder.csv');
 xlabel('x')
 ylabel('y')
 zlabel('z')
-%% create middle finger
+
+
+%% create fingers
 finger_m = create_Mojtaba_finger_from_csv(3, 'Middle');
 finger_i = create_Mojtaba_finger_from_csv(2, 'Index');
 finger_r = create_Mojtaba_finger_from_csv(4, 'Ring');
@@ -143,11 +188,13 @@ for i = 3:6
 end
 
 position_new_base = ([data_landmarker{4,3:5}] + [data_landmarker{5,3:5}])'/2 * 0.001;
-finger_m.set_base_p(finger_m.get_base_p - position_new_base);
-finger_i.set_base_p(finger_i.get_base_p - position_new_base);
-finger_r.set_base_p(finger_r.get_base_p - position_new_base);
-finger_l.set_base_p(finger_l.get_base_p - position_new_base);
-thumb.set_base_p(thumb.get_base_p - position_new_base);
+R_new_base = euler2R_XYZ([0,0,pi/2]);
+
+finger_m.set_base(R_new_base*(finger_m.get_base_p - position_new_base),R_new_base*finger_m.get_base_R);
+finger_i.set_base(R_new_base*(finger_i.get_base_p - position_new_base),R_new_base*finger_i.get_base_R);
+finger_r.set_base(R_new_base*(finger_r.get_base_p - position_new_base),R_new_base*finger_r.get_base_R);
+finger_l.set_base(R_new_base*(finger_l.get_base_p - position_new_base),R_new_base*finger_l.get_base_R);
+thumb.set_base(R_new_base*(thumb.get_base_p - position_new_base),R_new_base*thumb.get_base_R);
 
 figure(2)
 finger_m.plot_finger(plot_par)
@@ -163,7 +210,7 @@ finger_l.plot_com(plot_par)
 thumb.plot_com(plot_par)
 axis equal
 
-%% create forearm
+% create forearm
 % version 1: only wrist flexion and abduction
 % the palm mass is set
 % the center of mass is set as the middle point of mc bases
@@ -173,10 +220,10 @@ length_forearm = norm(position_US_RS-position_EL_EM);
 
 mdh_parameter1 = [0,0,0,0;...
                 pi/2,0,0,0;...
-                pi/2,0,0,0];
+                -pi/2,0,0,0];
 mdh_struct = mdh_matrix_to_struct(mdh_parameter1, 1);
 wrist = Finger('wrist', 'mdh',mdh_struct );
-wrist.set_base([0,length_forearm,0]',euler2R_XYZ([0,0,pi/2]));
+wrist.set_base([length_forearm,0,0]',euler2R_XYZ([0,0,0]));
 
 
 % set wrist dynamic
@@ -196,6 +243,55 @@ wrist.list_links(2).set_com(reshape(com_palm,3,1));
 
 wrist.plot_finger(plot_par)
 wrist.plot_com(plot_par)
+
+
+Mojtaba_hand = Hand('Mojtaba_hand');
+Mojtaba_hand.add_base(wrist);
+Mojtaba_hand.add_finger(finger_i);
+Mojtaba_hand.add_finger(finger_m);
+Mojtaba_hand.add_finger(finger_r);
+Mojtaba_hand.add_finger(finger_l);
+Mojtaba_hand.add_finger(thumb);
+
+rst_model = Mojtaba_hand.update_rst_model;
+
+
+%% set joint limits
+
+% update finger joint limits 
+for i = 1:5
+    Mojtaba_hand.list_fingers(i).set_onejoint_limits_q(1,[0,100]*pi/180);
+    Mojtaba_hand.list_fingers(i).set_onejoint_limits_q(2,[-10,10]*pi/180);
+    Mojtaba_hand.list_fingers(i).set_onejoint_limits_q(3,[0,90]*pi/180);
+    Mojtaba_hand.list_fingers(i).set_onejoint_limits_q(4,[0,90]*pi/180);
+end
+% Mojtaba_hand.base(1).set_onejoint_limits_q(1,[0,100]*pi/180);
+% Mojtaba_hand.base(1).set_onejoint_limits_q(1,[0,100]*pi/180);
+
+Mojtaba_hand.update_joint_limits;
+Mojtaba_hand.set_joint_limits_on;
+
+figure(3)
+q0 = zeros(Mojtaba_hand.nj,1);
+q0(1) = 1;
+Mojtaba_hand.update_hand(q0);
+Mojtaba_hand.update_hand_par_dyn;
+
+plot_hand_par = Mojtaba_hand.plot_parameter_init;
+Mojtaba_hand.plot_hand(plot_hand_par);
+Mojtaba_hand.plot_hand_com(plot_hand_par);
+axis equal
+% rst_model.show(q0,'Frames','on')
+
+%% set muscle viapoints
+
+
+
+
+
+
+
+
 
 
 

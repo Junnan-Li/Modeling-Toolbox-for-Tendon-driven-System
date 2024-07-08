@@ -336,6 +336,8 @@ tol = 1e-9;
 p_link_all_w_r = finger_r.get_p_all_links;
 plot3(p_link_all_w_r(1,:)',p_link_all_w_r(2,:)',p_link_all_w_r(3,:)','o-','Color','c');
 
+
+return
 %% Test 9: inverse kinematic with joint limits
 % move to test_IK
 

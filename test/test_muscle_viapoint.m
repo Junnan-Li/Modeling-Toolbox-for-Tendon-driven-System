@@ -1,4 +1,6 @@
 % test muscles and viapoint class
+% 
+% Note: this script is replaced by the test_viapoint.m
 
 close all
 clear all
