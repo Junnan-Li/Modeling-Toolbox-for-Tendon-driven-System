@@ -4,18 +4,21 @@
 
 % Comment: 
 %       properties:
-%           list_vp: a list of the via points, by default, the first one is origin,]
-%                    the last one is insertion. 
-% 
-%               OriginPoint
-%               Viapoints
-%               InsertionPoint
+%           name:    name of the muscle
+%           list_vp: 
+%                       current version: the first one is the origin, 
+%                                       the last one is insertion point,
+%                                       others are viapoints
+%           list_obstacle:
+%                       to be implemented
 % 
 %       functions: 
 %           set_via_point
 %           delete_via_point
 %           update_viapoints()
 %           cal_muscle_length(q)
+%           cal_muscle_length_inhand
+% 
 
 classdef Muscles < handle
     

@@ -65,38 +65,23 @@ data_axes = readcell('Mojtaba_model_data_axes.csv');
 close all
 data_muscle = readcell('Mojtaba_model_data_muscle_path.csv');
 
-muscle_list = {'PL'};
+muscle_list = {'FDP3'};
 figure(1)
 
-fingers_plot_color = {'r','b','c', 'g', 'k'};
+% fingers_plot_color = {'r','b','c', 'g', 'k'};
 
-for i = 2:size(data_landmarker,1)
-    if isnumeric(data_landmarker{i,3})
-        plot3(data_landmarker{i,3}* 0.001,data_landmarker{i,4}* 0.001,data_landmarker{i,5}* 0.001, ...
-            '.','MarkerSize',20, 'Color','b');
-        hold on
-    end
+% for i = 2:size(data_landmarker,1)
+%     if isnumeric(data_landmarker{i,3}) 
+%         plot3(data_landmarker{i,3}* 0.001,data_landmarker{i,4}* 0.001,data_landmarker{i,5}* 0.001, ...
+%             '.','MarkerSize',20, 'Color','b');
+%         hold on
+%     end
+% 
+% end
+plot_Mojtaba_landmarkers({'3'})
+plot_Mojtaba_muscle_viapoint(muscle_list);
 
-end
-
-for muscle_i = 1:length(muscle_list)
-    for i = 4:size(data_muscle,1)
-        try
-            if contains(data_muscle{i,2},muscle_list{muscle_i}) && isnumeric(data_muscle{i,5})
-                plot3(data_muscle{i,5}* 0.001,data_muscle{i,6}* 0.001,data_muscle{i,7}* 0.001, ...
-                    '.','MarkerSize',20, 'Color','r');
-                hold on
-            end
-        catch
-            break
-        end
-    end
-end
-
-axis equal
-xlabel('x')
-ylabel('y')
-% return
+return
 
 %% cylinder data
 
