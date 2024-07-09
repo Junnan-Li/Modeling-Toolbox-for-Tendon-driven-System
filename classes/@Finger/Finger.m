@@ -53,12 +53,15 @@ classdef Finger < handle & matlab.mixin.Copyable
         nt                  % [1] number of tendons
         nmus                % [1] number of muscles
         nvia                % [1] number of viapoints
+        nobs                % [1] number of obstacles
+
         list_joints         % [njx1] list of all joints
         list_links          % [nlx1] list of all links
         list_contacts       % [ncx1] list of all contacts
         list_tendons        % [ntx1] list of all tendons
         list_muscles        % [ntx1] list of all muscles
         list_viapoints      % [ntx1] list of all viapoints
+        list_obstacles      % [ntx1] list of all viapoints
         joint_act           % [njx1] logical vector: 1: active joint; 0: fixed joint 
         limits_q            % [njx2] min,max values of q
         limits_qd           % [njx2] min,max values of qd
@@ -1225,6 +1228,66 @@ classdef Finger < handle & matlab.mixin.Copyable
                 end
             end
             obj.update_finger(q_ori);
+        end
+
+        %% Obstacles
+        function new_obstacle = add_Obstacle(obj, name, link_index, link_p_obj,link_R_obj)
+            % add contact to the specific link 
+            if link_index == 0
+                link_name = obj.base.name;
+                new_obstacle = obj.base.add_viapoint_link(strcat(link_name,'_',name), link_p_obj,link_R_obj);
+            else
+                link_name = obj.list_links(link_index).name;
+                new_obstacle = obj.list_links(link_index).add_viapoint_link(strcat(link_name,'_',name), ...
+                    link_p_obj,link_R_obj);
+            end
+            obj.update_list_obstacles();
+        end
+
+        function update_list_obstacles(obj)
+            % update the Link Class property: Links.nc 
+            obj.list_obstacles = []; % init list_contacts
+            num_obstacles = 0;
+            % add viapoint from base
+            num_obs_link_i =  obj.base.nobs;
+            num_obstacles = num_obstacles + num_obs_link_i;
+            if num_obstacles ~= 0
+                for j = 1:num_obstacles
+                    obj.list_obstacles = [obj.list_obstacles;obj.base.obstacles(j)];
+                end
+            end
+            % add viapoint from links
+            if obj.nl 
+                for i = 1:obj.nl
+                    num_obs_link_i =  obj.list_links(i).nobs;
+                    num_obstacles = num_obstacles + num_obs_link_i;
+                    if num_obs_link_i ~= 0
+                        for j = 1:num_obs_link_i
+                            obj.list_obstacles = [obj.list_obstacles;obj.list_links(i).obstacles(j)];
+                        end
+                    end
+                end
+            end
+            obj.nobs = num_obstacles;
+        end
+        function update_obstacles(obj)
+            % update transformation matrix of all obstacles
+            if obj.nobs ~= 0
+                for i = 1:obj.nobs
+                    obstacle_i = obj.list_obstacles(i);
+                    base_T_obs_i = obstacle_i.get_base_T_obs;
+                    obstacle_i.update_w_T_Obs(obj.w_T_base*base_T_obs_i);
+                    obstacle_i.update_w_T_Obs_inhand(obj.w_T_b_inhand*base_T_obs_i);
+                end
+            end
+        end
+
+        function [w_p_obs,b_p_obs] = get_p_obstacle(obj, obs_index)
+            % get translational vector of one obstacle
+%             obstacle_i = obj.list_obstacles(obs_index).w_T_Obs;
+%             w_viapoint_pos = w_R_b * viapoint_pos_i + w_p_b;
+%             b_p_obs = viapoint_pos_i;
+%             w_p_obs = w_viapoint_pos;
         end
 
     end

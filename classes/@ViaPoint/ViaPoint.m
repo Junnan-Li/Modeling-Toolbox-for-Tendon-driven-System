@@ -14,7 +14,7 @@ classdef ViaPoint < handle %& matlab.System
     properties (SetAccess = private)
 %         link_index
         link_name
-        base_p          % not usually used
+        base_p          % used for Finger.get_p_all_viapoints
         w_p_VP          
         w_p_VP_inhand
     end

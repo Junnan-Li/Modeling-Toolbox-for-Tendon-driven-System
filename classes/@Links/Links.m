@@ -19,6 +19,8 @@ classdef Links < handle & matlab.mixin.Copyable
         contacts           
         viapoints
         nv                  % [1] num of viapoints
+        obstacles           
+        nobs
     end
     properties (SetAccess = private)
         index  
@@ -57,6 +59,12 @@ classdef Links < handle & matlab.mixin.Copyable
             obj.base_R = base_R;
             obj.update_link_contacts;
             obj.update_link_viapoints;
+            obj.update_link_obstacles;
+        end
+
+        function base_T_link = get_base_T_link(obj)
+            % get transformation matrix from base_p and base_R
+            base_T_link = [obj.base_R,obj.base_p; 0 0 0 1];
         end
         
         %% contacts
@@ -152,16 +160,34 @@ classdef Links < handle & matlab.mixin.Copyable
             obj.update_link_viapoints();
         end
 
-%         function update_w_p_viapoints(obj, )
-%             % update obj.nc link.Contact.base_R & base_p
-%             obj.nv = length(obj.viapoints);
-%             if obj.nv ~=0
-%                 for i = 1:obj.nv
-%                     obj.viapoints(i).update_VP_pose(obj.base_p,obj.base_R)
-%                 end
-%             end
-%         end
+        %% Obstacles
         
+        function new_Obstacle = add_obstacle_link(obj, name, link_p, link_R)
+            % add obstacle on the link
+            assert(length(link_p) == 3, '[add_obstacle_link]: input dimension is incorrect');
+%             assert(length(link_p) == 3, '[add_obstacle_link]: input dimension is incorrect');
+            link_p = reshape(link_p,[3,1]); % columewise
+            
+            new_Obstacle = Obstacles(name);
+            new_Obstacle.add_Obs_to_link(obj);
+            new_Obstacle.update_Obs_p_R(link_p,link_R);
+
+
+            obj.obstacles = [obj.obstacles;new_Obstacle];
+            obj.nobs = length(obj.obstacles);      
+            obj.update_link_viapoints; % 
+        end
+        function update_link_obstacles(obj)
+            % update obj.nc link.Contact.base_R & base_p
+            base_T_link = obj.get_base_T_link;
+            obj.nobs = length(obj.obstacles);
+            if obj.nobs ~=0
+                for i = 1:obj.nobs
+                    obj.obstacles(i).update_base_T_obs(base_T_link);
+                end
+            end
+        end
+
     end
 end
 
