@@ -64,6 +64,10 @@ classdef Obstacles < handle
         function update_w_T_Obs_inhand(obj,w_T_Obs_inhand_new)
             obj.w_T_Obs_inhand = w_T_Obs_inhand_new;
         end
+
+        function w_T_Obs = get_w_T_Obs(obj)
+            w_T_Obs = obj.w_T_Obs;
+        end
         function w_T_Obs_inhand = get_w_T_Obs_inhand(obj)
             w_T_Obs_inhand = obj.w_T_Obs_inhand;
         end

@@ -39,8 +39,39 @@
 %       set_tendon_par_MA_poly3(obj, tendon_index, joint_index, par)
 %
 %   muscle related:
-%       cal_all_Muscle_momentarm_1st_c: calculate the moment arm using
-%           first order centered numeric differentiation method
+%       add_Muscle: add muscle to the Finger 
+%       get_p_muscle_viapoints: get position of viapoints of muscle 
+%           % todo: call Viapoint.w_p_VP to get position
+%       cal_all_Muscle_Length: calculate all muscle length (call muscle.cal_muscle_length)
+%       cal_selected_Muscle_Length
+%       cal_all_Muscle_momentarm_1st_c(step): calculate the moment arm using
+%           first order centered numeric differentiation method with given
+%           step
+%       cal_selected_Muscle_momentarm_1st_c
+% 
+%   viapoint related
+%       add_ViaPoint(obj, name, link_index, link_p_obj): add viapoint to a
+%           link of given index (0: base)  
+%       update_list_viapoints(obj): update Finger.list_viapoints and Finger.nv
+%       update_viapoints: update the w_p_viapoint for all viapoints, using 
+%           Finger.get_p_viapoint_inhand and viapoint_i.update_w_p_VP.
+%       get_p_all_viapoints: get the position of viapoints in wowrld frame
+%           and base frame
+%       get_p_viapoint
+%       get_p_all_viapoints_inhand
+%       get_p_viapoint_inhand
+%       delete_all_viapoint: delete all viapoints and empty list_viapoints
+% 
+%   Obstacle related:
+%       add_Obstacle(obj, name, link_index, link_p_obj,link_R_obj): add
+%           obstacle to the link of given index and related position and orientation
+%       update_list_obstacles: update Finger.list_obstacles and Finger.nobs
+%       update_obstacles: update the transformation matrix of each
+%           obstacles (obstacles.update_w_T_Obs and .update_w_T_Obs_inhand)
+%       get_p_obstacle: get position of the obstacle frame origin
+%       get_T_obstacle: get transformation of the obstacle frame origin
+
+
 
 classdef Finger < handle & matlab.mixin.Copyable    
     properties (Access = public)
@@ -298,6 +329,8 @@ classdef Finger < handle & matlab.mixin.Copyable
             % update the list of tendons
             obj.update_M_coupling(obj.q_a); 
             
+            % update the obstacle
+            obj.update_obstacles;
             % update tendon force limits
 %             obj.update_tendon_force_limits;
             % update dynamic parameters
@@ -927,6 +960,48 @@ classdef Finger < handle & matlab.mixin.Copyable
             end
         end
 
+        function plot_obstacles(obj,varargin) 
+            % plot the com of each link in world frame
+            
+            if nargin == 1
+                par = obj.plot_parameter_init;
+            elseif nargin == 2
+                par =  varargin{1};
+            else
+                error('[Finger:plot_obstacles] input dimension is incorrect! \n')
+            end
+
+            if par.inhand == 0
+                w_p_viapoints_all = obj.get_p_all_obstacle;
+            else
+                w_p_viapoints_all = obj.get_p_all_obstacle_inhand;
+            end
+            plot3(w_p_viapoints_all(1,:)',w_p_viapoints_all(2,:)',w_p_viapoints_all(3,:)','*','Color',par.markercolor,...
+                                    'MarkerSize',par.markersize);
+            hold on
+
+            if par.axis_show
+                for i = 1:obj.nobs
+                    obs_i = obj.list_obstacles{i};
+                    if par.inhand == 0
+                        w_T_obs = obj.get_T_obstacle(i);
+                    else
+                        w_T_obs = obj.get_T_obstacle_inhand(i);
+                    end
+                    W_p = par.axis_len*w_T_obs(1:3,3); % z axis of obstacle frame
+                    h = quiver3(w_T_obs(1,4),w_T_obs(2,4),w_T_obs(3,4),...
+                            W_p(1),W_p(2),W_p(3),...
+                            'Color','b','LineWidth',par.linewidth);
+                    set(h,'AutoScale','on', 'AutoScaleFactor',1);
+                    hold on
+                    xlabel('x')
+                    ylabel('y')
+                    zlabel('z')
+                    axis equal
+                end 
+            end
+        end
+
         % plot function for hand 
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %% tendon related:
@@ -1235,25 +1310,40 @@ classdef Finger < handle & matlab.mixin.Copyable
             % add contact to the specific link 
             if link_index == 0
                 link_name = obj.base.name;
-                new_obstacle = obj.base.add_viapoint_link(strcat(link_name,'_',name), link_p_obj,link_R_obj);
+                new_obstacle = obj.base.add_obstacle_link(strcat(link_name,'_',name), link_p_obj,link_R_obj);
             else
                 link_name = obj.list_links(link_index).name;
-                new_obstacle = obj.list_links(link_index).add_viapoint_link(strcat(link_name,'_',name), ...
+                new_obstacle = obj.list_links(link_index).add_obstacle_link(strcat(link_name,'_',name), ...
+                    link_p_obj,link_R_obj);
+            end
+            obj.update_list_obstacles();
+        end
+        
+
+        function new_obstacle = add_Obstacle_cylinder(obj, name, link_index, link_p_obj,link_R_obj)
+            % add contact to the specific link 
+            if link_index == 0
+                link_name = obj.base.name;
+                new_obstacle = obj.base.add_obstacle_cy_link(strcat(link_name,'_',name), link_p_obj,link_R_obj);
+            else
+                link_name = obj.list_links(link_index).name;
+                new_obstacle = obj.list_links(link_index).add_obstacle_cyl_link(strcat(link_name,'_',name), ...
                     link_p_obj,link_R_obj);
             end
             obj.update_list_obstacles();
         end
 
+
         function update_list_obstacles(obj)
             % update the Link Class property: Links.nc 
-            obj.list_obstacles = []; % init list_contacts
+            obj.list_obstacles = {}; % init list_contacts
             num_obstacles = 0;
             % add viapoint from base
             num_obs_link_i =  obj.base.nobs;
             num_obstacles = num_obstacles + num_obs_link_i;
             if num_obstacles ~= 0
                 for j = 1:num_obstacles
-                    obj.list_obstacles = [obj.list_obstacles;obj.base.obstacles(j)];
+                    obj.list_obstacles = {obj.list_obstacles{:},obj.base.obstacles(j)}';
                 end
             end
             % add viapoint from links
@@ -1263,7 +1353,7 @@ classdef Finger < handle & matlab.mixin.Copyable
                     num_obstacles = num_obstacles + num_obs_link_i;
                     if num_obs_link_i ~= 0
                         for j = 1:num_obs_link_i
-                            obj.list_obstacles = [obj.list_obstacles;obj.list_links(i).obstacles(j)];
+                            obj.list_obstacles = {obj.list_obstacles{:},obj.list_links(i).obstacles(j)}';
                         end
                     end
                 end
@@ -1274,21 +1364,56 @@ classdef Finger < handle & matlab.mixin.Copyable
             % update transformation matrix of all obstacles
             if obj.nobs ~= 0
                 for i = 1:obj.nobs
-                    obstacle_i = obj.list_obstacles(i);
+                    obstacle_i = obj.list_obstacles{i};
                     base_T_obs_i = obstacle_i.get_base_T_obs;
                     obstacle_i.update_w_T_Obs(obj.w_T_base*base_T_obs_i);
-                    obstacle_i.update_w_T_Obs_inhand(obj.w_T_b_inhand*base_T_obs_i);
+                    obstacle_i.update_w_T_Obs_inhand(obj.w_T_base_inhand * base_T_obs_i);
                 end
             end
         end
 
         function [w_p_obs,b_p_obs] = get_p_obstacle(obj, obs_index)
             % get translational vector of one obstacle
-%             obstacle_i = obj.list_obstacles(obs_index).w_T_Obs;
-%             w_viapoint_pos = w_R_b * viapoint_pos_i + w_p_b;
-%             b_p_obs = viapoint_pos_i;
-%             w_p_obs = w_viapoint_pos;
+            w_T_Obs_i = obj.list_obstacles{obs_index}.w_T_Obs;
+            base_T_obs_i = obj.list_obstacles{obs_index}.base_T_obs;
+            b_p_obs = base_T_obs_i(1:3,4);
+            w_p_obs = w_T_Obs_i(1:3,4);
         end
+
+        function [w_p_obs,b_p_obs] = get_p_all_obstacle(obj)
+            % get translational vector of all obstacles
+            w_p_obs = zeros(3, obj.nvia);
+            b_p_obs = zeros(3, obj.nvia);
+            for i = 1:obj.nvia
+                w_T_Obs_i = obj.list_obstacles{i}.w_T_Obs;
+                base_T_obs_i = obj.list_obstacles{i}.base_T_obs;
+                b_p_obs(1:3,i) = base_T_obs_i(1:3,4);
+                w_p_obs(1:3,i) = w_T_Obs_i(1:3,4);
+            end
+        end
+        function [w_p_obs,b_p_obs] = get_p_all_obstacle_inhand(obj)
+            % get translational vector of all obstacles
+            w_p_obs = zeros(3, obj.nvia);
+            b_p_obs = zeros(3, obj.nvia);
+            for i = 1:obj.nvia
+                w_T_Obs_i = obj.list_obstacles{i}.w_T_Obs_inhand;
+                base_T_obs_i = obj.list_obstacles{i}.base_T_obs;
+                b_p_obs(1:3,i) = base_T_obs_i(1:3,4);
+                w_p_obs(1:3,i) = w_T_Obs_i(1:3,4);
+            end
+        end
+
+        function [w_T_obs,b_T_obs] = get_T_obstacle(obj, obs_index)
+            % get translational vector of one obstacle
+            w_T_obs = obj.list_obstacles{obs_index}.w_T_Obs;
+            b_T_obs = obj.list_obstacles{obs_index}.base_T_obs;
+        end
+        function [w_T_obs,b_T_obs] = get_T_obstacle_inhand(obj, obs_index)
+            % get translational vector of one obstacle
+            w_T_obs = obj.list_obstacles{obs_index}.w_T_Obs_inhand;
+            b_T_obs = obj.list_obstacles{obs_index}.base_T_obs;
+        end
+
 
     end
 end

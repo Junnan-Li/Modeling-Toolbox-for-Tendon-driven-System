@@ -171,12 +171,26 @@ classdef Links < handle & matlab.mixin.Copyable
             new_Obstacle = Obstacles(name);
             new_Obstacle.add_Obs_to_link(obj);
             new_Obstacle.update_Obs_p_R(link_p,link_R);
-
-
             obj.obstacles = [obj.obstacles;new_Obstacle];
             obj.nobs = length(obj.obstacles);      
-            obj.update_link_viapoints; % 
+            obj.update_link_obstacles; % 
         end
+
+        function new_Obstacle = add_obstacle_cyl_link(obj, name, link_p, link_R)
+            % add obstacle on the link
+            assert(length(link_p) == 3, '[add_obstacle_link]: input dimension is incorrect');
+%             assert(length(link_p) == 3, '[add_obstacle_link]: input dimension is incorrect');
+            link_p = reshape(link_p,[3,1]); % columewise
+            
+            new_Obstacle = Cylinder_Obs(name);
+            new_Obstacle.add_Obs_to_link(obj);
+            new_Obstacle.update_Obs_p_R(link_p,link_R);
+            obj.obstacles = [obj.obstacles;new_Obstacle];
+            obj.nobs = length(obj.obstacles);      
+            obj.update_link_obstacles; % 
+        end
+
+
         function update_link_obstacles(obj)
             % update obj.nc link.Contact.base_R & base_p
             base_T_link = obj.get_base_T_link;
