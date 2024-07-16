@@ -6,7 +6,7 @@ function plot_Mojtaba_muscle_viapoint(varargin)
 
 data_muscle = readcell('Mojtaba_model_data_muscle_path.csv');
 
-markersize = 15;
+markersize = 20;
 
 
 if nargin == 0

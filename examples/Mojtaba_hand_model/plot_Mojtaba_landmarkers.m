@@ -8,7 +8,7 @@ markersize = 20;
 
 if nargin == 0
     for i = 2:size(data_landmarker,1)
-        if contains(data_landmarker{i,1},{'h','b'}) && isnumeric(data_landmarker{i,3})
+        if isnumeric(data_landmarker{i,3})
             plot3(data_landmarker{i,3}* 0.001,data_landmarker{i,4}* 0.001,data_landmarker{i,5}* 0.001, ...
                 '.','MarkerSize',markersize,'Color','k');
             hold on

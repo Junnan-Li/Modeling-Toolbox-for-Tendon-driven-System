@@ -16,9 +16,15 @@ function mdh_matrix = mdh_struct_to_matrix(mdh_struct, order)
 %#codegen
 % assert(isequal(class(D), 'Finger'), 'Input class is not Finger!')
 
-mdh_matrix = [];
-len = length(mdh_struct.a);
 
+
+
+len = length(mdh_struct.a);
+if isnumeric(mdh_struct.a)
+    mdh_matrix = [];
+else
+    sym mdh_matrix; 
+end
 switch order
     case 1
         for i = 1:len

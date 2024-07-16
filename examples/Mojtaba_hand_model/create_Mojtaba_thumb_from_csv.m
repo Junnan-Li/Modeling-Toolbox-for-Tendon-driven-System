@@ -65,7 +65,7 @@ R_yz = euler2R_XYZ([0,eul_base_y,eul_base_z]);
 p_32_x = cylinder_axis(1,[2,3])';
 eul_base_x = acos(([1,0]*p_32_x)/norm(p_32_x));
 % R_z = -euler2R_XYZ([0,0,eul_base_x]);
-finger.set_base(landmarker_position(1,:)', R_base);
+finger.set_base(landmarker_position(1,:)' - [0.01;0;0], R_base);
 finger.update_finger(zeros(finger.nj,1));
 
 end

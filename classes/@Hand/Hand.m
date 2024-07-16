@@ -195,6 +195,7 @@ classdef Hand < handle & matlab.mixin.Copyable
                     i_q = i_q + finger_i.nj;
                 end
             end
+            obj.update_list_viapoints;
             %             obj.update_hand(obj.q);
         end
 
@@ -495,8 +496,8 @@ classdef Hand < handle & matlab.mixin.Copyable
 
             for i = 1:obj.nmus
                 w_p_viapoints_all = obj.get_p_muscle_viapoint(i);
-                plot3(w_p_viapoints_all(1,:)',w_p_viapoints_all(2,:)',w_p_viapoints_all(3,:)','-*','Color',par.markercolor,...
-                                    'MarkerSize',par.markersize);
+                plot3(w_p_viapoints_all(1,:)',w_p_viapoints_all(2,:)',w_p_viapoints_all(3,:)','-',...
+                    'Color',par.muscle_linecolor,'MarkerSize',par.muscle_markersize,'LineWidth',par.muscle_linewidth);
                 hold on
             end
         end
@@ -551,6 +552,7 @@ classdef Hand < handle & matlab.mixin.Copyable
             if obj.nb ~= 0
                 for i = 1:obj.nb
                     base_i = obj.base(i);
+                    base_i.update_list_viapoints;
                     obj.list_viapoints = [obj.list_viapoints;base_i.list_viapoints];
                     num_viapoints = num_viapoints + base_i.nvia;
                 end
@@ -558,6 +560,7 @@ classdef Hand < handle & matlab.mixin.Copyable
             if obj.nf ~= 0
                for i = 1:obj.nf
                     finger_i = obj.list_fingers(i);
+                    finger_i.update_list_viapoints;
                     obj.list_viapoints = [obj.list_viapoints;finger_i.list_viapoints];
                     num_viapoints = num_viapoints + finger_i.nvia;
                 end

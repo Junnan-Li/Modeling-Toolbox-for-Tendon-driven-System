@@ -19,4 +19,15 @@ parstr.axis_show = 1;
 parstr.axis_len = 0.1;
 parstr.linecolor = 'r';
 
+parstr.com_marker = '*';
+parstr.com_markersize = 5;
+parstr.com_markercolor = 'r';
+
+parstr.viapoint_marker = '.';
+parstr.viapoint_markersize = 20;
+parstr.viapoint_markercolor = 'g';
+
+parstr.muscle_linecolor = 'm';
+parstr.muscle_linewidth = 2;
+parstr.muscle_markersize = 15;
 end

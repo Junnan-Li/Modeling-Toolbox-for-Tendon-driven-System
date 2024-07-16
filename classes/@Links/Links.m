@@ -26,6 +26,8 @@ classdef Links < handle & matlab.mixin.Copyable
         index  
         base_p            % [3x1] b_p_i: position of the frame with respect to Finger base frame. 
         base_R            % [3x3] b_R_i: position of the frame with respect to Finger base frame. 
+        w_T_Link          
+        w_T_Link_inhand
     end
     
     methods
@@ -60,6 +62,23 @@ classdef Links < handle & matlab.mixin.Copyable
             obj.update_link_contacts;
             obj.update_link_viapoints;
             obj.update_link_obstacles;
+        end
+
+        function update_w_T_Link(obj,w_T_Link)
+            % update the Link frame transformation matrix in world frame, called by
+            % Finger.update_finger
+            obj.w_T_Link = w_T_Link;
+        end
+        function update_w_T_Link_inhand(obj,w_T_Link_inhand)
+            % update the Link frame transformation matrix in world frame within a hand , called by
+            % Finger.update_finger
+            obj.w_T_Link_inhand = w_T_Link_inhand;
+        end
+
+        function w_T_Link_inhand = get_w_T_Link_inhand(obj)
+            % get the Link frame transformation matrix in world frame within a hand , called by
+            % Finger.update_finger
+            w_T_Link_inhand = obj.w_T_Link_inhand;
         end
 
         function base_T_link = get_base_T_link(obj)

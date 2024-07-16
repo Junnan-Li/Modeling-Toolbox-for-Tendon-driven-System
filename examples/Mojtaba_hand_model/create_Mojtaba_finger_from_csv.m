@@ -67,7 +67,7 @@ finger.set_mdh_parameters(mdh_matrix);
 % set base information
 p_32 = landmarker_position(2,1:2)'- landmarker_position(1,1:2)';
 eul_base = -acos(([1,0]*p_32)/norm(p_32));
-finger.set_base(landmarker_position(1,:)',euler2R_XYZ([0,0,eul_base]));
+finger.set_base(landmarker_position(1,:)'-[0;0;0.005],euler2R_XYZ([0,0,eul_base]));
 finger.update_finger(zeros(finger.nj,1));
 
 end

@@ -320,7 +320,12 @@ classdef Finger < handle & matlab.mixin.Copyable
                 base_p_link_i = b_T_i(1:3,4);
                 base_R_link_i = b_T_i(1:3,1:3);
                 obj.list_links(i).update(base_p_link_i,base_R_link_i);
+                obj.list_links(i).update_w_T_Link(obj.w_T_base*b_T_i);
+                obj.list_links(i).update_w_T_Link_inhand(obj.w_T_base_inhand*b_T_i);
             end
+            
+            obj.base.update_w_T_Link(obj.w_T_base);
+            obj.base.update_w_T_Link_inhand(obj.w_T_base_inhand);
             
             % update viapoints
             obj.update_viapoints;
@@ -631,6 +636,9 @@ classdef Finger < handle & matlab.mixin.Copyable
 %             w_T_b = get_W_T_B(obj);
             p_link_all_b = zeros(3,obj.nl+1);
             p_link_all_w = zeros(3,obj.nl+1);
+
+%             p_link_all_b = sym(zeros(3,obj.nl+1));
+%             p_link_all_w = sym(zeros(3,obj.nl+1));
             for i = 1:obj.nl
                 p_link_all_b(:,i) = obj.list_links(i).base_p;
                 p_link_all_w(:,i) = w_R_b * p_link_all_b(:,i) + w_p_b;
@@ -885,8 +893,8 @@ classdef Finger < handle & matlab.mixin.Copyable
                 
             end
             p_com_all_w(:,1) = w_R_b * (obj.par_dyn_f.com_all(:,1)) + w_p_b;
-            plot3(p_com_all_w(1,:)',p_com_all_w(2,:)',p_com_all_w(3,:)','*','Color',par.markercolor,...
-                                    'MarkerSize',par.markersize);
+            plot3(p_com_all_w(1,:)',p_com_all_w(2,:)',p_com_all_w(3,:)',par.com_marker, ...
+                'Color',par.com_markercolor, 'MarkerSize',par.com_markersize);
             hold on
             % fingertip position
 %             mdh_all_matrix = mdh_struct_to_matrix(obj.mdh_all, 1);
@@ -937,8 +945,8 @@ classdef Finger < handle & matlab.mixin.Copyable
 
             [~,b_p_viapoints_all] = obj.get_p_all_viapoints;
             w_p_viapoints_all = w_p_b + w_R_b*b_p_viapoints_all;
-            plot3(w_p_viapoints_all(1,:)',w_p_viapoints_all(2,:)',w_p_viapoints_all(3,:)','*','Color',par.markercolor,...
-                                    'MarkerSize',par.markersize);
+            plot3(w_p_viapoints_all(1,:)',w_p_viapoints_all(2,:)',w_p_viapoints_all(3,:)',par.viapoint_marker,...
+                    'Color',par.viapoint_markercolor,'MarkerSize',par.viapoint_markersize);
             hold on
         end
 
@@ -955,8 +963,8 @@ classdef Finger < handle & matlab.mixin.Copyable
 
             for i = 1:obj.nmus
                 w_p_viapoints_all = obj.get_p_muscle_viapoints(i);
-                plot3(w_p_viapoints_all(1,:)',w_p_viapoints_all(2,:)',w_p_viapoints_all(3,:)','-*','Color',par.markercolor,...
-                                    'MarkerSize',par.markersize);
+                plot3(w_p_viapoints_all(1,:)',w_p_viapoints_all(2,:)',w_p_viapoints_all(3,:)','-.',...
+                    'Color',par.muscle_linecolor,'MarkerSize',par.muscle_markersize,'LineWidth',par.muscle_linewidth);
             end
         end
 
@@ -1112,6 +1120,7 @@ classdef Finger < handle & matlab.mixin.Copyable
                 end
             end
             obj.nvia = num_viapoints;
+            obj.update_viapoints;
         end
 
         function update_viapoints(obj)

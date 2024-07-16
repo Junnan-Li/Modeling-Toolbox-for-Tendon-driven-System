@@ -53,13 +53,20 @@ classdef Muscles < handle
             % update the number of the viapoint
             obj.list_vp = [obj.list_vp; viapoint_obj];
             obj.update_viapoints;
+        end
 
+        function switch_viapoints(obj, index_vp1, index_vp2)
+            % switch two viapoints
+            list_vp_tmp = obj.list_vp;
+            list_vp_tmp(index_vp1) = list_vp_tmp(index_vp2);
+            list_vp_tmp(index_vp2) = obj.list_vp(index_vp1);
+            obj.list_vp = list_vp_tmp;
+            obj.update_viapoints;
         end
 
         function update_viapoints(obj)
             % update the number of the viapoint
             obj.n_vp = length(obj.list_vp);
-
         end
         
         function l = cal_muscle_length(obj)
