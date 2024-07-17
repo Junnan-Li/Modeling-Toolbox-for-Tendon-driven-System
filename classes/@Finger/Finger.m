@@ -1368,6 +1368,7 @@ classdef Finger < handle & matlab.mixin.Copyable
                 end
             end
             obj.nobs = num_obstacles;
+            
         end
         function update_obstacles(obj)
             % update transformation matrix of all obstacles
