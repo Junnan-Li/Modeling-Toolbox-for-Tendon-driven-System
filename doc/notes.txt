@@ -12,11 +12,11 @@ Classes:
     position in the link coord.
  
 4. obstacle classes
-    containing several classical type like cylinder, sphere, (torus)
+    define the position & orientation according to the link. 
+    b_T_obs will be updatged by calling Link.update_link_obstacles and 
+    w_T_obs will be update by calling Finger.update_obstacles
     
-    attached links
-    relative position and orientation
-    size parameter
+
     
 5. finger class
     a. update_list_viapoints: not efficient

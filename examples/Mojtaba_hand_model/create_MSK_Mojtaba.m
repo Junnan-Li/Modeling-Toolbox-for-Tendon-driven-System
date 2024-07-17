@@ -26,19 +26,7 @@ plot_setting = 1;
 
 data_landmarker = readcell('Mojtaba_model_data_landmarker.csv');
 
-figure(1)
-fingers_plot_color = {'r','b','c', 'g', 'k'};
-for finger = 1:5
-    for i = 2:size(data_landmarker,1)
-        if contains(data_landmarker{i,1},num2str(finger)) && contains(data_landmarker{i,1},{'h','b'}) ...
-                && isnumeric(data_landmarker{i,3})
-            plot3(data_landmarker{i,3}* 0.001,data_landmarker{i,4}* 0.001,data_landmarker{i,5}* 0.001, ...
-                '.','MarkerSize',20, 'Color',fingers_plot_color{finger});
-            hold on
-        end
 
-    end
-end
 axis equal
 
 %% axes data
@@ -62,7 +50,6 @@ data_axes = readcell('Mojtaba_model_data_axes.csv');
 % axis equal
 
 %% muscle path data
-close all
 data_muscle = readcell('Mojtaba_model_data_muscle_path.csv');
 
 muscle_list = {'FDP3'};
@@ -81,6 +68,7 @@ figure(1)
 
 % muscle_list = {'FDP3'};
 % plot_Mojtaba_muscle_viapoint(muscle_list);
+
 
 % return
 
@@ -143,6 +131,11 @@ finger_r = set_Mojtaba_finger_inertia_from_csv(finger_r, 4);
 finger_l = set_Mojtaba_finger_inertia_from_csv(finger_l, 5);
 thumb = set_Mojtaba_finger_inertia_from_csv(thumb, 5);
 
+% finger_m.plot_com(plot_par)
+% finger_i.plot_com(plot_par)
+% finger_r.plot_com(plot_par)
+% finger_l.plot_com(plot_par)
+% thumb.plot_com(plot_par)
 
 
 %% inverse kinematics
@@ -156,6 +149,7 @@ x_middle = [data_landmarker{31,3:5}]' *  1e-3;
 x_ring = [data_landmarker{40,3:5}]' *  1e-3;
 [q_ring, ~, x_res,phi_x,iter] = finger_r.invkin_trans_numeric(x_ring);
 
+<<<<<<< Updated upstream
 
 
 % little finger
@@ -219,6 +213,20 @@ position_new_base = ([data_landmarker{4,3:5}] + [data_landmarker{5,3:5}])'/2 * 0
 % finger_l.set_base(R_new_base*(finger_l.get_base_p - position_new_base),R_new_base*finger_l.get_base_R);
 % thumb.set_base(R_new_base*(thumb.get_base_p - position_new_base),R_new_base*thumb.get_base_R);
 %%%%%%%%%%%%%%%%
+
+% figure(2)
+% finger_m.plot_finger(plot_par)
+% finger_i.plot_finger(plot_par)
+% finger_r.plot_finger(plot_par)
+% finger_l.plot_finger(plot_par)
+% thumb.plot_finger(plot_par)
+% 
+% finger_m.plot_com(plot_par)
+% finger_i.plot_com(plot_par)
+% finger_r.plot_com(plot_par)
+% finger_l.plot_com(plot_par)
+% thumb.plot_com(plot_par)
+% axis equal
 
 % create forearm
 % version 1: only wrist flexion and abduction
@@ -294,6 +302,7 @@ Mojtaba_hand.update_joint_limits;
 Mojtaba_hand.set_joint_limits_on;
 
 figure(3)
+
 q0 = [0;0;q_thumb;q_index;q_mid;q_ring;q_little];
 Mojtaba_hand.update_hand(q0);
 Mojtaba_hand.update_hand_par_dyn;
@@ -303,6 +312,7 @@ plot_hand_par.markersize = 10;
 plot_hand_par.markercolor = 'k';
 Mojtaba_hand.plot_hand(plot_hand_par);
 Mojtaba_hand.plot_hand_com(plot_hand_par);
+plot_Mojtaba_landmarkers
 axis equal
 % rst_model.show(q0,'Frames','on')
 Mojtaba_hand.plot_hand_viapoints(plot_hand_par)

@@ -40,6 +40,7 @@ classdef Hand < handle & matlab.mixin.Copyable
         nt                  % [1] number of tendons
         nmus                % [1] number of muscles
         nvia                % [1] number of viapoints
+        nobs                % [1] number of obstacles
         base                % [1] the base of hand (wrist)
         list_fingers        % [] list of all fingers
         list_joints         % [njx1] list of all joints
@@ -48,6 +49,7 @@ classdef Hand < handle & matlab.mixin.Copyable
         list_tendons        % [ntx1] list of all tendons
         list_muscles        % [ntx1] list of all muscles
         list_viapoints      % [ntx1] list of all viapoints
+        list_obstacles     % [ntx1] list of all obstacles
         
         limits_q            % [njx2] min,max values of q
         limits_qd           % [njx2] min,max values of qd
@@ -97,6 +99,9 @@ classdef Hand < handle & matlab.mixin.Copyable
             obj.list_muscles = [];
             obj.nvia = 0;
             obj.list_viapoints = [];
+            obj.nobs = 0;
+            obj.list_obstacles = [];
+
             obj.w_p_base = [0;0;0];
             obj.w_R_base = eye(3);
 
@@ -142,10 +147,12 @@ classdef Hand < handle & matlab.mixin.Copyable
             obj.nt = 0;
             obj.nmus = 0;
             obj.nvia = 0;
+            obj.nobs = 0;
             obj.limits_q = [];
             obj.limits_qd = [];
             obj.limits_qdd = [];
-
+            
+            obj.list_obstacles = {};
             obj.index_q_b = [];
             obj.index_q_f = [];
             
@@ -166,10 +173,14 @@ classdef Hand < handle & matlab.mixin.Copyable
                     obj.nt = obj.nt + base_i.nt;
                     obj.nmus = obj.nmus + base_i.nmus;
                     obj.nvia = obj.nvia + base_i.nvia;
+                    obj.nobs = obj.nobs + base_i.nobs;
                     obj.q = [obj.q;base_i.q];
                     obj.limits_q = [obj.limits_q;base_i.limits_q];
                     obj.limits_qd = [obj.limits_qd;base_i.limits_qd];
                     obj.limits_qdd = [obj.limits_qdd;base_i.limits_qdd];
+                    
+                    % sammurize the Finger list to Hand list
+                    obj.list_obstacles = {obj.list_obstacles{:},base_i.list_obstacles{:}}';
 
                     obj.index_q_b(i,:) = [i_q,i_q+ base_i.nj-1];
                     i_q = i_q + base_i.nj;
@@ -186,10 +197,13 @@ classdef Hand < handle & matlab.mixin.Copyable
                     obj.nt = obj.nt + finger_i.nt;
                     obj.nmus = obj.nmus + finger_i.nmus;
                     obj.nvia = obj.nvia + finger_i.nvia;
+                    obj.nobs = obj.nobs + finger_i.nobs;
                     obj.q = [obj.q;finger_i.q];
                     obj.limits_q = [obj.limits_q;finger_i.limits_q];
                     obj.limits_qd = [obj.limits_qd;finger_i.limits_qd];
                     obj.limits_qdd = [obj.limits_qdd;finger_i.limits_qdd];
+
+                    obj.list_obstacles = {obj.list_obstacles{:},finger_i.list_obstacles{:}}';
 
                     obj.index_q_f(i,:) = [i_q,i_q+ finger_i.nj-1];
                     i_q = i_q + finger_i.nj;
@@ -502,6 +516,25 @@ classdef Hand < handle & matlab.mixin.Copyable
             end
         end
 
+        function plot_hand_obstacles(obj,varargin) 
+            % plot the com of each link in world frame
+            
+            if nargin == 1
+                par = obj.plot_parameter_init;
+            elseif nargin == 2
+                par =  varargin{1};
+            else
+                error('[Hand:plot_hand_muscles] input dimension is incorrect! \n')
+            end
+
+            if obj.nobs ~= 0
+                for i = 1:obj.nobs
+                    obs_i = obj.list_obstacles{i};
+                    obs_i.plot_obs(par);
+                end
+            end
+        end
+
         %% Dynamics
         
         function update_hand_par_dyn(obj)
@@ -696,6 +729,10 @@ classdef Hand < handle & matlab.mixin.Copyable
             MA = obj.get_Muscle_Momentarm_1st_c;
             tau_mus = MA * f_mus;
         end
+
+        %% obstacles
+
+
 
         %% state
         function state = init_state(obj)

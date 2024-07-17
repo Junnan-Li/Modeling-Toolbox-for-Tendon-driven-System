@@ -210,6 +210,9 @@ classdef Finger < handle & matlab.mixin.Copyable
 
             obj.nvia = 0;
             obj.list_viapoints = [];
+
+            obj.nobs = 0;
+            obj.list_obstacles = {};
             
             obj.limit_joint_on = 0;
             obj.limits_q = zeros(obj.nj,2);
@@ -967,10 +970,10 @@ classdef Finger < handle & matlab.mixin.Copyable
                     'Color',par.muscle_linecolor,'MarkerSize',par.muscle_markersize,'LineWidth',par.muscle_linewidth);
             end
         end
-
-        function plot_obstacles(obj,varargin) 
+    
+        function plot_obstacles(obj,varargin)
             % plot the com of each link in world frame
-            
+
             if nargin == 1
                 par = obj.plot_parameter_init;
             elseif nargin == 2
@@ -978,38 +981,13 @@ classdef Finger < handle & matlab.mixin.Copyable
             else
                 error('[Finger:plot_obstacles] input dimension is incorrect! \n')
             end
-
-            if par.inhand == 0
-                w_p_viapoints_all = obj.get_p_all_obstacle;
-            else
-                w_p_viapoints_all = obj.get_p_all_obstacle_inhand;
-            end
-            plot3(w_p_viapoints_all(1,:)',w_p_viapoints_all(2,:)',w_p_viapoints_all(3,:)','*','Color',par.markercolor,...
-                                    'MarkerSize',par.markersize);
-            hold on
-
-            if par.axis_show
+            if obj.nobs ~= 0
                 for i = 1:obj.nobs
                     obs_i = obj.list_obstacles{i};
-                    if par.inhand == 0
-                        w_T_obs = obj.get_T_obstacle(i);
-                    else
-                        w_T_obs = obj.get_T_obstacle_inhand(i);
-                    end
-                    W_p = par.axis_len*w_T_obs(1:3,3); % z axis of obstacle frame
-                    h = quiver3(w_T_obs(1,4),w_T_obs(2,4),w_T_obs(3,4),...
-                            W_p(1),W_p(2),W_p(3),...
-                            'Color','b','LineWidth',par.linewidth);
-                    set(h,'AutoScale','on', 'AutoScaleFactor',1);
-                    hold on
-                    xlabel('x')
-                    ylabel('y')
-                    zlabel('z')
-                    axis equal
-                end 
+                    obs_i.plot_obs(par);
+                end
             end
         end
-
         % plot function for hand 
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %% tendon related:
@@ -1329,16 +1307,18 @@ classdef Finger < handle & matlab.mixin.Copyable
         end
         
 
-        function new_obstacle = add_Obstacle_cylinder(obj, name, link_index, link_p_obj,link_R_obj)
+        function new_obstacle = add_Obstacle_cylinder(obj, name, link_index, link_p_obj,link_R_obj, radius, height)
             % add contact to the specific link 
             if link_index == 0
                 link_name = obj.base.name;
-                new_obstacle = obj.base.add_obstacle_cy_link(strcat(link_name,'_',name), link_p_obj,link_R_obj);
+                new_obstacle = obj.base.add_obstacle_cyl_link(strcat(link_name,'_',name), link_p_obj,link_R_obj);
             else
                 link_name = obj.list_links(link_index).name;
                 new_obstacle = obj.list_links(link_index).add_obstacle_cyl_link(strcat(link_name,'_',name), ...
                     link_p_obj,link_R_obj);
             end
+            new_obstacle.radius = radius;
+            new_obstacle.height = height;
             obj.update_list_obstacles();
         end
 
