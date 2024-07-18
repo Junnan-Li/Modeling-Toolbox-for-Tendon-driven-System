@@ -33,42 +33,9 @@ axis equal
 
 data_axes = readcell('Mojtaba_model_data_axes.csv');
 
-% figure(1)
-% fingers_plot_color = {'r','b','c', 'g', 'k'};
-% for finger = 3
-%     for i = 3:size(data_axes,1)
-%         if contains(data_axes{i,1},num2str(finger)) && isnumeric(data_axes{i,3})
-%             plot3([data_axes{i,7}+10*data_axes{i,3};data_axes{i,7} - 10*data_axes{i,3}]* 0.001,...
-%                 [data_axes{i,8}+10*data_axes{i,4};data_axes{i,8} - 10*data_axes{i,4}]* 0.001,...
-%                 [data_axes{i,9}+10*data_axes{i,5};data_axes{i,9} - 10*data_axes{i,5}]* 0.001,...
-%                 '--','LineWidth',2, 'Color',fingers_plot_color{finger});
-%             hold on
-%         end
-% 
-%     end
-% end
-% axis equal
 
 %% muscle path data
 data_muscle = readcell('Mojtaba_model_data_muscle_path.csv');
-
-muscle_list = {'FDP3'};
-figure(1)
-
-% fingers_plot_color = {'r','b','c', 'g', 'k'};
-
-% for i = 2:size(data_landmarker,1)
-%     if isnumeric(data_landmarker{i,3}) 
-%         plot3(data_landmarker{i,3}* 0.001,data_landmarker{i,4}* 0.001,data_landmarker{i,5}* 0.001, ...
-%             '.','MarkerSize',20, 'Color','b');
-%         hold on
-%     end
-% 
-% end
-
-% muscle_list = {'FDP3'};
-% plot_Mojtaba_muscle_viapoint(muscle_list);
-
 
 % return
 
@@ -148,9 +115,6 @@ x_middle = [data_landmarker{31,3:5}]' *  1e-3;
 % ring finger
 x_ring = [data_landmarker{40,3:5}]' *  1e-3;
 [q_ring, ~, x_res,phi_x,iter] = finger_r.invkin_trans_numeric(x_ring);
-
-<<<<<<< Updated upstream
-
 
 % little finger
 x_little = [data_landmarker{49,3:5}]' *  1e-3;

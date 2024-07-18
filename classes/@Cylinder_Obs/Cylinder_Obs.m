@@ -40,8 +40,8 @@ classdef Cylinder_Obs < Obstacles
                 w_T_obs = obj.w_T_Obs_inhand;
             end
             [X,Y,Z] = cylinder_vertics_to_plot(w_T_obs, obj.radius,obj.height,10);
-            s = surf(X,Y,Z,'FaceColor','g', 'EdgeColor','none');
-            alpha(s,.6)
+            s = surf(X,Y,Z,'FaceColor',plot_par.obstacle_color, 'EdgeColor','none');
+            alpha(s,plot_par.obstacle_alpha)
             hold on
             axis equal
         end

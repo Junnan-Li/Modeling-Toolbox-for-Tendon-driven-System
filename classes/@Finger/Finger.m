@@ -938,19 +938,27 @@ classdef Finger < handle & matlab.mixin.Copyable
             else
                 error('[Finger:plot_viapoints] input dimension is incorrect! \n')
             end
-
-            if par.inhand == 0
-                w_R_b = obj.w_R_base;
-                w_p_b = obj.w_p_base;
+            
+            if obj.nvia == 0
+                fprintf('[plot_muscles]: muscle %s has no via point! /n', obj.name)
             else
-                [w_p_b,w_R_b] = T2pR(obj.get_w_T_base_inhand);
+                for i = 1:obj.nvia
+                    vp_i = obj.list_viapoints(i);
+                    vp_i.plot_viapoints(par);
+                end
             end
-
-            [~,b_p_viapoints_all] = obj.get_p_all_viapoints;
-            w_p_viapoints_all = w_p_b + w_R_b*b_p_viapoints_all;
-            plot3(w_p_viapoints_all(1,:)',w_p_viapoints_all(2,:)',w_p_viapoints_all(3,:)',par.viapoint_marker,...
-                    'Color',par.viapoint_markercolor,'MarkerSize',par.viapoint_markersize);
-            hold on
+%             if par.inhand == 0
+%                 w_R_b = obj.w_R_base;
+%                 w_p_b = obj.w_p_base;
+%             else
+%                 [w_p_b,w_R_b] = T2pR(obj.get_w_T_base_inhand);
+%             end
+% 
+%             [~,b_p_viapoints_all] = obj.get_p_all_viapoints;
+%             w_p_viapoints_all = w_p_b + w_R_b*b_p_viapoints_all;
+%             plot3(w_p_viapoints_all(1,:)',w_p_viapoints_all(2,:)',w_p_viapoints_all(3,:)',par.viapoint_marker,...
+%                     'Color',par.viapoint_markercolor,'MarkerSize',par.viapoint_markersize);
+%             hold on
         end
 
         function plot_muscles(obj,varargin) 
@@ -965,9 +973,11 @@ classdef Finger < handle & matlab.mixin.Copyable
             end
 
             for i = 1:obj.nmus
-                w_p_viapoints_all = obj.get_p_muscle_viapoints(i);
-                plot3(w_p_viapoints_all(1,:)',w_p_viapoints_all(2,:)',w_p_viapoints_all(3,:)','-.',...
-                    'Color',par.muscle_linecolor,'MarkerSize',par.muscle_markersize,'LineWidth',par.muscle_linewidth);
+                mus_i = obj.list_muscles(i);
+                mus_i.plot_muscles(par);
+%                 w_p_viapoints_all = obj.get_p_muscle_viapoints(i);
+%                 plot3(w_p_viapoints_all(1,:)',w_p_viapoints_all(2,:)',w_p_viapoints_all(3,:)','-.',...
+%                     'Color',par.muscle_linecolor,'MarkerSize',par.muscle_markersize,'LineWidth',par.muscle_linewidth);
             end
         end
     

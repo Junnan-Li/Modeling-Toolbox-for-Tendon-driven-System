@@ -157,7 +157,7 @@ classdef Links < handle & matlab.mixin.Copyable
             assert(length(link_p) == 3, 'Function error: input dimension of contact position is incorrect');
             link_p = reshape(link_p,[3,1]); % columewise
             
-            new_viapoint = ViaPoint(name, obj.name, link_p);
+            new_viapoint = ViaPoint(name, obj, link_p);
             obj.viapoints = [obj.viapoints;new_viapoint];
             obj.nv = length(obj.viapoints);      
             obj.update_link_viapoints; % 

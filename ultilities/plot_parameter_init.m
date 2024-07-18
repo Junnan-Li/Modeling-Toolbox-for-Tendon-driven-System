@@ -24,10 +24,13 @@ parstr.com_markersize = 5;
 parstr.com_markercolor = 'r';
 
 parstr.viapoint_marker = '.';
-parstr.viapoint_markersize = 20;
+parstr.viapoint_markersize = 25;
 parstr.viapoint_markercolor = 'g';
 
 parstr.muscle_linecolor = 'm';
 parstr.muscle_linewidth = 2;
 parstr.muscle_markersize = 15;
+
+parstr.obstacle_color = 'g';
+parstr.obstacle_alpha = 0.2;
 end

@@ -26,7 +26,7 @@ classdef Obstacles < handle
         link_R              % [3x3] orientation in the link frame
     end
     properties (SetAccess = private)
-        link
+        Link
         link_T_obs
         base_T_obs          
         w_T_Obs          
@@ -43,7 +43,7 @@ classdef Obstacles < handle
         end
         
         function add_Obs_to_link(obj,link_obj)
-            obj.link = link_obj;
+            obj.Link = link_obj;
         end
 
         function update_Obs_p_R(obj,link_p,link_R)

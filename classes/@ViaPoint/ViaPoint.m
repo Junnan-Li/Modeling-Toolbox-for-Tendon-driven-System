@@ -13,17 +13,17 @@ classdef ViaPoint < handle %& matlab.System
     end
     properties (SetAccess = private)
 %         link_index
-        link_name
+        Link
         base_p          % used for Finger.get_p_all_viapoints
         w_p_VP          
         w_p_VP_inhand
     end
 
     methods
-        function obj = ViaPoint(name, link_name, link_p)
+        function obj = ViaPoint(name, Link_obj, link_p)
             % ViaPoint initialize
             obj.name = name;
-            obj.link_name = link_name;
+            obj.Link = Link_obj;
 %             obj.link_index = 0;
             obj.link_p = link_p;
 
@@ -51,6 +51,20 @@ classdef ViaPoint < handle %& matlab.System
         function w_p_VP_inhand = get_w_p_VP_inhand(obj)
             w_p_VP_inhand = obj.w_p_VP_inhand;
         end
+
+        %% plot
+
+        function plot_viapoints(obj,plot_par)
+           if plot_par.inhand == 0
+                w_p_VP_ = obj.w_p_VP;
+            else
+                w_p_VP_ = obj.w_p_VP_inhand;
+            end 
+            plot3(w_p_VP_(1),w_p_VP_(2),w_p_VP_(3),plot_par.viapoint_marker,...
+                    'Color',plot_par.viapoint_markercolor,'MarkerSize',plot_par.viapoint_markersize);
+            hold on
+        end
+
 
     end
 end

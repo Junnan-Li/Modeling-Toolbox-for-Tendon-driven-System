@@ -43,11 +43,38 @@ muscle.add_viapoints(vp3)
 muscle.add_viapoints(vp4)
 muscle.add_viapoints(vp5)
 
-finger.plot_muscles(plot_par)
 
 
-obs1 = finger.add_Obstacle_cylinder('Cyl1',1,[0,0,0]',eye(3));
-obs2 = finger.add_Obstacle_cylinder('Cyl1',2,[0.05,0,0]',euler2R_XYZ([0.1,0,0]));
+
+obs1 = finger.add_Obstacle_cylinder('Cyl1',1,[0,0,0]',eye(3),0.1,0.2);
+obs2 = finger.add_Obstacle_cylinder('Cyl1',2,[0.05,0,0]',euler2R_XYZ([0.1,0,0]),0.1,0.2);
 
 finger.update_obstacles;
-finger.plot_obstacles(plot_par)
+% finger.plot_obstacles(plot_par)
+
+%%
+muscle.add_Muscle_Obstacles(obs1);
+muscle.add_Muscle_Obstacles(obs2);
+
+% finger.cal_all_Muscle_Length
+
+finger.plot_muscles(plot_par)
+
+figure(2)
+for i = 1:3
+    q = rand(finger.nj,1);
+    finger.update_finger(q)
+    finger.plot_finger(plot_par)
+    finger.plot_muscles(plot_par)
+end
+%%
+
+muscle.init_list_constr
+%% 
+
+
+
+
+
+
+
