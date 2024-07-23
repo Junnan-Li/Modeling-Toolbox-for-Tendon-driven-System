@@ -67,14 +67,24 @@ for i = 1:3
     finger.plot_finger(plot_par)
     finger.plot_muscles(plot_par)
 end
-%%
+%% update muscle constrain list
 
 muscle.init_list_constr
-%% 
+%%
+q = [0.8;0.3];
+finger.update_finger(q);
+figure(12)
+muscle.plot_muscles(plot_par);
 
+[l_total, wrap_status,w_PS_p] = muscle.cal_Muscle_length_ObstacleSet_Cyl_Garner;
 
+for i = 1:length(wrap_status)
+    if wrap_status(i)==1
+        plot3(w_PS_p{i}(1,:)',w_PS_p{i}(2,:),w_PS_p{i}(3,:), ...
+            'r.','MarkerSize',plot_par.muscle_markersize);
+    end
+end
 
+%% symbolic 
 
-
-
-
+[l_QT,w_status,w_Q_p,w_T_p] = cal_obstacle_vp_cyl_Garner(w_T_obs, w_P_p, w_S_p, radius, wrap_direction)

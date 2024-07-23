@@ -9,8 +9,16 @@
 %                       current version: the first one is the origin, 
 %                                       the last one is insertion point,
 %                                       others are viapoints
-%           list_obstacle:
-%                       to be implemented
+%           list_obstacle: 
+%                           list of all obstacles related to the obstacle
+%           list_constr:
+%                           list of constraints including viapoints and
+%                           obstacles in muscle path sequence
+%           constr_vp:      cell array of muscle path constrains only
+%                           containing viapoints
+%           constr_obs:     cell array of muscle path constrains containing
+%                           containing obstacles and adjacent vps
+%           
 % 
 %       functions: 
 %           set_via_point
@@ -27,7 +35,8 @@ classdef Muscles < handle
         list_vp              % [] list of the via points
         list_obs             % list of the obstacles
         list_constr          % list of constraints includes vp and obs
-
+        constr_vp
+        constr_obs
         n_vp                 % [1] number of the viapoints
         n_obs
     end
@@ -45,6 +54,8 @@ classdef Muscles < handle
 %             obj.nj_finger = 0;
             obj.list_vp = [];
             obj.list_obs = {};
+            obj.constr_vp = {};
+            obj.constr_obs = {};
 %             obj.ma_value = [];
 %             obj.stiffness = 0; %
 %             obj.damping = 0; %
@@ -117,6 +128,7 @@ classdef Muscles < handle
 %                 list_constr_tmp{index_i,1} = obj_i;
             end
             obj.list_constr = list_constr_tmp(~cellfun(@isempty, list_constr_tmp));
+            obj.update_constr_array;
         end
 
         function switch_constr(obj, index_con1, index_con2)
@@ -127,9 +139,93 @@ classdef Muscles < handle
             obj.list_constr = list_constr_tmp;
         end
 
+        function update_constr_array(obj)
+            % manually
+            obj.constr_vp = {};
+            obj.constr_obs = {};
+            con_obs_index = 1;
+            con_vp_index = 1;
+            constr_comb_vp_i = {};
+            for i = 1:length(obj.list_constr)
+                IsObstacle_i = isa( obj.list_constr{i}, 'Obstacles' );
+                if IsObstacle_i
+                    obj.constr_obs{con_obs_index,1} = {obj.list_constr{i-1}, ...
+                        obj.list_constr{i}, ...
+                        obj.list_constr{i+1}}';
+                    con_obs_index = con_obs_index + 1;
+                    if length(constr_comb_vp_i) > 1
+                        obj.constr_vp{con_vp_index,1} = constr_comb_vp_i;
+                        con_vp_index = con_vp_index + 1;
+                    end
+                    constr_comb_vp_i = {};
+
+                else
+                    constr_comb_vp_i = {constr_comb_vp_i{:}, obj.list_constr{i}}';
+                end
+            end
+            % check the last constr_vp_i has more than 2 vps
+            if length(constr_comb_vp_i) > 1
+                obj.constr_vp{con_vp_index,1} = constr_comb_vp_i;
+                con_vp_index = con_vp_index + 1;
+            end
+        end
+
+        %% muscle path
+        
+        function [l_total, wrap_status,w_PS_p] = cal_Muscle_length_ObstacleSet_Cyl_Garner(obj, varargin)
+            % calculate the muscle length with Cylinder obstacle set
+            % using cal_obstacle_vp_cyl_Garner.m 
+            l_total = 0;
+            if ~isempty(obj.constr_vp)
+                l_vp = nan(length(obj.constr_vp),1);
+                for i = 1:length(obj.constr_vp)
+                    constr_vp_i = obj.constr_vp{i};
+                    n_vp_i = length(constr_vp_i);
+                    w_p_vp = nan(3,n_vp_i);
+                    for vp_index = 1:n_vp_i
+                        vp_i = constr_vp_i{vp_index};
+                        if plot_par.inhand == 0
+                            w_p_vp(:,vp_index) = vp_i.get_w_p_VP;
+                        else
+                            w_p_vp(:,vp_index) = vp_i.get_w_p_VP_inhand;
+                        end 
+                    end
+                    l_vp(i) = cal_muscle_vp_length(w_p_vp);
+                    l_total = l_total + l_vp(i);
+                end
+            end
+            if ~isempty(obj.constr_obs)
+                l_obs = nan(length(obj.constr_obs),1);
+                w_PS_p = cell(length(obj.constr_obs),1);
+                wrap_status = nan(length(obj.constr_obs),1);
+                for i = 1:length(obj.constr_obs)
+                    constr_obs_i = obj.constr_obs{i};
+                    if length(constr_obs_i)==3
+                        if plot_par.inhand == 0
+                            w_P_p = constr_obs_i{1}.get_w_p_VP;
+                            w_T_obs = constr_obs_i{2}.get_w_T_Obs;
+                            w_S_p = constr_obs_i{3}.get_w_p_VP;
+                        else
+                            w_P_p = constr_obs_i{1}.get_w_p_VP_inhand;
+                            w_T_obs = constr_obs_i{2}.get_w_T_Obs_inhand;
+                            w_S_p = constr_obs_i{3}.get_w_p_VP_inhand;
+                        end
+                        radius = constr_obs_i{2}.radius;
+                        wrap_direction = sign(constr_obs_i{2}.axis(3));
+                        [l_QT_i,wrap_status(i),w_Q_p,w_T_p] = cal_obstacle_vp_cyl_Garner(w_T_obs, w_P_p, w_S_p, radius, wrap_direction);
+                        if wrap_status(i)
+                            w_PS_p{i,1} = [w_Q_p,w_T_p];
+                        end
+                    else
+                        disp('[Muscle.cal_Muscle_length_ObstacleSet_Cyl_Garner]: constr_obs has more than 3 elements! ')
+                    end
+                    l_obs(i) = l_QT_i;
+                    l_total = l_total + l_QT_i;
+                end
+            end
+        end
 
 
-        %% calculate length
         function l = cal_muscle_length(obj)
             % calculate the muscle length (L2 norm)
             l = 0;
@@ -155,31 +251,51 @@ classdef Muscles < handle
         %% plot 
         function plot_muscles(obj,plot_par) 
             % plot muscles with associated via points and obstacles
-            if obj.n_vp == 0
-                fprintf('[plot_muscles]: muscle %s has no via point! /n', obj.name)
-            else
-                w_p_vp_all = nan(3,obj.n_vp);
-                for i = 1:obj.n_vp
-                    vp_i = obj.list_vp(i);
-                    vp_i.plot_viapoints(plot_par);
-                    if plot_par.inhand == 0
-                        w_p_VP_i = vp_i.w_p_VP;
-                    else
-                        w_p_VP_i = vp_i.w_p_VP_inhand;
-                    end
-                    w_p_vp_all(:,i)= w_p_VP_i;
-                    plot3(w_p_vp_all(1,:)',w_p_vp_all(2,:)',w_p_vp_all(3,:)',...
-                        '-', 'LineWidth',plot_par.muscle_linewidth,...
-                        'Color',plot_par.muscle_linecolor)
-                end
-            end
-
             if obj.n_obs == 0
 %                 fprintf('[plot_muscles]: muscle %s has no via point! /n', obj.name)
             else
                 for i = 1:obj.n_obs
                     obs_i = obj.list_obs{i};
                     obs_i.plot_obs(plot_par);
+                end
+            end
+
+            
+            
+            if obj.n_vp == 0
+                fprintf('[plot_muscles]: muscle %s has no via point! /n', obj.name)
+            else
+                if plot_par.muscle_plot_obstacleset
+                    % plot muscle wrapping over the obstacle set
+
+%                     [~, wrap_status,w_PS_p] = obj.cal_Muscle_length_ObstacleSet_Cyl_Garner;
+                    for i = 1:length(obj.constr_obs)
+
+                        if wrap_status(i) == 1
+                            constr_obs_i = obj.constr_obs{i};
+                            w_p_vp_all = nan(3,4);
+                        else
+                            plot3(w_PS_p{i}(1,:)',w_PS_p{i}(2,:),w_PS_p{i}(3,:),...
+                            '.-', 'LineWidth',plot_par.muscle_linewidth,...
+                            'Color',plot_par.muscle_linecolor,'MarkerSize',plot_par.muscle_markersize)
+                        end
+                    end
+
+                else
+                    w_p_vp_all = nan(3,obj.n_vp);
+                    for i = 1:obj.n_vp
+                        vp_i = obj.list_vp(i);
+                        vp_i.plot_viapoints(plot_par);
+                        if plot_par.inhand == 0
+                            w_p_VP_i = vp_i.w_p_VP;
+                        else
+                            w_p_VP_i = vp_i.w_p_VP_inhand;
+                        end
+                        w_p_vp_all(:,i)= w_p_VP_i;
+                        plot3(w_p_vp_all(1,:)',w_p_vp_all(2,:)',w_p_vp_all(3,:)',...
+                            '-', 'LineWidth',plot_par.muscle_linewidth,...
+                            'Color',plot_par.muscle_linecolor)
+                    end
                 end
             end
         end
