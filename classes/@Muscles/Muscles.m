@@ -60,6 +60,7 @@ classdef Muscles < handle
 %             obj.stiffness = 0; %
 %             obj.damping = 0; %
             obj.n_vp = 0; %
+            obj.n_obs = 0; %
 %             obj.dyn_par = struct();
 %             obj.dyn_par.stiffness = 1e3;
 %             obj.dyn_par.damping = 0;
@@ -109,13 +110,12 @@ classdef Muscles < handle
             list_constr_tmp = cell(obj.n_obs+obj.n_vp,1);
             list_constr_index_tmp = nan(obj.n_vp,1);
             for i = 1:obj.n_vp
-                list_constr_tmp{i} = obj.list_vp(i);
+                list_constr_tmp{i,1} = obj.list_vp(i);
                 list_constr_index_tmp(i) = obj.list_vp(i).Link.index;
             end
             for i = 1:obj.n_obs
                 obj_i = obj.list_obs{i};
                 if obj_i.Link.index == 0
-%                     index_i = 1;
                     list_constr_tmp = {obj_i,list_constr_tmp{:}}';
                     list_constr_index_tmp = [0;list_constr_index_tmp(:)];
                 else
@@ -175,6 +175,11 @@ classdef Muscles < handle
         function [l_total, wrap_status,w_PS_p] = cal_Muscle_length_ObstacleSet_Cyl_Garner(obj, varargin)
             % calculate the muscle length with Cylinder obstacle set
             % using cal_obstacle_vp_cyl_Garner.m 
+            if nargin == 1
+                in_hand = 0;
+            else
+                in_hand = varargin{1};
+            end
             l_total = 0;
             if ~isempty(obj.constr_vp)
                 l_vp = nan(length(obj.constr_vp),1);
@@ -184,7 +189,7 @@ classdef Muscles < handle
                     w_p_vp = nan(3,n_vp_i);
                     for vp_index = 1:n_vp_i
                         vp_i = constr_vp_i{vp_index};
-                        if plot_par.inhand == 0
+                        if in_hand == 0
                             w_p_vp(:,vp_index) = vp_i.get_w_p_VP;
                         else
                             w_p_vp(:,vp_index) = vp_i.get_w_p_VP_inhand;
@@ -201,7 +206,7 @@ classdef Muscles < handle
                 for i = 1:length(obj.constr_obs)
                     constr_obs_i = obj.constr_obs{i};
                     if length(constr_obs_i)==3
-                        if plot_par.inhand == 0
+                        if in_hand == 0
                             w_P_p = constr_obs_i{1}.get_w_p_VP;
                             w_T_obs = constr_obs_i{2}.get_w_T_Obs;
                             w_S_p = constr_obs_i{3}.get_w_p_VP;
@@ -251,37 +256,88 @@ classdef Muscles < handle
         %% plot 
         function plot_muscles(obj,plot_par) 
             % plot muscles with associated via points and obstacles
-            if obj.n_obs == 0
-%                 fprintf('[plot_muscles]: muscle %s has no via point! /n', obj.name)
-            else
+
+            % plot the obstacles 
+            if obj.n_obs ~= 0
                 for i = 1:obj.n_obs
                     obs_i = obj.list_obs{i};
                     obs_i.plot_obs(plot_par);
                 end
             end
-
-            
             
             if obj.n_vp == 0
                 fprintf('[plot_muscles]: muscle %s has no via point! /n', obj.name)
             else
-                if plot_par.muscle_plot_obstacleset
+                if plot_par.muscle_plot_obstacleset && obj.n_obs ~= 0
                     % plot muscle wrapping over the obstacle set
-
-%                     [~, wrap_status,w_PS_p] = obj.cal_Muscle_length_ObstacleSet_Cyl_Garner;
+                    [~, wrap_status,w_PS_p] = obj.cal_Muscle_length_ObstacleSet_Cyl_Garner(plot_par.inhand);
                     for i = 1:length(obj.constr_obs)
-
+                        constr_obs_i = obj.constr_obs{i};
                         if wrap_status(i) == 1
-                            constr_obs_i = obj.constr_obs{i};
-                            w_p_vp_all = nan(3,4);
-                        else
+                            % the wrapping occurs
+                            if plot_par.inhand == 0
+                                w_p_vp_1 = constr_obs_i{1}.get_w_p_VP;
+                                w_p_vp_2 = constr_obs_i{3}.get_w_p_VP;
+                            else
+                                w_p_vp_1 = constr_obs_i{1}.get_w_p_VP_inhand;
+                                w_p_vp_2 = constr_obs_i{3}.get_w_p_VP_inhand;
+                            end
+                            w_p_P_Q = [w_p_vp_1,w_PS_p{i}(:,1)];
+                            w_p_T_S = [w_PS_p{i}(:,2),w_p_vp_2];
+
+                            % plot muscle, via points and obstacle via
+                            % points
+                            plot3(w_p_P_Q(1,:)',w_p_P_Q(2,:),w_p_P_Q(3,:),...
+                            '-', 'LineWidth',plot_par.muscle_linewidth,...
+                            'Color',plot_par.muscle_linecolor)
+                            plot3(w_p_T_S(1,:)',w_p_T_S(2,:),w_p_T_S(3,:),...
+                            '-', 'LineWidth',plot_par.muscle_linewidth,...
+                            'Color',plot_par.muscle_linecolor,'MarkerSize',plot_par.viapoint_markersize,...
+                            'MarkerFaceColor',plot_par.viapoint_markercolor)
+                            % plot vp 
+                            plot3(w_p_vp_1(1),w_p_vp_1(2),w_p_vp_1(3),...
+                            '.', 'Color',plot_par.viapoint_markercolor,'MarkerSize',plot_par.viapoint_markersize);
+                            plot3(w_p_vp_2(1),w_p_vp_2(2),w_p_vp_2(3),...
+                            '.', 'Color',plot_par.viapoint_markercolor,'MarkerSize',plot_par.viapoint_markersize); 
+                            % plot obstacle vp by different color
                             plot3(w_PS_p{i}(1,:)',w_PS_p{i}(2,:),w_PS_p{i}(3,:),...
+                            '.', 'Color',plot_par.obstacle_vp_color,'MarkerSize',plot_par.viapoint_markersize)   
+
+                        else
+                            % plot a straight line from the first to last
+                            % vp in the constr_obs
+                            if plot_par.inhand == 0
+                                w_p_vp = [constr_obs_i{1}.get_w_p_VP,constr_obs_i{3}.get_w_p_VP];
+                            else
+                                w_p_vp = [constr_obs_i{1}.get_w_p_VP_inhand,constr_obs_i{3}.get_w_p_VP_inhand];
+                            end
+                            plot3(w_p_vp(1,:)',w_p_vp(2,:),w_p_vp(3,:),...
                             '.-', 'LineWidth',plot_par.muscle_linewidth,...
-                            'Color',plot_par.muscle_linecolor,'MarkerSize',plot_par.muscle_markersize)
+                            'Color',plot_par.muscle_linecolor,'MarkerSize',plot_par.viapoint_markersize)
                         end
+                    end
+                    for i = 1:length(obj.constr_vp)
+                        constr_vp_i = obj.constr_vp{i};
+                        w_p_vp_i = nan(3,length(constr_vp_i));
+                        for j = 1:length(constr_vp_i)
+                            if plot_par.inhand == 0
+                                w_p_vp_j = constr_vp_i{j}.get_w_p_VP;
+                            else
+                                w_p_vp_j = constr_vp_i{j}.get_w_p_VP_inhand;
+                            end
+                            w_p_vp_i(:,j) = w_p_vp_j;
+                        end
+                        % plot the vp straight line
+                        plot3(w_p_vp_i(1,:)',w_p_vp_i(2,:)',w_p_vp_i(3,:)',...
+                            '-', 'LineWidth',plot_par.muscle_linewidth,...
+                            'Color',plot_par.muscle_linecolor)
+                        plot3(w_p_vp_i(1,:)',w_p_vp_i(2,:)',w_p_vp_i(3,:)',...
+                            '.','Color',plot_par.viapoint_markercolor, ...
+                            'MarkerSize',plot_par.viapoint_markersize)
                     end
 
                 else
+                    % just plot the straight line across vps
                     w_p_vp_all = nan(3,obj.n_vp);
                     for i = 1:obj.n_vp
                         vp_i = obj.list_vp(i);

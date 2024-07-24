@@ -13,7 +13,7 @@
 % Junnan Li, junnan.li@tum.de, 07.2024
 
 
-function [l_QT,w_status,w_Q_p,w_T_p] = cal_obstacle_vp_cyl_Garner(w_T_obs, w_P_p, w_S_p, radius, wrap_direction )
+function [l_muscle,w_status,w_Q_p,w_T_p] = cal_obstacle_vp_cyl_Garner(w_T_obs, w_P_p, w_S_p, radius, wrap_direction )
 
 obs_P_p = T_p31(inv(w_T_obs),w_P_p);
 obs_S_p = T_p31(inv(w_T_obs),w_S_p);
@@ -72,6 +72,7 @@ end
 % Step 4: Muscle length
 if w_status
     l_QT = sqrt(l_QT_xy^2 + (obs_Q_z-obs_T_z)^2);
+    l_muscle = norm(obs_P_p-obs_Q_p) + l_QT + norm(obs_T_p-obs_S_p);
 else
-    l_QT = norm(obs_P_p-obs_S_p);
+    l_muscle = norm(obs_P_p-obs_S_p);
 end

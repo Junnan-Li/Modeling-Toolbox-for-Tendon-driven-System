@@ -1211,6 +1211,14 @@ classdef Finger < handle & matlab.mixin.Copyable
             obj.nmus = length(obj.list_muscles);
         end
 
+        function update_muscles(obj)
+            % update position of all viapoints
+            for i = 1:obj.nmus
+                muscle_i = obj.list_muscles(i);
+                muscle_i.init_list_constr;
+            end
+        end
+
         function [w_p_viapoints_all,b_p_viapoints_all] = get_p_muscle_viapoints(obj, muscle_index)
             assert(isempty(find(muscle_index - obj.nmus > 0)),'[get_p_muscle_viapoints] muscle index exceeds the number of muscles!')
             % plot 3d muscle via points

@@ -9,7 +9,7 @@ function parstr = plot_parameter_init()
 % init the parameter struct for plot_finger
 parstr = struct();
 
-parstr.inhand = 0;
+parstr.inhand = false;
 
 parstr.linecolor = 'r';
 parstr.linewidth = 3;
@@ -25,14 +25,15 @@ parstr.com_markercolor = 'r';
 
 parstr.viapoint_marker = '.';
 parstr.viapoint_markersize = 25;
-parstr.viapoint_markercolor = 'g';
+parstr.viapoint_markercolor = "#77AC30"; % green
 
-parstr.muscle_plot_obstacleset = false;
+parstr.muscle_plot_obstacleset = true;
 parstr.muscle_linecolor = 'm';
 parstr.muscle_linewidth = 2;
-parstr.muscle_markersize = 15;
+% parstr.muscle_markersize = 15;
 
 
 parstr.obstacle_color = 'g';
 parstr.obstacle_alpha = 0.2;
+parstr.obstacle_vp_color = "#0072BD"; % blue
 end

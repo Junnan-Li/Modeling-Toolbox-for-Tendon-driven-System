@@ -36,14 +36,19 @@ finger.update_list_viapoints
 
 finger.plot_viapoints(plot_par)
 
-muscle = finger.add_Muscle('muscle');
-muscle.add_viapoints(vp1)
-muscle.add_viapoints(vp2)
-muscle.add_viapoints(vp3)
-muscle.add_viapoints(vp4)
-muscle.add_viapoints(vp5)
+muscle1 = finger.add_Muscle('muscle1');
+muscle1.add_viapoints(vp1)
+muscle1.add_viapoints(vp2)
+muscle1.add_viapoints(vp3)
+muscle1.add_viapoints(vp4)
+muscle1.add_viapoints(vp5)
 
-
+muscle2 = finger.add_Muscle('muscle2');
+muscle2.add_viapoints(vp1)
+muscle2.add_viapoints(vp2)
+muscle2.add_viapoints(vp3)
+muscle2.add_viapoints(vp4)
+muscle2.add_viapoints(vp5)
 
 
 obs1 = finger.add_Obstacle_cylinder('Cyl1',1,[0,0,0]',eye(3),0.1,0.2);
@@ -53,38 +58,27 @@ finger.update_obstacles;
 % finger.plot_obstacles(plot_par)
 
 %%
-muscle.add_Muscle_Obstacles(obs1);
-muscle.add_Muscle_Obstacles(obs2);
+muscle1.add_Muscle_Obstacles(obs1);
+muscle1.add_Muscle_Obstacles(obs2);
+finger.update_muscles
 
-% finger.cal_all_Muscle_Length
-
-finger.plot_muscles(plot_par)
-
-figure(2)
-for i = 1:3
-    q = rand(finger.nj,1);
-    finger.update_finger(q)
-    finger.plot_finger(plot_par)
-    finger.plot_muscles(plot_par)
-end
 %% update muscle constrain list
 
-muscle.init_list_constr
+muscle1.init_list_constr
+muscle2.init_list_constr
 %%
-q = [0.8;0.3];
+
+plot_par = finger.plot_parameter_init;
+q = [1.2;1.3];
 finger.update_finger(q);
 figure(12)
-muscle.plot_muscles(plot_par);
+finger.plot_finger(plot_par)
+muscle1.plot_muscles(plot_par);
+muscle2.plot_muscles(plot_par);
 
-[l_total, wrap_status,w_PS_p] = muscle.cal_Muscle_length_ObstacleSet_Cyl_Garner;
-
-for i = 1:length(wrap_status)
-    if wrap_status(i)==1
-        plot3(w_PS_p{i}(1,:)',w_PS_p{i}(2,:),w_PS_p{i}(3,:), ...
-            'r.','MarkerSize',plot_par.muscle_markersize);
-    end
-end
+[l_total, wrap_status,w_PS_p] = muscle1.cal_Muscle_length_ObstacleSet_Cyl_Garner;
+l_1 = muscle2.cal_muscle_length;
 
 %% symbolic 
 
-[l_QT,w_status,w_Q_p,w_T_p] = cal_obstacle_vp_cyl_Garner(w_T_obs, w_P_p, w_S_p, radius, wrap_direction)
+% [l_QT,w_status,w_Q_p,w_T_p] = cal_obstacle_vp_cyl_Garner(w_T_obs, w_P_p, w_S_p, radius, wrap_direction)
