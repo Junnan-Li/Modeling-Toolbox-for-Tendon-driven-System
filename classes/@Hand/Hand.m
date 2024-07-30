@@ -501,18 +501,20 @@ classdef Hand < handle & matlab.mixin.Copyable
             % plot the com of each link in world frame
             
             if nargin == 1
-                par = obj.plot_parameter_init;
+                plot_par = obj.plot_parameter_init;
             elseif nargin == 2
-                par =  varargin{1};
+                plot_par =  varargin{1};
             else
                 error('[Hand:plot_hand_muscles] input dimension is incorrect! \n')
             end
 
             for i = 1:obj.nmus
-                w_p_viapoints_all = obj.get_p_muscle_viapoint(i);
-                plot3(w_p_viapoints_all(1,:)',w_p_viapoints_all(2,:)',w_p_viapoints_all(3,:)','-',...
-                    'Color',par.muscle_linecolor,'MarkerSize',par.muscle_markersize,'LineWidth',par.muscle_linewidth);
-                hold on
+%                 w_p_viapoints_all = obj.get_p_muscle_viapoint(i);
+%                 plot3(w_p_viapoints_all(1,:)',w_p_viapoints_all(2,:)',w_p_viapoints_all(3,:)','-',...
+%                     'Color',par.muscle_linecolor,'MarkerSize',par.muscle_markersize,'LineWidth',par.muscle_linewidth);
+%                 hold on
+                muscle_i = obj.list_muscles(i);
+                muscle_i.plot_muscles(plot_par);
             end
         end
 
@@ -731,7 +733,34 @@ classdef Hand < handle & matlab.mixin.Copyable
         end
 
         %% obstacles
-
+         function update_list_obstacles(obj)
+            % update the Link Class property: Links.nc 
+            obj.list_obstacles = {}; % init list_contacts
+            num_obstacles = 0;
+            % add viapoint from base
+            if obj.nb ~= 0
+                for i = 1:obj.nb
+                    base_i = obj.base(i);
+                    base_i.update_list_obstacles();
+                    num_obstacles = num_obstacles + base_i.nobs;
+                    if base_i.nobs~=0
+                        obj.list_obstacles = {obj.list_obstacles{:},base_i.list_obstacles{:}}';
+                    end
+                end
+            end
+            if obj.nf ~= 0
+               for i = 1:obj.nf
+                    finger_i = obj.list_fingers(i);
+                    finger_i.update_list_obstacles();
+                    num_obstacles = num_obstacles + finger_i.nobs;
+                    if finger_i.nobs~=0
+                        obj.list_obstacles = {obj.list_obstacles{:},finger_i.list_obstacles{:}}';
+                    end
+                end
+            end
+            obj.nobs = num_obstacles;
+            
+        end       
 
 
         %% state

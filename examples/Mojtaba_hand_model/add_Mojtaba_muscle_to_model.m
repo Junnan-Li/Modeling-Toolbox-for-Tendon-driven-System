@@ -1,7 +1,7 @@
 % plot the muscle path and distinguish the origin, viapoints, and insertion
 
 
-function add_Mojtaba_muscle_to_model(Mojtaba_hand_model, Seg_linK_mapping, varargin)
+function muscle_all = add_Mojtaba_muscle_to_model(Mojtaba_hand_model, Seg_linK_mapping, varargin)
 
 data_muscle = readcell('Mojtaba_model_data_muscle_path.csv');
 
@@ -13,6 +13,7 @@ end
 
 curent_muscle = '';
 
+muscle_all = {};
 num_muscle = 0;
 num_viapoint = 0;
 for i = 4:size(data_muscle,1)
@@ -24,6 +25,7 @@ for i = 4:size(data_muscle,1)
             if ~matches(curent_muscle,muscle_name_i)
                 curent_muscle = muscle_name_i;
                 muscle_i = Mojtaba_hand_model.add_Muscle(curent_muscle);
+                muscle_all{end+1} = muscle_i;
                 num_muscle = num_muscle + 1;
             end
             Seg_name = data_muscle{i,4};

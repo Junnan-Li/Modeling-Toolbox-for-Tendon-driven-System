@@ -312,11 +312,18 @@ Seg_linK_mapping = {'Radius', Mojtaba_hand.base.base;...
                     'DP5', Mojtaba_hand.list_fingers(5).list_links(4);...
                     };
 
-add_Mojtaba_muscle_to_model(Mojtaba_hand, Seg_linK_mapping) % 
+muscle = add_Mojtaba_muscle_to_model(Mojtaba_hand, Seg_linK_mapping, {'FDS2'}); % 
 
 Mojtaba_hand.update_list_viapoints;
 % 
-% %
+% obs1 = Mojtaba_hand.list_fingers(2).add_Obstacle_cylinder('Cyl1',1,[0.003,0,0]',eye(3),0.01,0.03);
+obs2 = Mojtaba_hand.list_fingers(2).add_Obstacle_cylinder('Cyl1',3,[0.004,0,0]',euler2R_XYZ([0,0,0]),0.008,0.02);
+% obs3 = Mojtaba_hand.list_fingers(2).add_Obstacle_cylinder('Cyl1',4,[0,0,0]',euler2R_XYZ([0,0,0]),0.01,0.02);
+Mojtaba_hand.update_list_obstacles;
+Mojtaba_hand.update_hand(q0);
+muscle{1}.add_Muscle_Obstacles(obs2);
+muscle{1}.init_list_constr;
+
 plot_hand_par = Mojtaba_hand.plot_parameter_init;
 plot_hand_par.muscle_linewidth = 2;
 plot_hand_par.muscle_linecolor = 'g';
@@ -329,12 +336,12 @@ figure(5)
 Mojtaba_hand.plot_hand(plot_hand_par)
 axis equal
 Mojtaba_hand.plot_hand_viapoints(plot_hand_par)
-% plot_Mojtaba_muscle_viapoint()
+Mojtaba_hand.plot_hand_obstacles(plot_hand_par)
 Mojtaba_hand.plot_hand_muscles(plot_hand_par)
 
+%% 
 
-% plot_Mojtaba_axes({'3','2','4'});
-
+[qDD,M,C,G] = Mojtaba_hand.fordyn_ne_hand_w_end(q0);
 %%
 % % % q = sym('q',[1 finger_m.nj])
 % % % 

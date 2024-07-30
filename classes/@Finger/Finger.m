@@ -940,7 +940,7 @@ classdef Finger < handle & matlab.mixin.Copyable
             end
             
             if obj.nvia == 0
-                fprintf('[plot_muscles]: muscle %s has no via point! /n', obj.name)
+                fprintf('[Finger:plot_viapoints]: Finger %s has no via point! \n', obj.name)
             else
                 for i = 1:obj.nvia
                     vp_i = obj.list_viapoints(i);
