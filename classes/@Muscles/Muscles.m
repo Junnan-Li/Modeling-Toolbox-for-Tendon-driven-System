@@ -119,7 +119,7 @@ classdef Muscles < handle
                     list_constr_tmp = {obj_i,list_constr_tmp{:}}';
                     list_constr_index_tmp = [0;list_constr_index_tmp(:)];
                 else
-                    index_i = min(find(list_constr_index_tmp == obj_i.Link.index));
+                    index_i = min(find(list_constr_index_tmp >= obj_i.Link.index));
                     list_constr_tmp = {list_constr_tmp{1:index_i-1},obj_i,list_constr_tmp{index_i:end}}';
                     list_constr_index_tmp = [list_constr_index_tmp(1:index_i-1); ...
                                     obj_i.Link.index; list_constr_index_tmp(index_i:end)];

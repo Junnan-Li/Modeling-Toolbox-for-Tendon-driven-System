@@ -121,6 +121,8 @@ classdef Finger < handle & matlab.mixin.Copyable
         q                   % [njx1] unit rad
         par_dyn_f           % [nj+1x1]mass_all, [3xnj+1]com_all, [6xNJ+1] inertial regarding com, [3x1] g 
         M_coupling          % [njxnt] coupling matrix of the finger
+
+%         w_T_links_all
     end
     
     methods
@@ -1421,8 +1423,6 @@ classdef Finger < handle & matlab.mixin.Copyable
             w_T_obs = obj.list_obstacles{obs_index}.w_T_Obs_inhand;
             b_T_obs = obj.list_obstacles{obs_index}.base_T_obs;
         end
-
-
     end
 end
 
