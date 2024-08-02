@@ -38,7 +38,27 @@ floating base,
 finger, and the endeff frame of base should be well-aligned. The first joint of the finger is attached 
 to the endeffector of base. 
     
-  
+###############################################
+generate symbolic functions only with q as input to compute necessary terms for simulink 
+The functions that are needed
+
+Hand: 
+    kinematics:
+w_T_links = f_FK(q)
+J = f_J(q)
+
+    dynamics:
+tau = f_ID(q, qd, qdd)
+tau = f_ID_contact(q, qd, qdd, f, J)
+M,C,G,h = f_M(q, qd)
+
+
+    muscles:
+MA, l, wrapping = f_mus(q)
+
+    via points
+w_p_via = f_FK_via(q)
+
 
 Dynamics:
 1. floating base inverse dynamic 
