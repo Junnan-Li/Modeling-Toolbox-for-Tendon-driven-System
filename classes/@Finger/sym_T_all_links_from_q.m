@@ -22,8 +22,8 @@ mdh_sym =  sym(mdh_struct_to_matrix(mdh, 1));
 mdh_sym(:,3) = mdh_sym(:,3) +  sym([q_sym;0]);
 % update all link properties
 for i = 1:obj.nl+1
-    b_T_i = T_mdh_multi(mdh_sym(1:i,:));
-    w_T_all_sym(:,:,i+1) = w_T_b*b_T_i;
+    b_T_i = simplify(T_mdh_multi(mdh_sym(1:i,:)));
+    w_T_all_sym(:,:,i+1) = simplify(w_T_b*b_T_i);
 end
 
 var_name = {q_sym};

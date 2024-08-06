@@ -24,6 +24,7 @@ classdef Links < handle & matlab.mixin.Copyable
     end
     properties (SetAccess = private)
         index  
+        index_inhand
         base_p            % [3x1] b_p_i: position of the frame with respect to Finger base frame. 
         base_R            % [3x3] b_R_i: position of the frame with respect to Finger base frame. 
         w_T_Link          
@@ -44,6 +45,7 @@ classdef Links < handle & matlab.mixin.Copyable
             obj.par_dyn.inertia = [1,1,1,0,0,0]'; % [xx yy zz yz xz xy]; related to center of mass
             obj.stiffness = 1;
             obj.index = index; 
+            obj.index_inhand = nan;
             obj.contacts = [];
             obj.nc = 0;
             obj.viapoints = [];
@@ -62,6 +64,11 @@ classdef Links < handle & matlab.mixin.Copyable
             obj.update_link_contacts;
             obj.update_link_viapoints;
             obj.update_link_obstacles;
+        end
+
+        function set_index_inhand(obj,index_inhand)
+            % 
+            obj.index_inhand = index_inhand;
         end
 
         function update_w_T_Link(obj,w_T_Link)
@@ -86,6 +93,7 @@ classdef Links < handle & matlab.mixin.Copyable
             base_T_link = [obj.base_R,obj.base_p; 0 0 0 1];
         end
         
+
         %% contacts
         function new_contact = add_contact_link(obj,name, link_p)
             %add contact point on the link

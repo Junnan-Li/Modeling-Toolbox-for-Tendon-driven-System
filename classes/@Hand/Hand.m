@@ -136,6 +136,7 @@ classdef Hand < handle & matlab.mixin.Copyable
 
         function update_hand_list(obj)
             % update all list
+            % update the index_inhand of links, viapoints, obstacles
             obj.nf = length(obj.list_fingers);
             obj.q = [];
             obj.nb = length(obj.base);
@@ -145,7 +146,7 @@ classdef Hand < handle & matlab.mixin.Copyable
             obj.nl = 0;
             obj.nc = 0;
             obj.nt = 0;
-            obj.nmus = 0;
+%             obj.nmus = 0;
             obj.nvia = 0;
             obj.nobs = 0;
             obj.limits_q = [];
@@ -153,9 +154,12 @@ classdef Hand < handle & matlab.mixin.Copyable
             obj.limits_qdd = [];
             
             obj.list_obstacles = {};
+            obj.list_links = [];
             obj.index_q_b = [];
             obj.index_q_f = [];
-            
+
+            index_fingers = 1;
+            index_links = 1;
             i_q = 1;
             % update base information
             if obj.nb ~= 0
@@ -163,53 +167,68 @@ classdef Hand < handle & matlab.mixin.Copyable
                 obj.w_R_base = obj.base(1).w_R_base;
                 obj.index_q_b = zeros(obj.nb,2);
                 for i = 1:obj.nb
-
                     base_i  = obj.base(i);
+                    base_i.set_index_inhand(index_fingers);
+                    base_i.base.set_index_inhand(index_links-1);
+                    index_fingers = index_fingers + 1;
+                    for j = 1:base_i.nl
+                        base_i.list_links(j).set_index_inhand(index_links);
+                        index_links = index_links + 1;
+                    end
 
                     obj.nj = obj.nj + base_i.nj;
                     obj.njb = obj.njb + base_i.nj;
                     obj.nl = obj.nl + base_i.nl;
                     obj.nc = obj.nc + base_i.nc;
                     obj.nt = obj.nt + base_i.nt;
-                    obj.nmus = obj.nmus + base_i.nmus;
                     obj.nvia = obj.nvia + base_i.nvia;
-                    obj.nobs = obj.nobs + base_i.nobs;
+%                     obj.nobs = obj.nobs + base_i.nobs;
                     obj.q = [obj.q;base_i.q];
                     obj.limits_q = [obj.limits_q;base_i.limits_q];
                     obj.limits_qd = [obj.limits_qd;base_i.limits_qd];
                     obj.limits_qdd = [obj.limits_qdd;base_i.limits_qdd];
                     
                     % sammurize the Finger list to Hand list
-                    obj.list_obstacles = {obj.list_obstacles{:},base_i.list_obstacles{:}}';
-
+%                     obj.list_obstacles = {obj.list_obstacles{:},base_i.list_obstacles{:}}';
+                    obj.list_links = [obj.list_links(:);base_i.list_links(:)];
                     obj.index_q_b(i,:) = [i_q,i_q+ base_i.nj-1];
                     i_q = i_q + base_i.nj;
                 end
             end
+            index_links_base = index_links - 1;
             if obj.nf ~= 0
                 obj.index_q_f = zeros(obj.nf,2);
                 for i = 1:obj.nf
                     finger_i = obj.list_fingers(i);
+                    finger_i.set_index_inhand(index_fingers);
+                    finger_i.base.set_index_inhand(index_links_base);
+                    index_fingers = index_fingers + 1;
+                    for j = 1:finger_i.nl
+                        finger_i.list_links(j).set_index_inhand(index_links);
+                        index_links = index_links + 1;
+                    end
+                  
                     obj.nj = obj.nj + finger_i.nj;
                     obj.njf = obj.njf + finger_i.nj;
                     obj.nl = obj.nl + finger_i.nl;
                     obj.nc = obj.nc + finger_i.nc;
                     obj.nt = obj.nt + finger_i.nt;
-                    obj.nmus = obj.nmus + finger_i.nmus;
                     obj.nvia = obj.nvia + finger_i.nvia;
-                    obj.nobs = obj.nobs + finger_i.nobs;
+%                     obj.nobs = obj.nobs + finger_i.nobs;
                     obj.q = [obj.q;finger_i.q];
                     obj.limits_q = [obj.limits_q;finger_i.limits_q];
                     obj.limits_qd = [obj.limits_qd;finger_i.limits_qd];
                     obj.limits_qdd = [obj.limits_qdd;finger_i.limits_qdd];
 
-                    obj.list_obstacles = {obj.list_obstacles{:},finger_i.list_obstacles{:}}';
+%                     obj.list_obstacles = {obj.list_obstacles{:},finger_i.list_obstacles{:}}';
+                    obj.list_links = [obj.list_links(:);finger_i.list_links(:)];
 
                     obj.index_q_f(i,:) = [i_q,i_q+ finger_i.nj-1];
                     i_q = i_q + finger_i.nj;
                 end
             end
             obj.update_list_viapoints;
+            obj.update_list_obstacles;
             %             obj.update_hand(obj.q);
         end
 
@@ -411,7 +430,32 @@ classdef Hand < handle & matlab.mixin.Copyable
             end
          end
 
-       
+         function w_T_links_inhand = get_w_T_links_inhand(obj)
+             % get the T of the all figners
+             % [4*4*obj.nl]
+             %             W_T_b = obj.get_W_T_B();
+             w_T_links_inhand = zeros(4,4,obj.nl);
+             % each Finger has base, link1, ... linkn, ee
+             index = 1;
+             if obj.nb ~= 0
+                 for i = 1:obj.nb
+                     base_i = obj.base(i);
+                     n_frame_i = base_i.nl;
+                     w_T_link_i = base_i.get_T_all_links_inhand;
+                     w_T_links_inhand(:,:,index:index+n_frame_i-1) = w_T_link_i(:,:,2:end-1);
+                     index = index+n_frame_i;
+                 end
+             end
+             if obj.nf ~= 0
+                 for i = 1:obj.nf
+                     finger_i = obj.list_fingers(i);
+                     n_frame_i = finger_i.nl;
+                     w_T_link_i = finger_i.get_T_all_links_inhand;
+                     w_T_links_inhand(:,:,index:index+n_frame_i-1) = w_T_link_i(:,:,2:end-1);
+                     index = index+n_frame_i;
+                 end
+             end
+         end
 
 
         %% visualization
@@ -581,7 +625,6 @@ classdef Hand < handle & matlab.mixin.Copyable
         %% viapoints
         function update_list_viapoints(obj)
             % update the Link Class property: Links.nc 
-            
             obj.list_viapoints = []; % init list_contacts
             num_viapoints = 0;
             if obj.nb ~= 0
@@ -601,6 +644,12 @@ classdef Hand < handle & matlab.mixin.Copyable
                 end
             end
             obj.nvia = num_viapoints;
+            if obj.nvia~=0
+                for j = 1:obj.nvia
+                    link_i = obj.list_viapoints(j).Link;
+                    obj.list_viapoints(j).set_index_inhand(link_i.index_inhand);
+                end
+            end
         end
         
         function w_p_viapoints_all = get_p_all_viapoints_inhand(obj)
@@ -624,6 +673,7 @@ classdef Hand < handle & matlab.mixin.Copyable
                 end
             end
         end
+        
 
         function delete_all_viapoint(obj)
             % delete all viapoints
@@ -642,9 +692,9 @@ classdef Hand < handle & matlab.mixin.Copyable
             obj.update_list_viapoints;
         end
         %% Muscle  
-        function Muscle_obj = add_Muscle(obj, name)
+        function add_Muscle(obj, Muscle_obj)
             % add muscle to the finger
-            Muscle_obj = Muscles(name);
+%             Muscle_obj = Muscles(name);
             obj.list_muscles = [obj.list_muscles;Muscle_obj];
             obj.nmus = length(obj.list_muscles);
         end
@@ -669,6 +719,7 @@ classdef Hand < handle & matlab.mixin.Copyable
             end
         end
 
+        
 
         function l_muscle = get_muscle_length(obj, muscle_index)
             assert(isempty(find(muscle_index - obj.nmus > 0)),'[Hand:get_p_muscle_viapoints] muscle index exceeds the number of muscles!')
@@ -759,7 +810,10 @@ classdef Hand < handle & matlab.mixin.Copyable
                 end
             end
             obj.nobs = num_obstacles;
-            
+            for j = 1:obj.nobs
+                link_i = obj.list_obstacles{j}.Link;
+                obj.list_obstacles{j}.set_index_inhand(link_i.index_inhand);
+            end
         end       
 
 

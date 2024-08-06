@@ -108,6 +108,7 @@ classdef Finger < handle & matlab.mixin.Copyable
     end
     
     properties (SetAccess = private)
+        index_finger_inhand
         w_p_base            % position of the base in world frame. Default: [0,0,0]'
         w_R_base            % rotation of the base in world frame. Default: non rotation
         w_T_base  
@@ -215,6 +216,8 @@ classdef Finger < handle & matlab.mixin.Copyable
 
             obj.nobs = 0;
             obj.list_obstacles = {};
+
+            obj.index_finger_inhand = [];
             
             obj.limit_joint_on = 0;
             obj.limits_q = zeros(obj.nj,2);
@@ -245,6 +248,10 @@ classdef Finger < handle & matlab.mixin.Copyable
 %             obj.update_rst_model;
         end
         
+        function set_index_inhand(obj,index_inhand)
+            % 
+            obj.index_finger_inhand = index_inhand;
+        end
         %% class property check
         function check_finger_properties(obj)
             % check if all the properties of the Finger class are in the
@@ -674,6 +681,7 @@ classdef Finger < handle & matlab.mixin.Copyable
 
         function w_T_all = get_T_all_links_inhand(obj)
             % get all transformation matrix of all links
+            % first matrix is base, last is endeffector
             w_T_b = obj.get_w_T_base_inhand();
             w_T_all = zeros(4,4,obj.nl+2); % base, link1, ... linkn, ee
             w_T_all(:,:,1) = w_T_b;

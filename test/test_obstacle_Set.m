@@ -140,6 +140,31 @@ J4 = cross(muscle2.constr_obs{1}{2}.Link.w_T_Link(1:3,3),muscle2.constr_obs{1}{3
 ma_ = J2'*f1_norm + J3'* (-f2_norm) + J4'*f2_norm
 t2 = toc
 
-%% symbolic 
+%% hand 
+% test obstacle and via points in hand objects
+hand = create_hand_random('hand_Obstacle_Set', [2,2,3,4] );
+% hand_rst = hand.update_rst_model;
+hand.add_finger(finger)
+% hand.update_hand_list
 
-% [l_QT,w_status,w_Q_p,w_T_p] = cal_obstacle_vp_cyl_Garner(w_T_obs, w_P_p, w_S_p, radius, wrap_direction)
+par_plot = hand.plot_parameter_init();
+
+hand.add_Muscle(muscle1)
+hand.add_Muscle(muscle2)
+q = rand(hand.nj,1);
+hand.update_hand(q);
+
+figure(4)
+hand.plot_hand(par_plot)
+hand.plot_hand_obstacles(par_plot)
+hand.plot_hand_viapoints(par_plot)
+hand.plot_hand_muscles(par_plot)
+axis equal
+
+
+
+
+
+
+
+

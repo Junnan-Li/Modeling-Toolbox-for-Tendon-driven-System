@@ -175,7 +175,7 @@ classdef Muscles < handle
         function [l_total, wrap_status,w_PS_p] = cal_Muscle_length_ObstacleSet_Cyl_Garner(obj, varargin)
             % calculate the muscle length with Cylinder obstacle set
             % using cal_obstacle_vp_cyl_Garner.m 
-            if nargin == 1
+            if nargin <= 1
                 in_hand = 0;
             else
                 in_hand = varargin{1};
@@ -184,8 +184,9 @@ classdef Muscles < handle
             if ~isempty(obj.constr_vp)
                 l_vp = nan(length(obj.constr_vp),1);
                 for i = 1:length(obj.constr_vp)
+                    %  a constraint list of straight line 
                     constr_vp_i = obj.constr_vp{i};
-                    n_vp_i = length(constr_vp_i);
+                    n_vp_i = length(constr_vp_i); % number of via points
                     w_p_vp = nan(3,n_vp_i);
                     for vp_index = 1:n_vp_i
                         vp_i = constr_vp_i{vp_index};
@@ -231,27 +232,27 @@ classdef Muscles < handle
         end
 
 
-        function l = cal_muscle_length(obj)
-            % calculate the muscle length (L2 norm)
-            l = 0;
-            for i = 1:obj.n_vp-1
-                p_vp_i = obj.list_vp(i).w_p_VP;
-                p_vp_inext = obj.list_vp(i+1).w_p_VP;
-                p_dis_i = norm(p_vp_inext-p_vp_i);
-                l = l + p_dis_i;
-            end
-        end
+%         function l = cal_muscle_length(obj)
+%             % calculate the muscle length (L2 norm)
+%             l = 0;
+%             for i = 1:obj.n_vp-1
+%                 p_vp_i = obj.list_vp(i).w_p_VP;
+%                 p_vp_inext = obj.list_vp(i+1).w_p_VP;
+%                 p_dis_i = norm(p_vp_inext-p_vp_i);
+%                 l = l + p_dis_i;
+%             end
+%         end
           
-        function l = cal_muscle_length_inhand(obj)
-            % calculate the muscle length (L2 norm)
-            l = 0;
-            for i = 1:obj.n_vp-1
-                p_vp_i = obj.list_vp(i).w_p_VP_inhand;
-                p_vp_inext = obj.list_vp(i+1).w_p_VP_inhand;
-                p_dis_i = norm(p_vp_inext-p_vp_i);
-                l = l + p_dis_i;
-            end
-        end
+%         function l = cal_muscle_length_inhand(obj)
+%             % calculate the muscle length (L2 norm)
+%             l = 0;
+%             for i = 1:obj.n_vp-1
+%                 p_vp_i = obj.list_vp(i).w_p_VP_inhand;
+%                 p_vp_inext = obj.list_vp(i+1).w_p_VP_inhand;
+%                 p_dis_i = norm(p_vp_inext-p_vp_i);
+%                 l = l + p_dis_i;
+%             end
+%         end
 
         %% plot 
         function plot_muscles(obj,plot_par) 

@@ -292,9 +292,40 @@ else
     fprintf('Test (finger Jacobian): pass! \n')
 end
 
-%%  IK 
+%%  Jacobian with given q and index_link
 
+hand = create_hand_random('hand_Obstacle_Set', [2,3,3,4] );
+hand_rst = hand.update_rst_model;
 
+q = rand(hand.nj,1);
+hand.update_hand(q);
+plot_par = hand.plot_parameter_init;
+figure(10)
+hand.plot_hand(plot_par)
+axis equal
+hand_rst.show(q,'Frames','on');
+
+w_T_all = hand.get_w_T_links_inhand;
+plot3(reshape(w_T_all(1,4,:),hand.nl,1),reshape(w_T_all(2,4,:),...
+    hand.nl,1),reshape(w_T_all(3,4,:),hand.nl,1),'k+','MarkerSize',15)
+J_rst = nan(6,hand.nl,hand.nl);
+J = nan(6,hand.nl,hand.nl);
+J1 = nan(6,hand.nl,hand.nl);
+for i = 1:hand.nl
+    link_i = hand.list_links(i);
+    J_rst_tmp = geometricJacobian(hand_rst,q,link_i.name);
+    J_rst(:,:,i) = [J_rst_tmp(4:6,:);J_rst_tmp(1:3,:)];
+    J(:,:,i) = hand.Jacobian_geom_w_point(i,[0,0,0]);
+end
+J_error = J_rst - J;
+if max(abs(J_error(:))) > 1e-10
+    test_failed = 1;
+end
+if test_failed == 1
+    fprintf('Test (finger Jacobian): failed! \n')
+else
+    fprintf('Test (finger Jacobian): pass! \n')
+end
 %% dynamics
 
 hand.update_hand_par_dyn
