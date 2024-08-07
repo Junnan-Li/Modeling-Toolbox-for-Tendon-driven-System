@@ -647,7 +647,8 @@ classdef Hand < handle & matlab.mixin.Copyable
             if obj.nvia~=0
                 for j = 1:obj.nvia
                     link_i = obj.list_viapoints(j).Link;
-                    obj.list_viapoints(j).set_index_inhand(link_i.index_inhand);
+                    obj.list_viapoints(j).index_link_inhand(link_i.index_inhand);
+                    obj.list_viapoints(j).index_inhand(j);
                 end
             end
         end

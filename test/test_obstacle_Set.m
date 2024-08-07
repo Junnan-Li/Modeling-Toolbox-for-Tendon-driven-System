@@ -161,7 +161,11 @@ hand.plot_hand_viapoints(par_plot)
 hand.plot_hand_muscles(par_plot)
 axis equal
 
-
+[l_11_num, wrap_status,w_PS_p] = muscle1.cal_Muscle_length_ObstacleSet_Cyl_Garner;
+[l_12_num, wrap_status2,w_PS_p2] = muscle2.cal_Muscle_length_ObstacleSet_Cyl_Garner;
+%%
+clc
+[length1,J1, wrap_status1,w_PS_p1] = hand.cal_hand_Muscle_l_J_Garner;
 
 
 

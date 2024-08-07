@@ -1,10 +1,10 @@
-% Geometric Jacobian of the a given point at a given frame  
+% Translational Geometric Jacobian of the a given point at a given frame  
 % 
 % input:
 %           q: 
 % 
 % output:
-%           J: [6xobj.nja] geometric jacobian
+%           J_trans: [3xobj.nja] geometric jacobian
 % 
 % Source: 
 %   "Robotics: Modeling, Planning, and Control" P111 - P113
@@ -13,7 +13,7 @@
 % 
 % Junnan Li, junnan.li@tum.de, 01.2023
 
-function J = Jacobian_geom_w_point(obj, index_link, i_p_point,varargin)
+function J_trans = Jacobian_geom_w_point(obj, index_link, i_p_point,varargin)
 
 if nargin <= 3
     q = obj.q;
@@ -30,7 +30,7 @@ index_base = [1,obj.index_q_b(end,end)];
 index_finger = obj.index_q_f;
 
 J = Jacobian_geom_T_hand(w_T_all, index_base, index_finger, index_link, i_p_point);
-
+J_trans = J(1:3,:);
 obj.update_hand(q_init);
 
 end

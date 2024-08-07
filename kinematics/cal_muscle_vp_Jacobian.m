@@ -19,7 +19,7 @@ assert(size(w_p_vp,1)==3,'[cal_muscle_vp_Jacobian]: input dimension is incorrect
 assert(size(w_J_vp,3)==n_vp ,'[cal_muscle_vp_Jacobian]: input dimension is incorrect!')
 
 
-J = nan(nj,1);
+J = zeros(nj,1);
 for i = 1:n_vp-1
     w_p_i = w_p_vp(:,i+1) - w_p_vp(:,i);
     w_p_i_norm = w_p_i/norm(w_p_i);

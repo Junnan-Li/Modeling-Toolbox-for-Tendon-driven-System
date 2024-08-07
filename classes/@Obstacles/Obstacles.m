@@ -27,7 +27,7 @@ classdef Obstacles < handle
     end
     properties (SetAccess = private)
         Link
-        index_inhand        % index of the related link in q of hand
+        index_link_inhand        % index of the related link in q of hand
         link_T_obs
         base_T_obs          
         w_T_Obs          
@@ -43,9 +43,9 @@ classdef Obstacles < handle
             obj.link_T_obs = nan(4,4);
         end
 
-        function set_index_inhand(obj,index_inhand)
+        function set_index_inhand(obj,index_link_inhand)
             % 
-            obj.index_inhand = index_inhand;
+            obj.index_link_inhand = index_link_inhand;
         end
 
         function add_Obs_to_link(obj,link_obj)

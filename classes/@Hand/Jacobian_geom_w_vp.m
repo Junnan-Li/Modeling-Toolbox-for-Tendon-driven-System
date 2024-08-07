@@ -31,8 +31,8 @@ w_T_all = obj.get_w_T_links_inhand;
 index_base = [1,obj.index_q_b(end,end)];
 index_finger = obj.index_q_f;
 index_link = vp_obj.Link.index_inhand;
-w_T_link = w_p_VP_inhand.w_T_Link_inhand;
-i_p_point = T_p31(w_T_link, vp_obj.w_p_VP_inhand);
+w_T_link = vp_obj.Link.w_T_Link_inhand;
+i_p_point = T_p31(inv(w_T_link), vp_obj.w_p_VP_inhand);
 J = Jacobian_geom_T_hand(w_T_all, index_base, index_finger, index_link, i_p_point);
 J_tran = J(1:3,:);
 if nargin > 2

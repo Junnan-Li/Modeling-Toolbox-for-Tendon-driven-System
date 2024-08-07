@@ -12,7 +12,8 @@ classdef ViaPoint < handle %& matlab.System
         link_p              % [3x1] position in the link frame
     end
     properties (SetAccess = private)
-        index_inhand        % index of the related link in q of hand
+        index_link_inhand        % index of the related link in q of hand
+        index_inhand            % index of via points of hand
         Link
         base_p          % used for Finger.get_p_all_viapoints
         w_p_VP          
@@ -25,6 +26,7 @@ classdef ViaPoint < handle %& matlab.System
             obj.name = name;
             obj.Link = Link_obj;
             obj.index_inhand = nan;
+            obj.index_link_inhand = nan;
             obj.link_p = link_p;
 
         end
@@ -41,6 +43,11 @@ classdef ViaPoint < handle %& matlab.System
         function set_index_inhand(obj,index_inhand)
             % 
             obj.index_inhand = index_inhand;
+        end
+
+        function set_index_link_inhand(obj,index_link_inhand)
+            % 
+            obj.index_link_inhand = index_link_inhand;
         end
 
         function update_w_p_VP(obj,w_p_VP_new)
