@@ -28,7 +28,7 @@
 %           cal_muscle_length_inhand
 % 
 
-classdef Muscles < handle
+classdef Muscles < handle & matlab.mixin.Copyable 
     
     properties (Access = public)
         name                 % [char] name of tendon

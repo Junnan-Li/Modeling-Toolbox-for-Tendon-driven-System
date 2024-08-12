@@ -163,12 +163,49 @@ axis equal
 
 [l_11_num, wrap_status,w_PS_p] = muscle1.cal_Muscle_length_ObstacleSet_Cyl_Garner;
 [l_12_num, wrap_status2,w_PS_p2] = muscle2.cal_Muscle_length_ObstacleSet_Cyl_Garner;
-%%
+%% validate the hand.cal_hand_Muscle_l_J_Garner in terms of Jacobian
 clc
-[length1,J1, wrap_status1,w_PS_p1] = hand.cal_hand_Muscle_l_J_Garner;
+% m3 = copy(muscle1);
+% m4 = copy(muscle1);
+% m5 = copy(muscle1);
+% m6 = copy(muscle1);
+% m7 = copy(muscle1);
+% m8 = copy(muscle1);
+% hand.add_Muscle(m3)
+% hand.add_Muscle(m4)
+% hand.add_Muscle(m5)
+% hand.add_Muscle(m6)
+% hand.add_Muscle(m7)
+% hand.add_Muscle(m8)
 
 
+q_init = rand(hand.nj,1);
+hand.update_hand(q_init);
+hand.plot_hand(par_plot)
+hand.plot_hand_viapoints(par_plot)
+hand.plot_hand_muscles(par_plot)
+tic
+[length1,J1, wrap_status1,w_PS_p1] = hand.cal_hand_Muscle_l_J_Garner_test;
+t1 = toc;
+%
+tic
+J2 = hand.get_Muscle_Momentarm_1st_f; 
+t2 = toc;
 
+tic
+J3 = hand.get_Muscle_Momentarm_1st_c;
+t3 = toc;
+J_error1 = J1 - J2;
+J_error2 = J1 - J3;
+J_error = [J_error1;J_error2];
 
+if max(abs(J_error(:))) > 1e-6 
+    fprintf('Test (muscle Jacobian): failed! \n')
+else
+    fprintf('Test (muscle Jacobian): pass! \n')
+end
+fprintf('cal_hand_Muscle_l_J_Garner: %f! \n',t1)
+fprintf('get_Muscle_Momentarm_1st_f: %f! \n',t2)
+fprintf('get_Muscle_Momentarm_1st_c: %f! \n',t3)
 
 

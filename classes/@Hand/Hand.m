@@ -625,6 +625,7 @@ classdef Hand < handle & matlab.mixin.Copyable
         %% viapoints
         function update_list_viapoints(obj)
             % update the Link Class property: Links.nc 
+            
             obj.list_viapoints = []; % init list_contacts
             num_viapoints = 0;
             if obj.nb ~= 0
@@ -644,11 +645,12 @@ classdef Hand < handle & matlab.mixin.Copyable
                 end
             end
             obj.nvia = num_viapoints;
+            % update the via point link_index and index in hand list
             if obj.nvia~=0
                 for j = 1:obj.nvia
                     link_i = obj.list_viapoints(j).Link;
-                    obj.list_viapoints(j).index_link_inhand(link_i.index_inhand);
-                    obj.list_viapoints(j).index_inhand(j);
+                    obj.list_viapoints(j).set_index_link_inhand(link_i.index_inhand);
+                    obj.list_viapoints(j).set_index_inhand(j);
                 end
             end
         end
@@ -675,6 +677,14 @@ classdef Hand < handle & matlab.mixin.Copyable
             end
         end
         
+        function w_J_viapoints_all = get_J_all_viapoints_inhand(obj)
+            % plot 3d viapoints
+            w_J_viapoints_all = NaN(3,obj.nj,obj.nvia);
+            for i = 1:obj.nvia
+                vp_i = obj.list_viapoints(i);
+                w_J_viapoints_all(:,:,i) = obj.Jacobian_geom_w_vp(vp_i);
+            end
+        end
 
         function delete_all_viapoint(obj)
             % delete all viapoints
@@ -729,9 +739,9 @@ classdef Hand < handle & matlab.mixin.Copyable
             for i = 1:length(muscle_index)
                 muscle_i = obj.list_muscles(muscle_index(i));
                 if muscle_i.n_vp == 0
-                    fprintf('[Hand:get_p_muscle_viapoints] muscle %d has no viapoints! \n',muscle_index(i))
+                    fprintf('[Hand:get_muscle_length] muscle %d has no viapoints! \n',muscle_index(i))
                 end
-                l_muscle(i) = muscle_i.cal_muscle_length_inhand;
+                l_muscle(i) = muscle_i.cal_Muscle_length_ObstacleSet_Cyl_Garner(1);
             end
         end
 
@@ -742,6 +752,37 @@ classdef Hand < handle & matlab.mixin.Copyable
                 l_muscle_all(i) = obj.get_muscle_length(i);
             end
         end
+        
+        function MA = get_Muscle_Momentarm_1st_f(obj,  varargin)
+            % calculate the Momentarm matrix of all muscles
+            % MA is a [nj,length(muscle_index)] matrix
+            % calculate the MA value using first order centered 
+            % numeric differentiation method
+
+            if nargin == 1
+                muscle_index = (1:obj.nmus)';
+                eps = 1e-8;
+            elseif nargin == 2
+                muscle_index = varargin{1};
+                eps = 1e-8;
+            elseif nargin == 3
+                muscle_index = varargin{1};
+                eps = varargin{2};
+            end
+            MA = zeros(obj.nj,length(muscle_index));
+            q_ori = obj.q;
+            l_ori = obj.get_muscle_length(muscle_index);
+            for i = 1: obj.nj
+%                 for j = 1: length(muscle_index)
+                    q_f = q_ori;
+                    q_f(i) = q_f(i) + eps;
+                    obj.update_hand(q_f);
+                    l_f = obj.get_muscle_length(muscle_index); % forward 
+                    MA(i,:) = (l_f-l_ori)./(eps); 
+%                 end
+            end
+            obj.update_hand(q_ori);
+        end
 
         function MA = get_Muscle_Momentarm_1st_c(obj,  varargin)
             % calculate the Momentarm matrix of all muscles
@@ -751,27 +792,27 @@ classdef Hand < handle & matlab.mixin.Copyable
 
             if nargin == 1
                 muscle_index = (1:obj.nmus)';
-                step = 1e-3;
+                eps = 1e-8;
             elseif nargin == 2
                 muscle_index = varargin{1};
-                step = 1e-3;
+                eps = 1e-8;
             elseif nargin == 3
                 muscle_index = varargin{1};
-                step = varargin{2};
+                eps = varargin{2};
             end
             MA = zeros(obj.nj,length(muscle_index));
             q_ori = obj.q;
             for i = 1: obj.nj
 %                 for j = 1: length(muscle_index)
                     q_f = q_ori;
-                    q_f(i) = q_f(i) + step;
+                    q_f(i) = q_f(i) + eps;
                     obj.update_hand(q_f);
                     l_f = obj.get_muscle_length(muscle_index); % forward 
                     q_b = q_ori;
-                    q_b(i) = q_b(i) - step;
+                    q_b(i) = q_b(i) - eps;
                     obj.update_hand(q_b);
                     l_b = obj.get_muscle_length(muscle_index); % forward 
-                    MA(i,:) = (l_f-l_b)./(2*step); 
+                    MA(i,:) = (l_f-l_b)./(2*eps); 
 %                 end
             end
             obj.update_hand(q_ori);

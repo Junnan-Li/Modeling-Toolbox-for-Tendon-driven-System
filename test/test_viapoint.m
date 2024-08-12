@@ -57,8 +57,8 @@ hand.update_hand(q);
 
 
 %% add muscles
-
-Muscle_1 = hand.add_Muscle("muscle_1");
+Muscle_1 = Muscles("muscle_1");
+hand.add_Muscle(Muscle_1);
 Muscle_1.add_viapoints(vp01);
 Muscle_1.add_viapoints(vp03);
 Muscle_1.add_viapoints(vp1);
@@ -68,7 +68,8 @@ Muscle_1.add_viapoints(vp6);
 Muscle_1.add_viapoints(vp7);
 Muscle_1.add_viapoints(vp8);
 
-Muscle_2 = hand.add_Muscle("muscle_2");
+Muscle_2 = Muscles("muscle_2");
+hand.add_Muscle(Muscle_2);
 Muscle_2.add_viapoints(vp02);
 Muscle_2.add_viapoints(vp2);
 Muscle_2.add_viapoints(vp4);
