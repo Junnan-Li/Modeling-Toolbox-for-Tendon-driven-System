@@ -225,7 +225,9 @@ w_T_all = wrist.get_T_all_links;
 wrist.base.set_mass(1);
 wrist.base.set_com(position_EL_EM-position_US_RS);
 wrist.list_links(1).set_mass(0);
+wrist.list_links(1).set_inertia(zeros(6,1));
 wrist.list_links(2).set_mass(0.332);
+wrist.list_links(2).set_inertia([1e-4;1e-4;1e-4;0;0;0]);
 wrist.list_links(2).set_com(reshape(w_T_all(1:3,1:3)'*com_palm,3,1));
 wrist.update_finger_par_dyn
 
@@ -312,26 +314,25 @@ Seg_linK_mapping = {'Radius', Mojtaba_hand.base.base;...
                     'DP5', Mojtaba_hand.list_fingers(5).list_links(4);...
                     };
 
-muscle = add_Mojtaba_muscle_to_model(Mojtaba_hand, Seg_linK_mapping, {'FDS2'}); % 
+muscle = add_Mojtaba_muscle_to_model(Mojtaba_hand, Seg_linK_mapping); % 
 
 Mojtaba_hand.update_list_viapoints;
+Mojtaba_hand.muscle_init_list_constr;
 % 
 % obs1 = Mojtaba_hand.list_fingers(2).add_Obstacle_cylinder('Cyl1',1,[0.003,0,0]',eye(3),0.01,0.03);
-obs2 = Mojtaba_hand.list_fingers(2).add_Obstacle_cylinder('Cyl1',3,[0.004,0,0]',euler2R_XYZ([0,0,0]),0.008,0.02);
-% obs3 = Mojtaba_hand.list_fingers(2).add_Obstacle_cylinder('Cyl1',4,[0,0,0]',euler2R_XYZ([0,0,0]),0.01,0.02);
-Mojtaba_hand.update_list_obstacles;
-Mojtaba_hand.update_hand(q0);
-muscle{1}.add_Muscle_Obstacles(obs2);
-muscle{1}.init_list_constr;
+% obs2 = Mojtaba_hand.list_fingers(2).add_Obstacle_cylinder('Cyl1',3,[0.004,0,0]',euler2R_XYZ([0,0,0]),0.008,0.02);
+% % obs3 = Mojtaba_hand.list_fingers(2).add_Obstacle_cylinder('Cyl1',4,[0,0,0]',euler2R_XYZ([0,0,0]),0.01,0.02);
+% Mojtaba_hand.update_list_obstacles;
+% Mojtaba_hand.update_hand(q0);
+% muscle{1}.add_Muscle_Obstacles(obs2);
+% muscle{1}.init_list_constr;
 
 plot_hand_par = Mojtaba_hand.plot_parameter_init;
-plot_hand_par.muscle_linewidth = 2;
-plot_hand_par.muscle_linecolor = 'g';
-plot_hand_par.muscle_markersize = 10;
-plot_hand_par.axis_len = 0.02;
-plot_hand_par.viapoint_marker = '.';
-plot_hand_par.viapoint_markersize = 10;
-plot_hand_par.viapoint_markercolor = 'b';
+% plot_hand_par.muscle_linewidth = 2;
+% plot_hand_par.muscle_linecolor = 'g';
+% plot_hand_par.axis_len = 0.02;
+% plot_hand_par.viapoint_markersize = 10;
+% plot_hand_par.viapoint_markercolor = 'b';
 figure(5)
 Mojtaba_hand.plot_hand(plot_hand_par)
 axis equal
@@ -342,6 +343,11 @@ Mojtaba_hand.plot_hand_muscles(plot_hand_par)
 %% 
 
 [qDD,M,C,G] = Mojtaba_hand.fordyn_ne_hand_w_end(q0);
+Tau = Mojtaba_hand.invdyn_ne_hand_w_end(q0);
+
+%% moment arm
+[length1,J1, wrap_status1,w_PS_p1] = Mojtaba_hand.cal_hand_Muscle_l_J_Garner(Mojtaba_hand.get_w_T_links_inhand);
+
 %%
 % % % q = sym('q',[1 finger_m.nj])
 % % % 

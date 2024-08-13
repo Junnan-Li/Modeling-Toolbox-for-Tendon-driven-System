@@ -59,7 +59,10 @@ classdef Hand < handle & matlab.mixin.Copyable
         index_q_b           % [njb,2] start and end index of base joint in q
         index_q_f           % [njf,2] start and end index of base joint in q
 
-        topology
+        sim_mdh
+        sim_mdh_index
+        sim_nb
+        sim_w_T_b
     end
     
     properties (SetAccess = private)
@@ -115,6 +118,9 @@ classdef Hand < handle & matlab.mixin.Copyable
             obj.index_q_f = [];
             
             obj.par_dyn_h = struct();
+            
+            % generate matrix for simulink 
+            obj.sim_mdh = [];
         end
 
 
@@ -716,6 +722,14 @@ classdef Hand < handle & matlab.mixin.Copyable
             obj.nmus = length(obj.list_muscles);
         end
 
+        function muscle_init_list_constr(obj)
+            % add muscle to the finger
+%             Muscle_obj = Muscles(name);
+            for i = 1:obj.nmus
+                obj.list_muscles(i).init_list_constr;
+            end
+        end
+
         function w_p_viapoints_all = get_p_muscle_viapoint(obj, muscle_index)
             assert(isempty(find(muscle_index - obj.nmus > 0)),'[Hand:get_p_muscle_viapoints] muscle index exceeds the number of muscles!')
             % plot 3d muscle via points
@@ -858,6 +872,42 @@ classdef Hand < handle & matlab.mixin.Copyable
             end
         end       
 
+        %% simulation functions
+        function update_sim_mdh(obj)
+            % mdh in order: alpha,a,theta,d
+            obj.sim_mdh = [];
+            obj.sim_mdh_index = [];
+            obj.sim_nb = 0;
+            obj.sim_w_T_b = [];
+            mdh_index_start = 1;
+            if obj.nb ~= 0
+                for i = 1:obj.nb
+                    base_i = obj.base(i);
+                    mdh_i = mdh_struct_to_matrix(base_i.mdh_ori,1);
+                    obj.sim_mdh = [obj.sim_mdh; ...
+                        mdh_i];
+                    obj.sim_mdh_index = [obj.sim_mdh_index;
+                        mdh_index_start,mdh_index_start+size(mdh_i,1)-1];
+                    obj.sim_w_T_b = [obj.sim_w_T_b; ...
+                        base_i.w_T_base];
+                    mdh_index_start = obj.sim_mdh_index(end,2)+1;
+                end
+            end
+            obj.sim_nb = obj.nb;
+            if obj.nf ~= 0
+               for i = 1:obj.nf
+                    finger_i = obj.list_fingers(i);
+                    mdh_i = mdh_struct_to_matrix(finger_i.mdh_ori,1);
+                    obj.sim_mdh = [obj.sim_mdh; ...
+                        mdh_i];
+                    obj.sim_mdh_index = [obj.sim_mdh_index;
+                        mdh_index_start,mdh_index_start+size(mdh_i,1)-1];
+                    obj.sim_w_T_b = [obj.sim_w_T_b; ...
+                        finger_i.w_T_base];
+                    mdh_index_start = obj.sim_mdh_index(end,2)+1;
+                end
+            end
+        end
 
         %% state
         function state = init_state(obj)

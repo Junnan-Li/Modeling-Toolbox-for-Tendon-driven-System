@@ -29,18 +29,19 @@ function [length,J, wrap_status,w_PS_p] = cal_hand_Muscle_l_J_Garner(obj, vararg
 % calculate the muscle length with Cylinder obstacle set
 % using cal_obstacle_vp_cyl_Garner.m
 if nargin <= 1
-    q = obj.q;
+%     q = obj.q;
+    w_T_links_all = obj.get_w_T_links_inhand;
 else
-    q = varargin{1};
-    q = reshape(q,[obj.nj,1]);
-    obj.update_hand(q);
+    w_T_links_all = varargin{1};
+%     q = reshape(q,[obj.nj,1]);
+%     obj.update_hand(q);
 end
 
 
 nmus = obj.nmus;
 nj = obj.nj;
 
-w_T_links_all = obj.get_w_T_links_inhand;
+% w_T_links_all = obj.get_w_T_links_inhand;
 assert(all(size(w_T_links_all)==[4,4,obj.nj]),'[cal_hand_Muscle_l_J_Garner] dimension of w_T_links_all is incorrect!')
 
 % initialize
@@ -49,6 +50,8 @@ J = zeros(nj,nmus);
 wrap_status = cell(nmus,1);
 w_PS_p = cell(nmus,1);
 
+% J_vp_all is 3 x nj x nvia
+J_vp_all = obj.get_J_all_viapoints_inhand;
 
 for i_mus = 1:nmus
     muscle_i = obj.list_muscles(i_mus);
@@ -63,7 +66,7 @@ for i_mus = 1:nmus
             for vp_index = 1:n_vp_i
                 vp_i = constr_vp_i{vp_index};
                 w_p_vp(:,vp_index) = vp_i.get_w_p_VP_inhand;
-                J_vp(:,:,vp_index) = obj.Jacobian_geom_w_vp(vp_i);
+                J_vp(:,:,vp_index) = J_vp_all(:,:,vp_i.index_inhand);
             end
             J_constr_vp_i = cal_muscle_vp_Jacobian(J_vp, w_p_vp);
             l_constr_vp_i = cal_muscle_vp_length(w_p_vp);
@@ -85,13 +88,12 @@ for i_mus = 1:nmus
                 wrap_direction = sign(constr_obs_i{2}.axis(3));
                 [l_QT_i,wrap_status_i,w_Q_p,w_T_p] = cal_obstacle_vp_cyl_Garner(w_T_obs, w_P_p, w_S_p, radius, wrap_direction);
 
-                w_J_P = obj.Jacobian_geom_w_vp(constr_obs_i{1});
-                w_J_S = obj.Jacobian_geom_w_vp(constr_obs_i{3});
+                w_J_P = J_vp_all(:,:,constr_obs_i{1}.index_inhand);
+                w_J_S = J_vp_all(:,:,constr_obs_i{3}.index_inhand);
                 if wrap_status_i
                     J_vp = zeros(3,nj,4);
-                    w_T_link = constr_obs_i{2}.Link.w_T_Link_inhand;
-                    w_J_Q = obj.Jacobian_geom_w_point(constr_obs_i{2}.index_link_inhand, w_Q_p);
-                    w_J_T = obj.Jacobian_geom_w_point(constr_obs_i{2}.index_link_inhand, w_T_p);
+                    w_J_Q = obj.Jacobian_geom_w_point(constr_obs_i{2}.index_link_inhand, w_Q_p,w_T_links_all);
+                    w_J_T = obj.Jacobian_geom_w_point(constr_obs_i{2}.index_link_inhand, w_T_p,w_T_links_all);
                     J_vp(:,:,1) = w_J_P;
                     J_vp(:,:,2) = w_J_Q;
                     J_vp(:,:,3) = w_J_T;
@@ -117,7 +119,7 @@ for i_mus = 1:nmus
     end
 end
 
-if nargin > 1
-    obj.update_hand(q_init);
-end
+% if nargin > 1
+%     obj.update_hand(q_init);
+% end
 end

@@ -24,7 +24,8 @@ for i = 4:size(data_muscle,1)
             muscle_name_i = data_muscle{i,2};
             if ~matches(curent_muscle,muscle_name_i)
                 curent_muscle = muscle_name_i;
-                muscle_i = Mojtaba_hand_model.add_Muscle(curent_muscle);
+                muscle_i = Muscles(curent_muscle);
+                Mojtaba_hand_model.add_Muscle(muscle_i);
                 muscle_all{end+1} = muscle_i;
                 num_muscle = num_muscle + 1;
             end

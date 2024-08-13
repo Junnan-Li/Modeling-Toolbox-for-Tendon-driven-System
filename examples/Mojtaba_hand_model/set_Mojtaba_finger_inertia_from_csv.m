@@ -32,6 +32,8 @@ for i = 2:size(data_inertia,1)
 end
 
 % update dynamic parameters for PP MP and DP links
+finger.list_links(1).set_mass(0); % in kg
+finger.list_links(1).set_inertia(zeros(6,1)); % in kg
 for i = 1:3
     finger.list_links(i+1).set_mass(dynpar_mass(i)); % in kg
     finger.list_links(i+1).set_inertia([dynpar_inertia(i,:),zeros(1,3)]);

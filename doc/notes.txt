@@ -43,9 +43,13 @@ generate symbolic functions only with q as input to compute necessary terms for 
 The functions that are needed
 
 Hand: 
+    input: q, qd 
+    index: link_index, VP_index, 
     kinematics:
-w_T_links = f_FK(q)
-J = f_J(q)
+        w_T_links = f_FK(q)
+        w_p_via = f_FK_via(q)
+        w_J_via = f_J_via(q)
+        J = f_J(q)
 
     dynamics:
 tau = f_ID(q, qd, qdd)
@@ -53,12 +57,17 @@ tau = f_ID_contact(q, qd, qdd, f, J)
 M,C,G,h = f_M(q, qd)
 
 
-    muscles:
-MA, l, wrapping = f_mus(q)
+
 
     via points
-w_p_via = f_FK_via(q)
 
+
+
+    muscles:
+l, J, wrapping, position = f_mus(w_T_links,w_p_via,w_J_via)
+
+
+    M
 
 Dynamics:
 1. floating base inverse dynamic 
