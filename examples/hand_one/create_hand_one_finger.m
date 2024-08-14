@@ -115,4 +115,6 @@ hand_rst = handone.update_rst_model;
 J = handone.Jacobian_geom_w_one_finger(1,q);
 
 handone.update_sim_mdh
-
+%%
+w_T_all_links = handone.get_w_T_links_inhand;
+sim_plot_hand(w_T_all_links,handone.sim_n_links,handone.sim_q_index)
