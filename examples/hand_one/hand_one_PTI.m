@@ -47,9 +47,11 @@ mdh_matrix = mdh_struct_to_matrix(mdh_ori,1);
 mdh_matrix(5,2) = 0.014;
 
 finger_handone.set_mdh_parameters(mdh_matrix);
-finger_handone.w_p_base = 4*zeros(3,1);
-finger_handone.w_R_base = euler2R_XYZ([pi,0,0]);
-finger_handone.update_finger(config);
+finger_handone.set_base_p(4*zeros(3,1));
+finger_handone.set_base_R(euler2R_XYZ([pi,0,0]));
+finger_handone
+
+% finger_handone.update_finger(config);
 
 % load rst model from finger class
 rst_model_r = finger_handone.rst_model;
