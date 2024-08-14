@@ -314,7 +314,7 @@ Seg_linK_mapping = {'Radius', Mojtaba_hand.base.base;...
                     'DP5', Mojtaba_hand.list_fingers(5).list_links(4);...
                     };
 
-muscle = add_Mojtaba_muscle_to_model(Mojtaba_hand, Seg_linK_mapping); % 
+muscle = add_Mojtaba_muscle_to_model(Mojtaba_hand, Seg_linK_mapping,{'FDS2'}); % 
 
 Mojtaba_hand.update_list_viapoints;
 Mojtaba_hand.muscle_init_list_constr;

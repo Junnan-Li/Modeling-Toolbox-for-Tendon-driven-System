@@ -61,7 +61,8 @@ classdef Hand < handle & matlab.mixin.Copyable
 
         sim_mdh
         sim_mdh_index
-        sim_nb
+        sim_q_index
+        sim_n_links
         sim_w_T_b
     end
     
@@ -877,8 +878,9 @@ classdef Hand < handle & matlab.mixin.Copyable
             % mdh in order: alpha,a,theta,d
             obj.sim_mdh = [];
             obj.sim_mdh_index = [];
-            obj.sim_nb = 0;
+            obj.sim_n_links = [obj.nb,obj.nf];
             obj.sim_w_T_b = [];
+            obj.sim_q_index = [obj.index_q_b;obj.index_q_f];
             mdh_index_start = 1;
             if obj.nb ~= 0
                 for i = 1:obj.nb
@@ -893,7 +895,6 @@ classdef Hand < handle & matlab.mixin.Copyable
                     mdh_index_start = obj.sim_mdh_index(end,2)+1;
                 end
             end
-            obj.sim_nb = obj.nb;
             if obj.nf ~= 0
                for i = 1:obj.nf
                     finger_i = obj.list_fingers(i);
