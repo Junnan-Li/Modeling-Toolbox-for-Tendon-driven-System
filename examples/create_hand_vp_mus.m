@@ -35,6 +35,8 @@ hand.update_list_viapoints;
 q = rand(hand.nj,1);
 hand.update_hand(q);
 
+
+return
 %% add muscles
 
 Muscle_1 = hand.add_Muscle("muscle_1");

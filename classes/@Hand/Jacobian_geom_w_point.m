@@ -24,7 +24,7 @@ end
 
 index_base = [1,obj.index_q_b(end,end)];
 index_finger = obj.index_q_f;
-
+w_p_point = reshape(w_p_point,3,1);% reshape the vector as 3x1 
 J = Jacobian_geom_T_hand(w_T_link_all, index_base, index_finger, index_link, w_p_point);
 J_trans = J(1:3,:);
 % obj.update_hand(q_init);
