@@ -17,6 +17,14 @@
 
 %       
 % 
+% Kinematics
+%       Jacobian:
+%           hand.Jacobian_geom_w_point.m: point/frame Jacobian 
+%               give the index of link and position of point in the link 
+%               frame. it gives the Jacobian of that point.
+% 
+%           Jacobian_geom_w_vp.m: viapoint Jacobian 
+%               input 
 % 
 
 

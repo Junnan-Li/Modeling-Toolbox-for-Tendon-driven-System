@@ -1,11 +1,19 @@
 %% Class of Links:
 % 
-%       Create a Link:
-
-
-
-
-
+% 
+%   index: [1] index of link/joint in a Finger object
+%   index_inhand: [1] index of link/joint in a Hand object
+%   base_p: [3x1] position of link frame to the Finger base frame (mdh related)
+%   base_R: [3x3] orientation of link frame to the Finger base frame(mdh related)
+%   w_T_Link: [4x4] transformation matrix to the Finger world frame 
+%   w_T_Link_inhand: [4x4] transformation matrix to the Hand world frame 
+% 
+% The Link kinematic information is updated by calling
+%   update_w_T_Link.m 
+%   update_w_T_Link_inhand
+% from Finger/Hand functions
+% 
+% 
 classdef Links < handle & matlab.mixin.Copyable 
     
     properties (Access = public)

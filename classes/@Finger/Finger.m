@@ -1,8 +1,6 @@
 %% Class of Finger:
-% 
-%       Create a Finger:
-%           finger = Finger(finger_name, finger_type, link_len_vector)
-%           
+% How to create a Finger object:
+%       1. finger = Finger(finger_name, finger_type, link_len_vector)
 %           finger_name: [char]           
 %           finger_type: 
 %               'RRRR': general finger with four joints(Ab/duction, MCP, PIP, DIP)
@@ -11,21 +9,66 @@
 %           link_len_vector:
 %               vector of the length of the links that match the number
 %               the finger_type (mdh: a)
-%
+%       2. finger = Finger(finger_name, 'mdh',mdh_struct);
+%           finger_name: [char] 
+%           mdh_struct: structure contains mdh parameters; use
+%               mdh_matrix_to_struct(mdh_matrix,1) to derive
+%       3. create_finger_random(finger_name, finger_dof)
+%           create a random finger with name and DoF. Normally used for
+%           initializing a finger with random parameters and then modifying
+%           the mdh parameters
+% 
+%%%%%%%%%%%%%%%%%%%%%%%%%
+% For validation, the Finger object has a avatar model generated in Robotic
+% System Toolbox from Matlab. 
+%       After defininh the Finger object, use update_rst_model.m to generate 
+%       rst model. 
+% 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %       Coordinates:   
 %           Coord. World: (w) world coordinate. symmetrical for all classes
 %           Coord. base:  original coordinate for the **Class Finger**. 
 %                         Tranformation information regarding w: w_p_base & w_R_base
-%           Coord. jonts: mdh related 
-%           
-
-% TODO: 
-%       1. passive joints
-%       2. function check_finger_properties 
-%       3. dh parameter as another option to define kinematics
+%           Coord. links(joints) and endeffector: mdh related   
+%%%%%%%%%%%%%%%%%%%%%%%%%
+%       Links(Finger.base & Finger.list_links):
+%           Base: a link object define the base of a finger with parameters
+%               saved in Finger.base
+%           Links: a link object for each link connected by joints saved in
+%               Finger.list_links
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+%       Kinematic parameters (saved as structure with dimension [nj+1,4])
+%       NOTE: theta parameters are set to 0 initially and considered as q
+%           Finger.mdh: alpha, a, theta (q), d 
+%           Finger.mdha_all: same as Finger.mdh (current version)
+%           Finger.mdh_ori: alpha, a, theta (without q), d 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%       Dynamic parameters (Finger.par_dyn_f)
+%           .g: [3x1] gravity vector ([0;0;-9.81] by default)
+%           .mall_all: [nl+1,1] mass value of base and links
+%           .inertia_all: [6,nl+1]
+%           .com_all: [3,nl+1]
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+%       Base/Link functions
+%           w_T_base:  transformation matrix of Finger base to Finger world frame
+%           w_T_base_inhand:  transformation matrix of Finger base to Hand
+%               world frame
 % 
-
-%   functions:
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%       Functions:
+%           obj.update_finger(q_a):
+%               update the the finger state with given q. 
+%               set q to obj.mdh.theta and calculate transformation matrix
+%               for each Links and call 
+%               update_viapoints.m, 
+%               update_M_coupling.m, 
+%               update_obstacles.m 
+% 
+% 
+%           obj.update_finger_par_dyn:
+%               
+%       
+%   Functions:
 %       obj.update_finger(q_a): 
 %           obj.mdh_all, obj.mdh, obj.M_coupling, rst_model 
 %       obj.update_finger_par_dyn:
@@ -70,7 +113,11 @@
 %           obstacles (obstacles.update_w_T_Obs and .update_w_T_Obs_inhand)
 %       get_p_obstacle: get position of the obstacle frame origin
 %       get_T_obstacle: get transformation of the obstacle frame origin
-
+% TODO: 
+%       1. passive joints
+%       2. function check_finger_properties 
+%       3. dh parameter as another option to define kinematics
+% 
 
 
 classdef Finger < handle & matlab.mixin.Copyable    
@@ -415,15 +462,18 @@ classdef Finger < handle & matlab.mixin.Copyable
             mass_all = zeros(obj.nja+1,1); % first is base
             com_all = zeros(3,obj.nja+1);
             inertia_all = zeros(6,obj.nja+1);
-            
+            % set base information
+            mass_all(1) = obj.base.par_dyn.mass;
+            com_all(:,1) = obj.base.par_dyn.com;
+            inertia_all(:,1) = obj.base.par_dyn.inertia;
             for i = 1:obj.nl
                 mass_all(i+1) = obj.list_links(i).par_dyn.mass;
                 com_all(:,i+1) = obj.list_links(i).par_dyn.com;
                 inertia_all(:,i+1) = obj.list_links(i).par_dyn.inertia;
             end
-            obj.par_dyn_f.mass_all(2:end) = mass_all(2:end);
-            obj.par_dyn_f.com_all(:,2:end) = com_all(:,2:end);
-            obj.par_dyn_f.inertia_all(:,2:end) = inertia_all(:,2:end);
+            obj.par_dyn_f.mass_all = mass_all;
+            obj.par_dyn_f.com_all = com_all;
+            obj.par_dyn_f.inertia_all = inertia_all;
         end
 
         function set_g_w(obj,g)
@@ -436,6 +486,9 @@ classdef Finger < handle & matlab.mixin.Copyable
         end
 
         function set_base_dynpar(obj,mass,com,inertia )
+            % NOT USED
+            % to modify the base parameter, change the obj.base properties
+            % directly
             % set dynamic parameter in world frame
             assert(length(mass) == 1, '[set_base_dynpar] mass dimentino is not correct')
             assert(length(com) == 3, '[set_base_dynpar] com dimentino is not correct')

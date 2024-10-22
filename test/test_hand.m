@@ -293,7 +293,7 @@ else
 end
 
 %%  Jacobian with given q and index_link
-
+test_failed = 0;
 hand = create_hand_random('hand_Obstacle_Set', [2,3,3,4] );
 hand_rst = hand.update_rst_model;
 
@@ -315,7 +315,8 @@ for i = 1:hand.nl
     link_i = hand.list_links(i);
     J_rst_tmp = geometricJacobian(hand_rst,q,link_i.name);
     J_rst(:,:,i) = [J_rst_tmp(4:6,:);J_rst_tmp(1:3,:)];
-    J(:,:,i) = hand.Jacobian_geom_w_point(i,[0,0,0]);
+    [J_trans,J_all] = hand.Jacobian_geom_w_point(i,[0,0,0]);
+    J(:,:,i) = J_all;
 end
 J_error = J_rst - J;
 if max(abs(J_error(:))) > 1e-10

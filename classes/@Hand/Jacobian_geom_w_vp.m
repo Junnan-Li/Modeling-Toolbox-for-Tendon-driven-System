@@ -1,7 +1,9 @@
 % Geometric Jacobian of the a given point at a given frame  
 % 
 % input:
-%           q: 
+%           vp_obj: viapoint object 
+%           varargin:
+%               q: calculate the Jacobian of given configuration
 % 
 % output:
 %           J: [3xobj.nja] translational geometric jacobian

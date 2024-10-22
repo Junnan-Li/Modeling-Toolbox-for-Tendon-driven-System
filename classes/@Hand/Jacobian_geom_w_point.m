@@ -1,8 +1,8 @@
 % Translational Geometric Jacobian of the a given point at a given frame  
 % 
 % input:
-%           q: 
-% 
+%           index_link: the index number of the link that point is defined
+%           i_p_point
 % output:
 %           J_trans: [3xobj.nja] geometric jacobian
 % 
@@ -13,7 +13,7 @@
 % 
 % Junnan Li, junnan.li@tum.de, 01.2023
 
-function J_trans = Jacobian_geom_w_point(obj, index_link, w_p_point,varargin)
+function [J_trans,J] = Jacobian_geom_w_point(obj, index_link, i_p_point,varargin)
 
 if nargin <= 3
     w_T_link_all = obj.get_w_T_links_inhand;
@@ -24,7 +24,8 @@ end
 
 index_base = [1,obj.index_q_b(end,end)];
 index_finger = obj.index_q_f;
-w_p_point = reshape(w_p_point,3,1);% reshape the vector as 3x1 
+i_p_point = reshape(i_p_point,3,1);% reshape the vector as 3x1 
+w_p_point = T_p31(w_T_link_all(:,:,index_link),i_p_point);
 J = Jacobian_geom_T_hand(w_T_link_all, index_base, index_finger, index_link, w_p_point);
 J_trans = J(1:3,:);
 % obj.update_hand(q_init);
