@@ -1,5 +1,5 @@
 % Geometric Jacobian of the end-effector based on the jonit cofiguration
-% reference coordinate: CS base of the finger
+% reference coordinate: CS world frame of Finger object
 % 
 % input:
 %           obj
@@ -16,7 +16,7 @@
 % 
 % Junnan Li, junnan.li@tum.de, 01.2023
 
-function J = Jacobian_geom_b_end(obj,varargin)
+function w_J_end = Jacobian_geom_w_end(obj,varargin)
 
 mdh = mdh_struct_to_matrix(obj.mdh,1);
 
@@ -26,8 +26,8 @@ if nargin == 2
     q = reshape(q,[obj.nja,1]);
     mdh(1:obj.nj,3) = q;
 end
-
-J = zeros(6,obj.nj);
+% w_R_b = obj.get_w_R_b;
+w_J_end = zeros(6,obj.nj);
 base_T_end = T_mdh_multi(mdh);
 for i = 1:obj.nj
     
@@ -35,9 +35,9 @@ for i = 1:obj.nj
     b_R_i = base_T_i(1:3,1:3);
     i_T_end = base_T_i\base_T_end;
     i_p_end = i_T_end(1:3,4);
-    J_tmp_p = cross(b_R_i*[0;0;1],b_R_i*i_p_end);
-    J_tmp_w = b_R_i*[0;0;1];
-    J(:,i) = [J_tmp_p;J_tmp_w];
+    J_tmp_p = obj.get_w_R_b*cross(b_R_i*[0;0;1],b_R_i*i_p_end);
+    J_tmp_w = obj.get_w_R_b*b_R_i*[0;0;1];
+    w_J_end(:,i) = [J_tmp_p;J_tmp_w];
 end
 
 end

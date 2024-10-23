@@ -1,20 +1,24 @@
 % recursive Newton-Euler method to compute inverse dynamic with mdh
 % parameters (floating base)
+% Extend the system state [q;qd] with [x,xd] of base position and velocity
+% 
 % Input:
-%     xq:               [n_q+6x1] [X_base; q] state vector
-%     xqD:              [n_q+6x1] [XD_base; qD] velocity state vector
-%     xqDD:             [n_q+6x1] [XD_base; qD] acceleration state vector
-%     mdh:              [n_q+1x4] in sequence of [alpha,a,theta,d] To be
+%     xq:               [n_q+6] [X_base; q] state vector, representing in
+%                               Euler angle xyz
+%     xqD:              [n_q+6] [XD_base; qD] velocity state vector,
+%                               angular velocity
+%     xqDD:             [n_q+6] [XD_base; qD] acceleration state vector
+%     mdh:              [n_q+1,4] in sequence of [alpha,a,theta,d] To be
 %                       noted that the theta should exclude from mdh parameters 
 %     Mass:             [n_q+1] [base_mass; links mass] 
-%     F_ext:            [6xn_q+2] force/moment that exerted by the environment to each frame. 
-%     CoM:              [3xn_q+1] in local frame
-%     I:                [6xn_q+1] in local frame with respect to center of mass. in sequence of [xx yy zz yz xz xy]
-%     g:                [3x1] gravity term
+%     F_ext:            [6,n_q+2] force/moment that exerted by the environment to each frame. 
+%     CoM:              [3,n_q+1] in local frame
+%     I:                [6,n_q+1] in local frame with respect to center of mass. in sequence of [xx yy zz yz xz xy]
+%     g:                [3] gravity term
 % 
 % Output:
-%     FTau:             [n_q+6x1] [F_base; torque]
-%     W_T_allframe:     [4x4xn_q+2] Homogeneous transformation from frame i to world frame. 1: base, 2~n_q+1: link, end:  
+%     FTau:             [n_q+6,1] [F_base; torque]
+%     W_T_allframe:     [4,4,n_q+2] Homogeneous transformation from frame i to world frame. 1: base, 2~n_q+1: link, end:  
 
 % internal variable:
 %   n_q: number of joints

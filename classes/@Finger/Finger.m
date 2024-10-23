@@ -1,4 +1,11 @@
 %% Class of Finger:
+% Finger object represents a serial robot connected by revolute joint.
+% For validation, the Finger object has a avatar model generated in Robotic
+% System Toolbox from Matlab. 
+%       After defininh the Finger object, use update_rst_model.m to generate 
+%       rst model. 
+% 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 % How to create a Finger object:
 %       1. finger = Finger(finger_name, finger_type, link_len_vector)
 %           finger_name: [char]           
@@ -17,12 +24,6 @@
 %           create a random finger with name and DoF. Normally used for
 %           initializing a finger with random parameters and then modifying
 %           the mdh parameters
-% 
-%%%%%%%%%%%%%%%%%%%%%%%%%
-% For validation, the Finger object has a avatar model generated in Robotic
-% System Toolbox from Matlab. 
-%       After defininh the Finger object, use update_rst_model.m to generate 
-%       rst model. 
 % 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %       Coordinates:   
@@ -57,25 +58,58 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 %       Functions:
 %           obj.update_finger(q_a):
-%               update the the finger state with given q. 
-%               set q to obj.mdh.theta and calculate transformation matrix
-%               for each Links and call 
+%               with given q. this function sets q to obj.mdh.theta and 
+%               updates: 
+%               Link.base_p, Link.base_R, Link.w_T_Link, w_T_Link_inhand 
+%               and calls: 
 %               update_viapoints.m, 
 %               update_M_coupling.m, 
 %               update_obstacles.m 
 % 
 % 
 %           obj.update_finger_par_dyn:
+%               updates obj.par_dyn_f from Links.par_dyn
+% 
+%           obj.update_joints_info:
+%               updates obj.limits_q* with Joints.q*_limits
 %               
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%       
+%   Kinematics:
+%       position
+%           get_W_T_B: get base transformation matrix
+%           get_p_all_links: get cartesian position of all link frames
+%           get_T_all_links: get transformation matrix of all link frames
+%           
+%       Jacobian
+%           Jacobian_geom_b_end
+%           Jacobian_geom_w_end
 %       
-%   Functions:
-%       obj.update_finger(q_a): 
-%           obj.mdh_all, obj.mdh, obj.M_coupling, rst_model 
-%       obj.update_finger_par_dyn:
-%           obj.par_dyn_f
-%       obj.update_list_contacts
-%       obj.update_list_tendons
-%       obj.update_rst_model
+%       FK
+%           update_finger(varargin)
+%       
+%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+%   Dynamics:
+%       general:
+%           invdyn_ne_mdh: inverse dynamic using Newton-Euler with mdh as
+%                          kinematic parameters, f_ext is [6,1]
+%           invdyn_ne_mdh_sym: generate symbolic version of ID 
+%           invdyn_ne_xq_mdh_all_fext: floating base with system state [x;q]
+%           invdyn_ne_xq_mdh_wt_fext_sub: floating base with individual
+%                                       M, C, G, Mqdd, F_Tau
+%           invdyn_ne_xq_mdh_wt_fext_sub_sym_par: use parfor to speed up 
+% 
+%       Finger:
+%           invdyn_ne_w_end: call invdyn_ne_mdh.m, for fixed base 
+%           invdyn_ne_w_end_sym: call invdyn_ne_mdh_sym.m, has options for
+%                               different sets of symbolic variables, for
+%                               fixed base
+%           invdyn_ne_xq_fb_all_fext: call invdyn_ne_xq_mdh_all_fext
+%           invdyn_ne_xq_fb_all_fext_sym: call
+%                                invdyn_ne_xq_mdh_all_fext_sym.m.
+%           invdyn_ne_xq_fb_wt_fext_sub_sym
+%           invdyn_ne_xq_fb_wt_fext_sub_sym_par
+%           
+% 
 %   tendon related: 
 %       add_tendon();
 %       update_M_coupling()
@@ -155,12 +189,12 @@ classdef Finger < handle & matlab.mixin.Copyable
     end
     
     properties (SetAccess = private)
-        index_finger_inhand
+        index_finger_inhand % the index of this Finger in a Hand Object 
         w_p_base            % position of the base in world frame. Default: [0,0,0]'
         w_R_base            % rotation of the base in world frame. Default: non rotation
-        w_T_base  
-        w_T_base_inhand     
-        limit_joint_on          % [1] activate the joint limits
+        w_T_base            % transformation matrix of base frame in Finger world frame
+        w_T_base_inhand     % transformation matrix of base frame in Hand world frame
+        limit_joint_on      % [1] activate the joint limits
         mdh                 % mdh parameters: alpha, a theta, d (with q)
         mdh_all
         mdh_ori             % mdh parameters: alpha, a theta, d (without q)
@@ -227,7 +261,6 @@ classdef Finger < handle & matlab.mixin.Copyable
             obj.base = Links(strcat(obj.name,'_base'),0,0);
             obj.base.update([0,0,0]',eye(3));
             % generate joints 
-            % TODO 
             list_joints = [];
             for i = 1:obj.nj
                 Joint_name_i = strcat(obj.name,'_Joint',num2str(i));
@@ -493,10 +526,15 @@ classdef Finger < handle & matlab.mixin.Copyable
             assert(length(mass) == 1, '[set_base_dynpar] mass dimentino is not correct')
             assert(length(com) == 3, '[set_base_dynpar] com dimentino is not correct')
             assert(length(inertia) == 6, '[set_base_dynpar] inertia dimentino is not correct')
-
+            %  update the properties of Finger.base
+            obj.base.par_dyn.mass = mass;
+            obj.base.par_dyn.com = reshape(com,3,1);
+            obj.base.par_dyn.inertia = reshape(inertia,6,1);
+            % update Finger.par_dyn
             obj.par_dyn_f.mass_all(1) = mass;
             obj.par_dyn_f.com_all(:,1) = reshape(com,3,1) ; % regarding com
             obj.par_dyn_f.inertia_all(:,1) = reshape(inertia,6,1) ; 
+            
         end
 
  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%               
@@ -677,12 +715,12 @@ classdef Finger < handle & matlab.mixin.Copyable
             w_p_base = obj.w_p_base;
             w_R_base = obj.w_R_base;
         end
-        function w_p_base = get_base_p(obj)
+        function w_p_base = get_w_p_b(obj)
             % set the position and orientation of the base in the world
             % frame
             w_p_base = obj.w_p_base;
         end
-        function w_R_base = get_base_R(obj)
+        function w_R_base = get_w_R_b(obj)
             % set the position and orientation of the base in the world
             % frame
             w_R_base = obj.w_R_base;
@@ -715,16 +753,30 @@ classdef Finger < handle & matlab.mixin.Copyable
             p_link_all_w(:,end) = w_p_b + w_R_b * b_T_i(1:3,4);
         end
 
+%         function w_T_all = get_T_all_links(obj)
+%             % get all transformation matrix of all links
+%             w_T_b = obj.get_W_T_B();
+%             w_T_all = zeros(4,4,obj.nl+2); % base, link1, ... linkn, ee
+%             w_T_all(:,:,1) = w_T_b;
+%             for i = 1:obj.nl
+%                 b_p_i = obj.list_links(i).base_p;
+%                 b_R_i = obj.list_links(i).base_R;
+%                 b_T_i = [b_R_i,b_p_i; 0 0 0 1];
+%                 w_T_all(:,:,i+1) = w_T_b*b_T_i;
+%             end
+%             % fingertip position
+%             mdh_all_matrix = mdh_struct_to_matrix(obj.mdh_all, 1);
+%             b_T_ee = T_mdh_multi(mdh_all_matrix);
+%             w_T_all(:,:,end) = w_T_b*b_T_ee;
+%         end
+
         function w_T_all = get_T_all_links(obj)
             % get all transformation matrix of all links
             w_T_b = obj.get_W_T_B();
             w_T_all = zeros(4,4,obj.nl+2); % base, link1, ... linkn, ee
             w_T_all(:,:,1) = w_T_b;
             for i = 1:obj.nl
-                b_p_i = obj.list_links(i).base_p;
-                b_R_i = obj.list_links(i).base_R;
-                b_T_i = [b_R_i,b_p_i; 0 0 0 1];
-                w_T_all(:,:,i+1) = w_T_b*b_T_i;
+                w_T_all(:,:,i+1) = obj.list_links(i).w_T_Link;
             end
             % fingertip position
             mdh_all_matrix = mdh_struct_to_matrix(obj.mdh_all, 1);
@@ -755,8 +807,8 @@ classdef Finger < handle & matlab.mixin.Copyable
             w_R_b = obj.w_R_base; 
             w_p_b = obj.w_p_base;
 %             w_T_b = get_W_T_B(obj);
-            w_R_ee = zeros(3,3);
-            w_p_ee = zeros(3,1);
+%             w_R_ee = zeros(3,3);
+%             w_p_ee = zeros(3,1);
             % fingertip position
             mdh_all_matrix = mdh_struct_to_matrix(obj.mdh_all, 1);
             b_T_i = T_mdh_multi(mdh_all_matrix);

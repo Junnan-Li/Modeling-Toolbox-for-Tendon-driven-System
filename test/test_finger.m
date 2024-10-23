@@ -73,14 +73,28 @@ end
 %% Test 2: Jacobian test
 % test the geometric Jacobian matrix of the endeffector
 % Jacobian_geom_b_end.m
+% Jacobian_geom_w_end.m
+
+% set variable randomly
+finger_r.set_base(rand(3,1), euler2R_XYZ(rand(3,1)));
+finger_r.update_rst_model;
+% joint configurations
+q_r = rand(finger_r.nj,1);
+finger_r.update_finger(q_r);
+
+% load rst model from finger class
+rst_model = finger_r.rst_model;
 
 % number of active joints
 num_nja = finger_r.nja;
 
-% geometric Jacobian computed by the class function 'Jacobian_geom_end'
+% geometric Jacobian computed by the class function 'Jacobian_geom_b_end'
 J_class_b = finger_r.Jacobian_geom_b_end(q_r);% with respect to the base frame
 W_R_b = finger_r.w_R_base();
 J_class = blkdiag(W_R_b,W_R_b)*J_class_b;
+
+% geometric Jacobian computed by the class function 'Jacobian_geom_b_end'
+J_class_w = finger_r.Jacobian_geom_w_end(q_r);% with respect to the base frame
 
 % geometrical Jacobian using Jacobian_geom_mdh.m function
 J_geom_func_b = Jacobian_geom_mdh(mdh_struct_to_matrix(finger_r.mdh_ori,1),q_r);
@@ -91,9 +105,11 @@ J_rst = geometricJacobian(rst_model,q_r,rst_model.BodyNames{end}); % J_rst = [om
 J_rst = [J_rst(4:6,1:num_nja);J_rst(1:3,1:num_nja)]; % J_rst = [v_x v_y v_z omega_x omega_y omega_z]'
 
 % validaiton
-J_error = abs(J_class-J_rst);
-J_error_2 = abs(J_geom_func-J_rst);
-if max([J_error(:),J_error_2(:)]) > 1e-10
+J_error = abs(J_class-J_class_w);
+J_error1 = abs(J_class-J_rst);
+J_error2 = abs(J_geom_func-J_rst);
+
+if max([J_error(:),J_error1(:),J_error2(:)]) > 1e-10
     fprintf('Test 2 (geometric Jacobian): failed! \n')
 else
     fprintf('Test 2 (geometric Jacobian): pass! \n')
@@ -109,33 +125,40 @@ J_analytic_func = blkdiag(W_R_b,W_R_b)*J_analytic_func_b;
 
 
 %% Test 3: Frame position test
-% test properties: link.base_p & link.base_R
+% test properties
+% Finger.
 
-% Base to World frame transformation of class model 
-W_p_b = finger_r.w_p_base();
-W_R_b = finger_r.w_R_base();
+for t3 = 1:20
+    test_3_error = 0;
+    q_r = rand(finger_r.nj,1);
+    finger_r.update_finger(q_r);
 
-test_3_error = 0;
+    % Base to World frame transformation of class model
+    W_p_b = finger_r.w_p_base();
+    W_R_b = finger_r.w_R_base();
 
-for i = 1:finger_r.nl
-    % rsi model: frame position & orientation in world frame
-    T_rst_link_i = getTransform(finger_r.rst_model,q_r,finger_r.list_links(i).name);
-    W_base_p_rsi = T_rst_link_i(1:3,4);
-    W_base_R_rsi = T_rst_link_i(1:3,1:3);
     
-    % class model: frame position & orientation in world frame
-    W_base_p_class = W_R_b * finger_r.list_links(i).base_p + W_p_b;
-    W_base_R_class = W_R_b* finger_r.list_links(i).base_R;
-    
-    base_p_error = abs(W_base_p_class-W_base_p_rsi);
-    base_R_error = abs(W_base_R_class-W_base_R_rsi);
-    
-    
-    if max(base_p_error(:)) > 1e-10 || max(base_R_error(:)) > 1e-10
-        test_3_error = 1;
+    w_T_all = finger_r.get_T_all_links;
+    T_rst_b = getTransform(finger_r.rst_model,q_r,finger_r.rst_model.BodyNames{1});
+    T_rst_ee = getTransform(finger_r.rst_model,q_r,finger_r.rst_model.BodyNames{end});
+
+
+    for i = 1:finger_r.nl
+        % rsi model: frame position & orientation in world frame
+        T_rst_link_i = getTransform(finger_r.rst_model,q_r,finger_r.list_links(i).name);
+        w_T_link_i = finger_r.list_links(i).w_T_Link;
+
+        b_T_link_i = pR2T(finger_r.list_links(i).base_p,finger_r.list_links(i).base_R);
+        w_T_link_i_2 = finger_r.w_T_base * b_T_link_i;
+
+        error_T1 = T_rst_link_i - w_T_link_i;
+        error_T2 = T_rst_link_i - w_T_link_i_2;
+        error_T3 = T_rst_link_i - w_T_all(:,:,i+1); 
+        if max(abs([error_T1(:),error_T2(:),error_T3(:)])) > 1e-10
+            test_3_error = 1;
+        end
     end
 end
-
 % validaiton
 if test_3_error == 1
     fprintf('Test 3 (Frame position): failed! \n')
@@ -205,7 +228,7 @@ hold on
 finger_r.plot_contacts
 
 % return
-%% Test 5 inverse dynamic test
+%% Test 5_1 inverse dynamic test (fixed base)
 % method 1: 
 %       class function (fixed base): Finger.invdyn_ne_w_end(q_r,q_rD,q_rDD,F_ext)
 % method 2: 
@@ -216,6 +239,8 @@ finger_r.plot_contacts
 %       class function (floating base, wt f_ext):  Finger.invdyn_ne_xq_fb_wt_fext_sub
 
 % random states
+q_r = rand(finger_r.nj,1);
+finger_r.update_finger(q_r);
 q_rD = rand(size(q_r));
 q_rDD = rand(size(q_r));
 F_ext = rand(6,1);

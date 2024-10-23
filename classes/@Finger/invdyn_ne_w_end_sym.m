@@ -1,6 +1,7 @@
 % symbolic version:
 % inverse dynamic of the finger with the endeffector interaction to the
 % environment with respect to the world frame
+% Fixed base
 % 
 % input:
 %           sym_type: symbolic variables contains 
@@ -18,7 +19,7 @@
 %           F_ext_ne_sym: [6x1]
 % 
 % symbolic output:
-%           Tau_sym: [obj.njx1] 
+%           Tau_sym: [obj.njx1] saved in output/tau_sym_$obj.name$
 % 
 % Source: 
 %   "Robotics: Modeling, Planning, and Control" P111 - P113

@@ -1,30 +1,32 @@
 % recursive Newton-Euler method to compute inverse dynamic with mdh
 % only end-effector external force input
-% parameters
+% enabling floating base 
+% 
+% 
 % Input:
-%     q,qD,qDD:         [n_qx1] joint states
-%     mdh:              [n_q+1x4] in sequence of [alpha,a,theta,d] To be
+%     q,qD,qDD:         [nq] joint states
+%     mdh:              [nq+1,4] in sequence of [alpha,a,theta,d] To be
 %                       noted that the theta should exclude from mdh parameters 
-%     Mass:             [n_q+1] mass vector. the first mass is the base 
-%     X_base:           [6x1] eulerxyz
-%     XD_base:          [6x1] translational and angular velocity
-%     F_ext:            [6x1] force/moment that exerted by the environment to the endeffector frame. 
-%     CoM:              [3xn_q+1] in local frame; last column is endeffector
-%     I:                [6xn_q+1] in local frame with respect to center of mass. in sequence of [xx yy zz yz xz xy]
-%     g:                [3x1] gravity term in world frame
+%     Mass:             [nq+1] mass vector. the first mass is the base 
+%     X_base:           [6] eulerxyz
+%     XD_base:          [6] translational and angular velocity
+%     F_ext:            [6] force/moment that exerted by the environment to the endeffector frame. 
+%     CoM:              [3,nq+1] in local frame; last column is endeffector
+%     I:                [6,nq+1] in local frame with respect to center of mass. in sequence of [xx yy zz yz xz xy]
+%     g:                [3,1] gravity term in world frame
 % 
 % Output:
-%     Tau:              [n_qx1] joint torque 
-%     F:                [6xn_q+2] force/moment vectors that the i link exert to the i+1 link
-%     W_T_allframe:     [4x4xn_q+2] Homogeneous transformation from frame i to world frame. 1: base, 2~n_q+1: link, end:  
+%     Tau:              [nq,1] joint torque 
+%     F:                [6,nq+2] force/moment vectors that the i link exert to the i+1 link
+%     W_T_allframe:     [4,4,nq+2] Homogeneous transformation from frame i to world frame. 1: base, 2~n_q+1: link, end:  
 
 % internal variable:
-%   n_q: number of joints
-%   n_q: number of frames (n_q+2)
-%   V: [6xn_q+2] linear & angular velocity of each frames
-%   VD: [6xn_q+2] linear & angular accelerations of each frames
-%   VD_c: [6xn_q+2] linear & angular accelerations of each center of mass;
-%         (default endeffector center of mass is the origin og the frame)
+%   nq: number of joints
+%   nf: number of frames (n_q+2)
+%   V: [6,n_q+2] linear & angular velocity of each frames
+%   VD: [6,n_q+2] linear & angular accelerations of each frames
+%   VD_c: [6,n_q+2] linear & angular accelerations of each center of mass;
+%         (default endeffector center of mass is the origin of the frame)
 %   
 % 
 % Frames:
@@ -33,7 +35,7 @@
 % source:
 %   [1] B. Siciliano, L. Sciavicco, L. Villani, and G. Oriolo, Robotics: Modeling, Planning, and Control, vol. 16, no. 4. 2009.
 % 
-% Comment: [04/23] XDbase not updated (VD_c)
+% Comment: [04/23] fixed:XDbase not updated (VD_c)
 
 
 function [Tau,F,W_T_allframe] = invdyn_ne_mdh(q,qD,qDD,mdh, Mass, X_base, XD_base,XDD_base, F_ext, CoM, I, g)
@@ -57,7 +59,7 @@ VD = zeros(6,n_q+2);
 V(:,1) = XD_base;
 VD(:,1) = XDD_base;
 VD_c = VD;
-% 
+% calculate the transformation matrix of each frame
 W_T_allframe = zeros(4,4,n_f-1);
 mdh(1:n_q,3) = mdh(1:n_q,3)+q; % update mdh parameters with the current q
 % homogeneous transformation from Base to World frame
@@ -69,7 +71,6 @@ end
 % update VD_c of base
 W_b_r_c = euler2R_XYZ(X_base(4:6))*CoM(:,1);
 VD_c(1:3,1) = VD(1:3,1) + cross(VD(4:6,1),W_b_r_c) + cross(V(4:6,1),cross(V(4:6,1),W_b_r_c));
-
 
 % forward recursion: 
 for i = 2:n_q+2
@@ -128,10 +129,7 @@ for i = n_q+1:-1:1
     F(1:3,i) = F(1:3,i+1) - m_i*g + m_i*VD_c(1:3,i);
     F(4:6,i) = F(4:6,i+1) - cross(-W_i_r_c,F(1:3,i)) - cross(W_c_r_ip1,-F(1:3,i+1)) ...
         + W_I_i*VD_c(4:6,i) + cross(V(4:6,i),W_I_i*V(4:6,i));
-
 end
-
-
 % frame force/moment to joint torque
 for i = 2:n_q+1
     % frame qi to World
@@ -139,5 +137,4 @@ for i = 2:n_q+1
     W_R_i = W_T_i(1:3,1:3);
     Tau(i-1) = F(4:6,i)'*W_R_i*[0 0 1]';
 end
-
 end

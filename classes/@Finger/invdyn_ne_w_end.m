@@ -1,10 +1,14 @@
 % inverse dynamic of the finger with the endeffector interaction to the
 % environment with respect to the world frame
+% Fixed base
 % 
 % input:
-%           qD: 
-%           qDD: 
-%           F_ext_ne: [6x1]
+%           q:          [obj.nj]
+%           varargin:
+%               qD: 
+%               qDD: 
+%               F_ext_ne: [6x1]
+%               mex:      [1] if use compiled mex function to compute
 % 
 % output:
 %           Tau: [obj.nj] 
@@ -14,17 +18,58 @@
 % 
 % TODO: need to adapt to the passive joint mode
 
-function Tau = invdyn_ne_w_end(obj, q, qD, qDD, F_ext, varargin)
+function Tau = invdyn_ne_w_end(obj, varargin)
 
-assert(length(q)== obj.nj, 'dimension of joint vector is incorrect!')
-assert(length(qD)== obj.nj, 'dimension of joint vector is incorrect!')
-assert(length(qDD)== obj.nj, 'dimension of joint vector is incorrect!')
-
-if nargin == 5
+if nargin == 1
+    q = obj.q;
+    qD = zeros(obj.nj,1);
+    qDD = zeros(obj.nj,1);
+    F_ext = zeros(6,1);
+    mex = 0;
+elseif nargin == 2
+    q = varargin{1};
+    qD = zeros(obj.nj,1);
+    qDD = zeros(obj.nj,1);
+    F_ext = zeros(6,1);
+    mex = 0;
+elseif nargin == 3
+    q = varargin{1};
+    qD = varargin{2};
+    qDD = zeros(obj.nj,1);
+    F_ext = zeros(6,1);
+    mex = 0;
+elseif nargin == 4
+    q = varargin{1};
+    qD = varargin{2};
+    qDD = varargin{3};
+    F_ext = zeros(6,1);
+    mex = 0;
+elseif nargin == 5
+    q = varargin{1};
+    qD = varargin{2};
+    qDD = varargin{3};
+    F_ext = varargin{4};
     mex = 0;
 elseif nargin == 6
-    mex = varargin{1};
+    q = varargin{1};
+    qD = varargin{2};
+    qDD = varargin{3};
+    F_ext = varargin{4};
+    mex = varargin{5};
+elseif nargin > 6
+    error('[invdyn_ne_w_end] too much input!')
 end
+
+assert(length(q)== obj.nj, '[invdyn_ne_w_end] dimension of joint vector is incorrect!')
+assert(length(qD)== obj.nj, '[invdyn_ne_w_end] dimension of joint vector is incorrect!')
+assert(length(qDD)== obj.nj, '[invdyn_ne_w_end] dimension of joint vector is incorrect!')
+assert(length(F_ext)== 6, '[invdyn_ne_w_end] dimension of joint vector is incorrect!')
+assert(length(qDD)== obj.nj, '[invdyn_ne_w_end] dimension of joint vector is incorrect!')
+% if nargin == 5
+%     mex = 0;
+% elseif nargin == 6
+%     mex = varargin{1};
+% end
 
 mdh_ne = mdh_struct_to_matrix(obj.mdh_ori, 1);
 mdh_ne(1:obj.nj,3) = mdh_ne(1:obj.nj,3);

@@ -1,31 +1,31 @@
 % symbolic generation of recursive Newton-Euler method to compute inverse dynamic with mdh
 % only end-effector external force input
-% parameters
+% 
 % Input:
-%     q,qD,qDD:         [n_qx1] joint states
-%     mdh:              [n_q+1x4] in sequence of [alpha,a,theta,d] To be
+%     q,qD,qDD:         [nq] joint states
+%     mdh:              [nq+1,4] in sequence of [alpha,a,theta,d] To be
 %                       noted that the theta should exclude from mdh parameters 
-%     Mass:             [n_q+1] mass vector. the first mass is the base 
-%     X_base:           [6x1] eulerxyz
-%     XD_base:          [6x1] translational and angular velocity
-%     F_ext:            [6x1] force/moment that exerted by the environment to the endeffector frame. 
-%     CoM:              [3xn_q+1] in local frame; last column is endeffector
-%     I:                [6xn_q+1] in local frame with respect to center of mass. in sequence of [xx yy zz yz xz xy]
-%     g:                [3x1] gravity term in world frame
+%     Mass:             [nq+1] mass vector. the first mass is the base 
+%     X_base:           [6] eulerxyz
+%     XD_base:          [6] translational and angular velocity
+%     F_ext:            [6] force/moment that exerted by the environment to the endeffector frame. 
+%     CoM:              [3,nq+1] in local frame; last column is endeffector
+%     I:                [6,nq+1] in local frame with respect to center of mass. in sequence of [xx yy zz yz xz xy]
+%     g:                [3,1] gravity term in world frame
 % 
 % Output:
-%     Tau:              [n_qx1] joint torque 
-%     F:                [6xn_q+2] force/moment vectors that the i link exert to the i+1 link
-%     W_T_allframe:     [4x4xn_q+2] Homogeneous transformation from frame i to world frame. 1: base, 2~n_q+1: link, end:  
+%     Tau:              [nq,1] joint torque 
+%     F:                [6,nq+2] force/moment vectors that the i link exert to the i+1 link
+%     W_T_allframe:     [4,4,nq+2] Homogeneous transformation from frame i to world frame. 1: base, 2~n_q+1: link, end:  
 
 % internal variable:
-%   n_q: number of joints
-%   n_q: number of frames (n_q+2)
-%   V: [6xn_q+2] linear & angular velocity of each frames
-%   VD: [6xn_q+2] linear & angular accelerations of each frames
-%   VD_c: [6xn_q+2] linear & angular accelerations of each center of mass;
-%         (default endeffector center of mass is the origin og the frame)
-%   
+%   nq: number of joints
+%   nf: number of frames (n_q+2)
+%   V: [6,n_q+2] linear & angular velocity of each frames
+%   VD: [6,n_q+2] linear & angular accelerations of each frames
+%   VD_c: [6,n_q+2] linear & angular accelerations of each center of mass;
+%         (default endeffector center of mass is the origin of the frame)
+%    
 % 
 % Frames:
 %   0:World, 1:Base, 2:F_1, 3:F_2,..., end:F_endeffector
@@ -33,7 +33,7 @@
 % source:
 %   [1] B. Siciliano, L. Sciavicco, L. Villani, and G. Oriolo, Robotics: Modeling, Planning, and Control, vol. 16, no. 4. 2009.
 % 
-% Comment: [04/23] XDbase not updated (VD_c)
+% Comment: [10/24] fixed:XDbase not updated (VD_c), need validate
 
 
 function [Tau,F,W_T_allframe] = invdyn_ne_mdh_sym(q,qD,qDD,mdh, Mass, X_base, XD_base,XDD_base, F_ext, CoM, I, g)
@@ -68,6 +68,9 @@ for i = 2:n_f-1
 end
 
 W_T_allframe = simplify(W_T_allframe);             
+% update VD_c of base
+W_b_r_c = simplify(euler2R_XYZ(X_base(4:6))*CoM(:,1));
+VD_c(1:3,1) = VD(1:3,1) + simplify(cross(VD(4:6,1),W_b_r_c)) + simplify(cross(V(4:6,1),cross(V(4:6,1),W_b_r_c)));
 
 % forward recursion: 
 for i = 2:n_q+2
