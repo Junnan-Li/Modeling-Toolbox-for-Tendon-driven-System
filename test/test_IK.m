@@ -1,4 +1,4 @@
-% test the IK algorithms of toolbox and RST toolbox
+% test the IK algorithms of Finger object and RST model
 
 
 
@@ -10,9 +10,9 @@ clc
 %% create fingers
 % use mdh to create finger
 finger_r = create_finger_random('finger_random', 6);
-% finger_r.set_base(zeros(3,1),euler2R_XYZ(zeros(1,3)))
+% % finger_r.set_base(zeros(3,1),euler2R_XYZ(zeros(1,3)))
 %% set random states
-rst_model = finger_r.update_rst_model;
+finger_r.update_rst_model;
 % load rst model from finger class
 rst_model = finger_r.rst_model;
 
@@ -29,49 +29,35 @@ axis equal
 show(rst_model,q_r,'Collisions','on','Visuals','off');
 hold on
 
-%%
+%% define ik problem
 
-q_init = rand(finger_r.nj,1);
-q_des = rand(finger_r.nj,1);
+q_init = rand(finger_r.nj,1); % init finger pose
+q_des = rand(finger_r.nj,1); % desired finger pose
 finger_r.update_finger(q_des);
-x_des = finger_r.get_x_ee_w();
+x_des = finger_r.get_x_ee_w(); % fingertip position of desired pose
 T_all_des = finger_r.get_T_all_links();
 T_des = T_all_des(:,:,end);
-finger_r.update_finger(q_init);
+finger_r.update_finger(q_init); 
 finger_r.update_rst_model;
 rst_model = finger_r.rst_model;
 
 IK_par = IK_par();
 % IK_par.ikpar_NR.visual = 1;
+IK_par.ikpar_NR.alpha = 0.3;
 tic
 [q_ik_NR, info_NR] = finger_r.invkin_numeric(x_des,IK_par);
 t1 = toc;
+finger_r.update_finger(q_init); 
 tic;
 [q_ik_LM, info_LM] = finger_r.invkin_numeric_LM(x_des);
 t2 = toc;
 tic
 [q_ik_rst, solnInfo] = finger_r.invkin_rst(x_des);
-t3 = tic;
+t3 = toc;
 error_q = q_des - q_ik_NR;
 error_q_LM = q_des - q_ik_LM;
 error_x = x_des - info_NR.x_res;
 error_x_LM = x_des - info_LM.x_res;
-
-% if max(abs(error_x(:))) > 1e-4 
-%     fprintf('Finger IK (invkin_numeric.m): failed! \n')
-% else
-%     fprintf('Finger IK (invkin_numeric.m): pass! \n')
-% end
-% if max(abs(error_x_LM(:))) > 1e-4 
-%     fprintf('Finger IK (invkin_numeric_LM.m): failed! \n')
-% else
-%     fprintf('Finger IK (invkin_numeric_LM.m): pass! \n')
-% end
-% if solnInfo.ExitFlag ~= 1 
-%     fprintf('Finger IK (invkin_rst.m): failed! \n')
-% else
-%     fprintf('Finger IK (invkin_rst.m): pass! \n')
-% end
 
 % 
 figure(3)
@@ -80,13 +66,13 @@ hold on
 show(rst_model,q_des,'Collisions','on','Visuals','off');
 hold on
 show(rst_model,q_ik_rst,'Collisions','on','Visuals','off');
-finger_r.plot_finger(plot_par)
+% finger_r.plot_finger(plot_par)
 
-
-fprintf('Finger IK Test (invkin_numeric NR): status: %d; time: %f; iter: %d \n', info_NR.status,t1,info_NR.iter)
+fprintf('IK Test: \n')
+fprintf('Finger IK Test (invkin_numeric NR):    status: %d; time: %f; iter: %d \n', info_NR.status,t1,info_NR.iter)
 fprintf('Finger IK Test (invkin_numeric_LM LM): status: %d; time: %f; iter: %d \n', info_LM.status,t2,info_LM.iter)
-fprintf('Finger IK Test (invkin_rst): status: %d; time: %f; iter: %d \n', solnInfo.ExitFlag==1,t3,solnInfo.Iterations)
-
+fprintf('Finger IK Test (invkin_rst):           status: %d; time: %f; iter: %d \n', solnInfo.ExitFlag==1,t3,solnInfo.Iterations)
+fprintf('############## \n')
 %% create hand
 
 hand = create_hand_random('hand_IK_test', [2,2,2,4] );
@@ -161,11 +147,11 @@ t2 = toc;
 
 % LM method
 hand.update_hand(q_hand_init);
-tic
+tic 
 [q_res2, info3] = hand.invkin_numeric_LM(x_des_1,1);
 t3 = toc;
 
-fprintf('Hand IK Test (invkin_numeric NR): status: %d; time: %f; iter: %d \n', info2.status,t2,info2.iter)
+fprintf('Hand IK Test (invkin_numeric NR):    status: %d; time: %f; iter: %d \n', info2.status,t2,info2.iter)
 fprintf('Hand IK Test (invkin_numeric_LM LM): status: %d; time: %f; iter: %d \n', info3.status,t3,info3.iter)
-fprintf('Hand IK Test (invkin_rst): status: %d; time: %f; iter: %d \n', solnInfo.ExitFlag==1,t1,solnInfo.Iterations)
+fprintf('Hand IK Test (invkin_rst):           status: %d; time: %f; iter: %d \n', solnInfo.ExitFlag==1,t1,solnInfo.Iterations)
 

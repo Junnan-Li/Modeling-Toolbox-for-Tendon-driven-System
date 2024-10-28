@@ -1,27 +1,30 @@
-% symbolic generation of finger obj
-% test with 3dof structure
+% test symbolic representation of Finger dynamics
+% Finger.invdyn_ne_w_end_sym
 
-mdh_parameter = rand(3,4);
-mdh_parameter(:,3) = 0;
-mdh_parameter(1,1:4) = 0;
-mdh_struct = mdh_matrix_to_struct(mdh_parameter, 1);
-finger_3dof = Finger('finger_3dof', 'mdh',mdh_struct );
 
-mdh_default_struct = finger_3dof.mdh_ori;
-mdh_matrix = mdh_struct_to_matrix(mdh_default_struct, 1);
-mdh_matrix(2,1) = -pi/2;
-finger_3dof.set_mdh_parameters(mdh_matrix);
+
+clear all
+close all
+clc
+
+%%%%%
+
+
+finger_3dof = create_finger_random('finger_example', 3);
 % set random states
 % set random base position and orientation
 finger_3dof.set_base(4*rand(3,1),euler2R_XYZ(rand(1,3)));
 % finger_3dof.w_R_base = euler2R_XYZ(rand(1,3));
 
 % % generate the symbolic term
+tic
 Tau_sym = finger_3dof.invdyn_ne_w_end_sym(1,1);
+t = toc;
+fprintf('Time cost of szmbolic generation: %d \n', t)
 % [FTau_sym] = finger_3dof.invdyn_ne_xq_fb_all_fext_sym(1, 1);
 
 
-% test results
+%% validate symbolic representation
 q_rand = rand(finger_3dof.nj,1);
 qd_rand = rand(finger_3dof.nj,1);
 qdd_rand = rand(finger_3dof.nj,1);
@@ -34,14 +37,20 @@ q_sym = sym('q',[2,1], 'real');
 qd_sym = sym('qd',[2,1], 'real');
 qdd_sym = sym('qdd',[2,1], 'real');
 F_ext_sym = sym('F_ext',[6,1], 'real');
-Tau_sym_res = double(subs(Tau_sym,symvar(Tau_sym), [F_ext_rand ;q_rand ;qd_rand ;qdd_rand]')); % [q_sym qd_sym qdd_sym F_ext_sym],
-
+% Tau_sym_res = double(subs(Tau_sym,symvar(Tau_sym), [F_ext_rand ;q_rand ;qd_rand ;qdd_rand]')); % [q_sym qd_sym qdd_sym F_ext_sym],
+Tau_sym_res = tau_sym_finger_example(q_rand, qd_rand , qdd_rand , F_ext_rand );
 Tau_error = Tau_num-Tau_sym_res;
 
-% floating base test
+if max(abs(Tau_error(:))) > 1e-10 
+    test_12_status = 0;
+    fprintf('Test (sym torque): failed! \n')
+else
+    fprintf('Test (sym torque): pass! \n')
+end
+%% floating base test
 % generate symbolic function
 
-% [FTau_sym] = finger_3dof.invdyn_ne_xq_fb_all_fext_sym(1, 0);
+% [FTau_sym] = finger_3dof.invdyn_ne_xq_fb_all_fext_sym(1, 1);
 % [FTau_G,FTau_C,M_xq,FTau_M,FTau_wt_fext] = finger_3dof.invdyn_ne_xq_fb_wt_fext_sub_sym_par(1,1);
 
 %
@@ -52,9 +61,9 @@ xqdd = rand(6+finger_3dof.nj,1);
 tic 
 Tau_fb_num = finger_3dof.invdyn_ne_xq_fb_all_fext(xq, xqd, xqdd, zeros(6,2+finger_3dof.nj));
 t1 = toc;
-tic
-Tau_fb_sym_res = double(subs(FTau_wt_fext,symvar(FTau_wt_fext), [xq(4:end) ;xqd(4:end) ;xqdd]')); 
-t2 = toc;
+% tic
+% Tau_fb_sym_res = double(subs(FTau_wt_fext,symvar(FTau_wt_fext), [xq(4:end) ;xqd(4:end) ;xqdd]')); 
+% t2 = toc;
 tic
 FTau_fb_sym = tau_xq_fb_sym_finger_3dof_FTau_wt_fext(xq,xqd,xqdd);
 t3 = toc;

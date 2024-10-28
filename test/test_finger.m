@@ -1,13 +1,21 @@
 % finger class function test
 % 
 % Test 1:
-%       Transformation matrix test with given length and base
-%       position & orientation
+%       Transformation matrix of all frames with a randomly defined finger
+%       and configuration
 % Test 2: 
-%       geometric Jacobian test of the end effector
+%       geometric Jacobian of the end effector
 % Test 3:
-%       
-% 
+%       frame position and orientation
+% Test 4:
+%       Jacobian of Contact object
+% Test 5_1:
+%       inverse dynamic test (fixed base)
+% Test 5_2
+%       inverse dynamic test (floating base)
+% Test 6:      
+%       Forward dynamic test
+% Test 7
 %           
 % 
 
@@ -273,7 +281,7 @@ Tau_error = abs(Tau_class-Tau_rst);
 Tau_error_2 = abs(Tau_class-Tau_class_fb(7:end));
 
 
-% test floating base function 
+%% Test 5_2 inverse dynamic test (floating base)
 F_ext = zeros(6,1);
 X_base = rand(6,1);
 XD_base = rand(6,1);
@@ -316,21 +324,21 @@ else
     fprintf('Test 6 (forward dynamic): pass! \n')
 end
 
-
+return
 %% Test 7 Tendon moment arm properties
 % poly 3 function: MA = ax^3+bx^2+cx+d
 
-if finger_r.nt == 0
-    finger_r.add_tendon('Flex_1', 0.005*rand(4,finger_r.nj));
-    finger_r.add_tendon('Flex_2', 0.005*rand(4,finger_r.nj));
-    finger_r.add_tendon('Ext_1', 0.005*rand(4,finger_r.nj));
-end
-q_r = rand(4,1);
-finger_r.update_finger(q_r);
-finger_r.M_coupling;
-finger_r.set_tendon_par_MA_poly3(3,1,[0,0,0,0.03]);
-finger_r.set_tendon_par_MA_poly3(3,2,[0,0,0,0.035]);
-finger_r.M_coupling;
+% if finger_r.nt == 0
+%     finger_r.add_tendon('Flex_1', 0.005*rand(4,finger_r.nj));
+%     finger_r.add_tendon('Flex_2', 0.005*rand(4,finger_r.nj));
+%     finger_r.add_tendon('Ext_1', 0.005*rand(4,finger_r.nj));
+% end
+% q_r = rand(4,1);
+% finger_r.update_finger(q_r);
+% finger_r.M_coupling;
+% finger_r.set_tendon_par_MA_poly3(3,1,[0,0,0,0.03]);
+% finger_r.set_tendon_par_MA_poly3(3,2,[0,0,0,0.035]);
+% finger_r.M_coupling;
 
 
 %% Test 8: inverse kinematic

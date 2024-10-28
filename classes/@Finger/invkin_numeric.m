@@ -5,10 +5,13 @@
 %           IK_par(optional)
 % 
 % output:
-%           q: calculated joint angle
-%           x_res: result of the position x
-%           phi_x: PHI
-%           iter: interation number 
+%           q: result of ik solution
+%           info:
+%               status: if problem solved
+%               x_res: result of the position x
+%               phi_x: PHI
+%               iter: interation number 
+%               retry_iter: num of retries
 % 
 % Junnan Li, junnan.li@tum.de, 04.2024
 
@@ -30,7 +33,6 @@ alpha = par.alpha;
 retry_num = par.retry_num;
 
 q_all = zeros(iter_max,obj.nja);
-q_res = zeros(size(obj.nja));
 
 info = struct();
 info.status = 0;
@@ -39,6 +41,7 @@ info.phi_x = zeros(size(x_des));
 info.iter = 0;
 info.retry_iter = 0;
 
+iter = 0;
 if par.visual % visualization
     figure()
 end
@@ -65,8 +68,8 @@ for retry_i = 0:retry_num
                 info.status = 1;
                 break
             end
-            J = obj.Jacobian_analytic_b_end;
-%             J = obj.Jacobian_geom_b_end;
+%             J = obj.Jacobian_analytic_b_end;
+            J = obj.Jacobian_geom_b_end;
             J_w = blkdiag(obj.w_R_base,obj.w_R_base) * J;
             if rank(J_w) < min(size(J_w)) 
                 disp('[Finger.invkin_numeric]: Jacobian rank deficit')
@@ -74,6 +77,7 @@ for retry_i = 0:retry_num
             delta_q = alpha * pinv(J_w) * delta_x_i;
             q_i_new = q_i + delta_q;
             obj.update_finger(q_i_new);
+            iter = iter + 1;
         end
     catch ME
             disp('[Finger.invkin_numeric]: catch error!')
@@ -86,7 +90,7 @@ end
 q_res = q_i;
 info.x_res = x_i;
 info.phi_x = delta_x_i;
-info.iter = i;
+info.iter = iter;
 info.retry_iter = retry_i;
 
 end

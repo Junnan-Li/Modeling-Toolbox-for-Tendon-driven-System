@@ -86,7 +86,14 @@
 %       
 %       FK
 %           update_finger(varargin)
-%       
+% 
+%       IK: 
+%           IK_par: class of ik parameters for solvers
+%           invkin_numeric: Newton-Raphson algorithm
+%           invkin_numeric_LM: Levenberg-marquart algorithm
+% 
+%   functions are tested in test_ik.m   
+% 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 %   Dynamics:
 %       general:
@@ -109,7 +116,7 @@
 %           invdyn_ne_xq_fb_wt_fext_sub_sym
 %           invdyn_ne_xq_fb_wt_fext_sub_sym_par
 %           
-% 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 %   tendon related: 
 %       add_tendon();
 %       update_M_coupling()

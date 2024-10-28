@@ -58,18 +58,18 @@ g_sym = sym(g);
 % init symbolic variables based on sym_type
 switch sym_type
     case 1
-        var_name = [q_sym;qd_sym;qdd_sym;F_ext_sym];
+        var_name = {q_sym;qd_sym;qdd_sym;F_ext_sym};
     case 2
         X_base_sym = sym('x_base',[6,1], 'real');
         XD_base_sym = sym('x_base',[6,1], 'real');
         XDD_base_sym = sym('x_base',[6,1], 'real');
-        var_name = [q_sym;qd_sym;qdd_sym;F_ext_sym;X_base_sym;XD_base_sym;XDD_base_sym];
+        var_name = {q_sym;qd_sym;qdd_sym;F_ext_sym;X_base_sym;XD_base_sym;XDD_base_sym};
     case 3
         X_base_sym = sym('x_base',[6,1], 'real');
         XD_base_sym = sym('x_base',[6,1], 'real');
         XDD_base_sym = sym('x_base',[6,1], 'real');
         Mass_sym = sym('mass', size(Mass), 'positive');
-        var_name = [q_sym;qd_sym;qdd_sym;F_ext_sym;X_base_sym;XD_base_sym;XDD_base_sym;Mass_sym];
+        var_name = {q_sym;qd_sym;qdd_sym;F_ext_sym;X_base_sym;XD_base_sym;XDD_base_sym;Mass_sym};
     case 101
         X_base_sym = sym('x_base',[6,1], 'real');
         XD_base_sym = sym('xd_base',[6,1], 'real');
@@ -80,7 +80,7 @@ switch sym_type
         CoM_ne_sym = sym([CoM_ne(:,1:end-1),CoM_end]);
         I_end = sym('I_end', [6,1],'real');
         I_ne_sym = sym([I_ne(:,1:end-1),I_end]);
-        var_name = [q_sym;qd_sym;qdd_sym;F_ext_sym;X_base_sym;XD_base_sym;XDD_base_sym;mass_end;CoM_end;I_end];
+        var_name = {q_sym;qd_sym;qdd_sym;F_ext_sym;X_base_sym;XD_base_sym;XDD_base_sym;mass_end;CoM_end;I_end};
 end
 
 
@@ -88,22 +88,23 @@ end
              X_base_sym, XD_base_sym, XDD_base_sym, F_ext_sym,...
              CoM_ne_sym, I_ne_sym, g_sym);
 
-% gravity term
-switch sym_type
-    case 1
-        Tau_G_sym  = simplify(subs(Tau_sym, [qd_sym;qdd_sym;F_ext_sym], ...
-            [zeros(obj.nj,1);zeros(obj.nj,1);zeros(6,1)]));
-    case 2
-        Tau_G_sym  = simplify(subs(Tau_sym, [qd_sym;qdd_sym;XD_base_sym,XDD_base_sym,F_ext_sym], ...
-            [zeros(obj.nj,1);zeros(obj.nj,1);zeros(6,1);zeros(6,1);zeros(6,1)]));
-    case 3
-        Tau_G_sym  = simplify(subs(Tau_sym, [qd_sym;qdd_sym;XD_base_sym,XDD_base_sym,F_ext_sym], ...
-            [zeros(obj.nj,1),zeros(obj.nj,1),zeros(6,1),zeros(6,1),zeros(6,1),zeros(6,1)]));
-    case 101
-        Tau_G_sym  = simplify(subs(Tau_sym, [qd_sym;qdd_sym;XD_base_sym,XDD_base_sym,F_ext_sym], ...
-            [zeros(obj.nj,1),zeros(obj.nj,1),zeros(6,1),zeros(6,1),zeros(6,1),zeros(6,1)]));
-end
-% Mass term
+% % gravity term
+% switch sym_type
+%     case 1
+%         Tau_G_sym  = simplify(subs(Tau_sym, [qd_sym;qdd_sym;F_ext_sym], ...
+%             [zeros(obj.nj,1);zeros(obj.nj,1);zeros(6,1)]));
+%     case 2
+%         Tau_G_sym  = simplify(subs(Tau_sym, [qd_sym;qdd_sym;XD_base_sym,XDD_base_sym,F_ext_sym], ...
+%             [zeros(obj.nj,1);zeros(obj.nj,1);zeros(6,1);zeros(6,1);zeros(6,1)]));
+%     case 3
+%         Tau_G_sym  = simplify(subs(Tau_sym, [qd_sym;qdd_sym;XD_base_sym,XDD_base_sym,F_ext_sym], ...
+%             [zeros(obj.nj,1),zeros(obj.nj,1),zeros(6,1),zeros(6,1),zeros(6,1),zeros(6,1)]));
+%     case 101
+%         Tau_G_sym  = simplify(subs(Tau_sym, [qd_sym;qdd_sym;XD_base_sym,XDD_base_sym,F_ext_sym], ...
+%             [zeros(obj.nj,1),zeros(obj.nj,1),zeros(6,1),zeros(6,1),zeros(6,1),zeros(6,1)]));
+% end
+
+% % Mass term
 % qd = 0, F_ext = 0
 % M = zeros(obj.nj,obj.nj)
 % for i = 1:obj.nj

@@ -1,14 +1,17 @@
-% Numeric inverse kinematic method for a Finger (Newton Raphson)
+% Numeric inverse kinematic method for a Finger (Levenberg-Marquardt)
 % 
 % input:
 %           x_des: desired position in world frame
 %           IK_par(optional)
 % 
 % output:
-%           q: calculated joint angle
-%           x_res: result of the position x
-%           phi_x: PHI
-%           iter: interation number 
+%           q: result of ik solution
+%           info:
+%               status: if problem solved
+%               x_res: result of the position x
+%               phi_x: PHI
+%               iter: interation number 
+%               retry_iter: num of retries
 % 
 % Junnan Li, junnan.li@tum.de, 04.2024
 
@@ -19,7 +22,7 @@ if nargin == 2
 elseif nargin == 3
     ikpar = varargin{1};
 else
-    error('[Finger.invkin_numeric_LM]: input dimension is incorrect!')
+    error('[Finger.invkin_ncumeric_LM]: input dimension is incorrect!')
 end
 assert(all(size(x_des) == [6,1]), '[Finger.invkin_numeric_LM]: wrong dimension of X_des')
 
@@ -31,7 +34,6 @@ tol = par.tol;
 retry_num = par.retry_num;
 
 q_all = zeros(iter_max,obj.nja);
-q_res = zeros(size(obj.nja));
 
 info = struct();
 info.status = 0;
