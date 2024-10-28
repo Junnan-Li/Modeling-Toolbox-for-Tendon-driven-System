@@ -226,11 +226,57 @@ jacobian_f2 = geometricJacobian(rst_merge_2,q_merge,rst_model_finger_2.BodyNames
 jacobian_f2_mod = [jacobian_f2(4:6,:);jacobian_f2(1:3,:)]; 
 
 %% create hand with two fingers
+% create 2 bases
+theta_rand = rand(1);
+mdh_parameter1 = [0,0,0,0;theta_rand,0.5,0,0;-theta_rand,1.5,0,0];
+mdh_struct = mdh_matrix_to_struct(mdh_parameter1, 1);
+base_1 = Finger('base_1', 'mdh',mdh_struct );
+base_1.set_base([0,0,1]',euler2R_XYZ([0,0,0]));
 
+% define base dynamic parameters
+base_1.list_links(1).set_mass(2);
+base_1.list_links(1).set_com([0.2,0,0]');
+base_1.list_links(2).set_mass(1);
+base_1.list_links(2).set_com([0.3,0,0]');
+base_1.update_finger_par_dyn;
+
+% visualization
+q0_1 = rand(2,1);
+base_1.update_finger(q0_1);
+
+% base 2
+theta_rand = rand(1);
+mdh_parameter2 = [0,0,0,0;theta_rand,1,0,0;-theta_rand,0.5,0,0];
+mdh_struct = mdh_matrix_to_struct(mdh_parameter2, 1);
+base_2 = Finger('base_2', 'mdh',mdh_struct );
+base_2.set_base([0,0,2]',euler2R_XYZ([pi/3,0,0]));
+
+% define base dynamic parameters
+base_2.list_links(1).set_mass(2);
+base_2.list_links(1).set_com([0.2,0,0]');
+base_2.list_links(2).set_mass(1);
+base_2.list_links(2).set_com([0.3,0,0]');
+base_2.update_finger_par_dyn;
+
+% visualization
+q0_2 = rand(2,1);
+base_2.update_finger(q0_2);
+% 
+% figure(3)
+% base_1.plot_finger
+% base_2.plot_finger
+
+% create fingers
+finger_1 = create_finger_random("finger1",3);
+finger_2 = create_finger_random("finger2",4);
+finger_3 = create_finger_random("finger3",2);
+% 
 hand = Hand('hand_exa');
 hand.add_base(base_1);
+hand.add_base(base_2);
 hand.add_finger(finger_1);
 hand.add_finger(finger_2);
+hand.add_finger(finger_3);
 q_hand = rand(hand.nj,1);
 hand.update_hand(q_hand);
 
@@ -252,7 +298,8 @@ for i = 1:20
     w_T_ee_all = hand.get_w_T_ee_all;
     T_1_rst = hand_rst.getTransform(q_hand, 'finger1_endeffector');
     T_2_rst = hand_rst.getTransform(q_hand, 'finger2_endeffector');
-    T_rst = [T_1_rst;T_2_rst];
+    T_3_rst = hand_rst.getTransform(q_hand, 'finger3_endeffector');
+    T_rst = [T_1_rst;T_2_rst;T_3_rst];
 
     T_error = w_T_ee_all-T_rst;
     if max(abs(T_error(:))) > 1e-10

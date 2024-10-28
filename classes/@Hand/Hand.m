@@ -1,23 +1,47 @@
 %% Class of Hand:
+% Hand is a hybrid structure of links based on Finger object to simulate
+% Human & robotic hand system.
+% Hand consists of several serially connected Finger objects as Hand.base
+% to mimic forearm and several parallel connected Finger objects to the end
+% effector of Hand.base listed in Hand.list_fingers to mimic digits. 
+% 
+% For Hand.base:
+%   each base (Finger object)' end effector frame is considered as the
+%   world frame of the next base object
+% For Hand.fingers
+%   the end effector frame of the last base object is the world frame of
+%   all fingers
+% 
 % 
 % properties
-%       Base                % [Finger] a serial Finger object
+%       Base                % [nb] a serial Finger object
 %       list_finger         % [nf] the list of all attached finger
 %       list_links          % [nl] the list of all attached finger
 %       list_muscles        % [nmus] the list of all attached finger
 %       list_viapoints      % [nvia] the list of all attached finger
 %       list_tendons        % [nt] the list of all attached finger
+%       list_obstacles      % [nobs] list of all obstacles
+%       list_contacts       % [nc] list of all contacts
 % 
 %       w_p_base            % position of the base in world frame. taken
-%                           from Base properties 
+%                           from the Hand.base(1).w_p_base 
 %       w_R_base            % rotation of the base in world frame.  taken
-%                           from Base properties 
+%                           from the Hand.base(1).w_R_base 
 % 
 %       njb + njf = nj      
-
+%%%%%%%%%%%%%%%%%%%%%
+%   How to create a hand
+%       1. add bases and fingers manually.
+%           Hand.add_base
+%           Hand.add_finger
+% 
+%       2. create_hand_random(hand_name, varargin )
+%           
 %       
 % 
 % Kinematics
+%       position
+%           get_w_T_ee_all: get transformation matrix of all finger ee
 %       Jacobian:
 %           hand.Jacobian_geom_w_point.m: point/frame Jacobian 
 %               give the index of link and position of point in the link 
@@ -25,6 +49,12 @@
 % 
 %           Jacobian_geom_w_vp.m: viapoint Jacobian 
 %               input 
+% 
+%%%%%%%%%%%%%%%%%%%%%%%%%
+%   Functions for Simulink
+%       
+% 
+% 
 % 
 
 
@@ -51,13 +81,13 @@ classdef Hand < handle & matlab.mixin.Copyable
         nobs                % [1] number of obstacles
         base                % [1] the base of hand (wrist)
         list_fingers        % [] list of all fingers
-        list_joints         % [njx1] list of all joints
-        list_links          % [nlx1] list of all links
-        list_contacts       % [ncx1] list of all contacts
-        list_tendons        % [ntx1] list of all tendons
-        list_muscles        % [ntx1] list of all muscles
-        list_viapoints      % [ntx1] list of all viapoints
-        list_obstacles     % [ntx1] list of all obstacles
+        list_joints         % [nj] list of all joints
+        list_links          % [nl] list of all links
+        list_contacts       % [nc] list of all contacts
+        list_tendons        % [nt] list of all tendons
+        list_muscles        % [nmus] list of all muscles
+        list_viapoints      % [nvia] list of all viapoints
+        list_obstacles     % [nobs] list of all obstacles
         
         limits_q            % [njx2] min,max values of q
         limits_qd           % [njx2] min,max values of qd
@@ -394,7 +424,7 @@ classdef Hand < handle & matlab.mixin.Copyable
 
          function w_T_ee_all = get_w_T_ee_all(obj)
             % get the T of the all figners
-            % [4*nf, 4]
+            % [4xnf, 4]
             
             if obj.nf == 0
                 w_T_ee_all = 0;
@@ -410,7 +440,7 @@ classdef Hand < handle & matlab.mixin.Copyable
 
          function w_x_ee_all = get_w_x_ee_all(obj)
             % get the T of the all figners
-            % [4*nf, 4]
+            % [6,nf]
             w_x_ee_all = zeros(6,obj.nf);
             w_T_ee_all = obj.get_w_T_ee_all;
             for i = 1:obj.nf
@@ -447,7 +477,7 @@ classdef Hand < handle & matlab.mixin.Copyable
 
          function w_T_links_inhand = get_w_T_links_inhand(obj)
              % get the T of the all figners
-             % [4*4*obj.nl]
+             % [4,4,obj.nl]
              %             W_T_b = obj.get_W_T_B();
              w_T_links_inhand = zeros(4,4,obj.nl);
              % each Finger has base, link1, ... linkn, ee

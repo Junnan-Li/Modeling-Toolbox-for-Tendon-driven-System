@@ -116,6 +116,12 @@
 %           invdyn_ne_xq_fb_wt_fext_sub_sym
 %           invdyn_ne_xq_fb_wt_fext_sub_sym_par
 %           
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   Simulink functions
+%       kinematics:
+%           sym_T_all_links_from_q: generate Transformation matrix of all
+%               frames with q input
+%   
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 %   tendon related: 
 %       add_tendon();

@@ -8,6 +8,11 @@
 %               num_finger
 %               dof_finger
 % 
+% for example 
+%   create_hand_random("hand_example", [2,3,4,3] ): create a hand with 2
+%   bases, each of which has 3 DoFs, and 4 fingers, each of which has 3
+%   DoFs
+% 
 % output:   
 %           hand_obj:        
 % 
