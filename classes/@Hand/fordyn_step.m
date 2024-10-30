@@ -1,4 +1,12 @@
 % Forward dynamic simulation for one step 
+% not finished 
+% 
+% TODO: 
+%       1. input of function should be muscle activation
+%       2. length of muscle schould be updated 
+%       3. tau should be calculated from muscle models
+%       4. 
+%   
 % input:
 %           step: 
 %           tau: 
@@ -7,7 +15,6 @@
 %           state_new:
 % 
 % 
-% TODO: need to adapt to the passive joint mode
 
 function state_new = fordyn_step(obj, step, tau)
 %  qD, Tau, F_ext, 

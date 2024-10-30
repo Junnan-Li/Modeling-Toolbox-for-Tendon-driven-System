@@ -1,11 +1,12 @@
-% Geometric Jacobian of the end-effectors of one finger 
+% Geometric Jacobian of Hand end-effectors of one finger with given finger
+% index
 % 
 % input:
 %           finger_index: 
 %           q: 
 % 
 % output:
-%           J: [6xobj.nja] geometric jacobian
+%           J: [6,obj.nja] geometric jacobian
 % 
 % Source: 
 %   "Robotics: Modeling, Planning, and Control" P111 - P113

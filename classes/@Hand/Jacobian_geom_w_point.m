@@ -1,15 +1,17 @@
-% Translational Geometric Jacobian of the a given point at a given frame  
+% Geometric Jacobian of the a given point at a given frame  
 % 
 % input:
 %           index_link: the index number of the link that point is defined
-%           i_p_point
+%           i_p_point:  position of point in link frame
+%           varargin:
+%               w_T_link_all: optional input of all transformation matrix
+%                             of Hand
 % output:
-%           J_trans: [3xobj.nja] geometric jacobian
+%           J_trans: [3,obj.nja] geometric jacobian
+%           J:       [6,obj.nja] geometric jacobian   
 % 
 % Source: 
 %   "Robotics: Modeling, Planning, and Control" P111 - P113
-% 
-% Note: the same as J = Jacobian_geom_mdh(mdh,q)
 % 
 % Junnan Li, junnan.li@tum.de, 01.2023
 

@@ -2,9 +2,11 @@
 % environment with respect to the world frame
 % 
 % input:
-%           qD: 
-%           Tau: 
-%           F_ext: [6xn_q+2]
+%           q:  [obj.nj] 
+%           varargin
+%               qD: [obj.nj] 
+%               F_ext_ne: [6,obj.nf] external wrench at each fingertips 
+%               mex: [1] if use mex compiled function
 % 
 % output:
 %           qDD: [obj.nj] 
@@ -75,6 +77,7 @@ if obj.njf ~= 0
         I = [I,obj.par_dyn_h.inertia_all{i,2}];
         kin_str.njf(i) = finger_i.nj;
     end
+end
 X_base = zeros(6,1);
 X_base(1:3) = obj.w_p_base;
 X_base(4:6) = R2euler_XYZ(obj.w_R_base);
@@ -83,9 +86,11 @@ XDD_base = zeros(6,1);
 
 g = obj.par_dyn_h.g;
 
-[qDD,M,C,G] = fordyn_ne_T(q,qD,Tau,T, kin_str, Mass, X_base, ...
-    XD_base,XDD_base, F_ext, CoM, I, g, mex);
-% [qDD,M_fd,C_fd,G_fd] = fordyn_ne_mdh(q,qD,Tau,mdh_ne, Mass,...
-%              X_base, XD_base, XDD_base, F_ext_ne, CoM_ne, I_ne, g, mex);
 
+if mex
+    error('[invdyn_ne_hand_w_end] not implemented yet!')
+else
+    [qDD,M,C,G] = fordyn_ne_T(q,qD,Tau,T, kin_str, Mass, X_base, ...
+        XD_base,XDD_base, F_ext, CoM, I, g, mex);
+end
 end

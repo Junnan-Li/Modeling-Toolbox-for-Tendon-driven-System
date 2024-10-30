@@ -1,11 +1,16 @@
-% Geometric Jacobian of the end-effector based on the joint cofiguration
+% general Geometric Jacobian of a given point. The link information is
+% separated as base and fingers
+% 
 % 
 % Input:
-%           w_T_all: 4x4xnl
+%           w_T_all: [4,4,nl]
 %           index_base: [1,2]  [1, index_last_base]
 %           index_finger: [nf,2]    [index_start_finger_link, index_last_finger_link]
+%           index_link: [1] the index of link that the point is attached
+%           w_p_point:  position of the point in world frame
+%   
 % Output:
-%           J: [6xn_q] Jacobian matrix 
+%           J: [6,n_q] Jacobian matrix 
 % 
 % Junnan Li, junnan.li@tum.de, 08.2024
 

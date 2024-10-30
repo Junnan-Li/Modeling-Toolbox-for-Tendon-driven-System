@@ -2,9 +2,12 @@
 % environment with respect to the world frame
 % 
 % input:
-%           qD: 
-%           qDD: 
-%           F_ext_ne: [6xnf] external wrench at each fingertips 
+%           q:  [obj.nj] 
+%           varargin
+%               qD: [obj.nj] 
+%               qDD: [obj.nj] 
+%               F_ext_ne: [6,obj.nf] external wrench at each fingertips 
+%               mex: [1] if use mex compiled function
 % 
 % output:
 %           Tau: [obj.nj] 
@@ -86,8 +89,9 @@ g = obj.par_dyn_h.g;
 
 
 if mex
-    [Tau,~,~] = invdyn_ne_mdh_mex(q,qD,qDD,mdh_ne, Mass,...
-        X_base, XD_base, XDD_base, F_ext_ne, CoM_ne, I_ne, g);
+%     [Tau,~,~] = invdyn_ne_mdh_mex(q,qD,qDD,mdh_ne, Mass,...
+%         X_base, XD_base, XDD_base, F_ext_ne, CoM_ne, I_ne, g);
+    error('[invdyn_ne_hand_w_end] not implemented yet!')
 else
     [Tau,F] = invdyn_ne_T(q,qD,qDD,T, kin_str, Mass, ...
         X_base, XD_base,XDD_base, F_ext, CoM, I, g);

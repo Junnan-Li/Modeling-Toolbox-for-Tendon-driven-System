@@ -5,7 +5,7 @@ close all
 clear all
 clc
 
-%% Test generate fingers and wrist seperately and calculate J and M
+%% Create fingers and bases objects
 % 2 dof base with a arbitary alpha in mdh parameters
 % 
 theta_rand = rand(1);
@@ -33,7 +33,7 @@ base_1.update_rst_model;
 rst_model_base = base_1.rst_model;
 rst_model_base.show(q0_1,"Frames","on");
 
-%% finger 1
+% finger 1
 mdh_parameter2 = [0,0,0,0;pi/2,0.8,0,0;-pi/2,1,0,0;0,0.5,0,0;0,0.7,0,0];
 mdh_struct = mdh_matrix_to_struct(mdh_parameter2, 1);
 finger_1 = Finger('finger1', 'mdh',mdh_struct );
@@ -58,40 +58,7 @@ finger_1.update_rst_model;
 rst_model_finger_1 = finger_1.rst_model;
 rst_model_finger_1.show(q0_2,"Frames","on");
 
-% calculate the gravity torque using both methods 
-gravTorq = gravityTorque(rst_model_finger_1,q0_2);
-tau = finger_1.invdyn_ne_w_end( q0_2, 0*q0_2,0*q0_2,zeros(6,1));
-G_error = abs(gravTorq-tau);
-if max(abs(G_error(:))) > 1e-10 
-    fprintf('Test (gravity torque vector): failed! \n')
-else
-    fprintf('Test (gravity torque vector): pass! \n')
-end
-
-% Jacobian calculation
-jacobian = geometricJacobian(rst_model_finger_1,q0_2,rst_model_finger_1.BodyNames{end});
-jacobian_mod = [jacobian(4:6,:);jacobian(1:3,:)]; % using RST function
-J = finger_1.Jacobian_geom_b_end(q0_2); 
-w_R_b = finger_1.w_R_base;
-J_w = blkdiag(w_R_b,w_R_b)*J; % using class function
-J_error = abs(jacobian_mod-J_w);
-if max(abs(J_error(:))) > 1e-10 
-    fprintf('Test (Jacobian): failed! \n')
-else
-    fprintf('Test (Jacobian): pass! \n')
-end
-
-% Mass matrix
-[~,M_fd,~,G_fd] = finger_1.fordyn_ne_w_end(q0_2,0*q0_2, 0*q0_2, zeros(6,finger_1.nj+2),0);
-M = massMatrix(rst_model_finger_1,q0_2); % using RST function
-M_error = abs(M-M_fd);
-if max(abs(M_error(:))) > 1e-10 
-    fprintf('Test (Mass Matrix): failed! \n')
-else
-    fprintf('Test (Mass Matrix): pass! \n')
-end
-
-%% finger 2
+% finger 2
 mdh_parameter3 = [0,0,0,0;0,0.2,0,0;pi/2,1,0,0;-pi/2,1,0,0;0,0.5,0,0];
 mdh_struct = mdh_matrix_to_struct(mdh_parameter3, 1);
 finger_2 = Finger('finger2', 'mdh',mdh_struct );
@@ -138,45 +105,44 @@ rst_modelmerge.show(q0_merge, "Frames","on");
 rst_modelmerge.DataFormat = 'column';
 % rst_modelmerge.Gravity = [0 0 -9.81];
 
-% calculate the gravity torque using both methods 
-gravTorq = gravityTorque(rst_modelmerge,q0_merge);
-tau = merge_1.invdyn_ne_w_end(q0_merge, 0*q0_merge,0*q0_merge,zeros(6,1));
-G_error = abs(gravTorq-tau);
-if max(abs(G_error(:))) > 1e-10 
-    fprintf('Test merge (gravity torque vector): failed! \n')
-else
-    fprintf('Test merge (gravity torque vector): pass! \n')
-end
-
-% Jacobian calculation
-jacobian = geometricJacobian(rst_modelmerge,q0_merge,rst_modelmerge.BodyNames{end});
-jacobian_mod = [jacobian(4:6,:);jacobian(1:3,:)]; % using RST function
-J = merge_1.Jacobian_geom_b_end(q0_merge); 
-w_R_b = merge_1.w_R_base;
-J_w = blkdiag(w_R_b,w_R_b)*J; % using class function
-J_error = abs(jacobian_mod-J_w);
-if max(abs(J_error(:))) > 1e-10 
-    fprintf('Test (Jacobian): failed! \n')
-else
-    fprintf('Test (Jacobian): pass! \n')
-end
-
-% Mass matrix
-[~,M_fd,~,G_fd] = merge_1.fordyn_ne_w_end(q0_merge,0*q0_merge, 0*q0_merge, zeros(6,merge_1.nj+2),0);
-M = massMatrix(rst_modelmerge,q0_merge); % using RST function
-M_error = abs(M-M_fd);
-if max(abs(M_error(:))) > 1e-10 
-    fprintf('Test (Mass Matrix): failed! \n')
-else
-    fprintf('Test (Mass Matrix): pass! \n')
-end
+% % calculate the gravity torque using both methods 
+% gravTorq = gravityTorque(rst_modelmerge,q0_merge);
+% tau = merge_1.invdyn_ne_w_end(q0_merge, 0*q0_merge,0*q0_merge,zeros(6,1));
+% G_error = abs(gravTorq-tau);
+% if max(abs(G_error(:))) > 1e-10 
+%     fprintf('Test merge (gravity torque vector): failed! \n')
+% else
+%     fprintf('Test merge (gravity torque vector): pass! \n')
+% end
+% 
+% % Jacobian calculation
+% jacobian = geometricJacobian(rst_modelmerge,q0_merge,rst_modelmerge.BodyNames{end});
+% jacobian_mod = [jacobian(4:6,:);jacobian(1:3,:)]; % using RST function
+% J = merge_1.Jacobian_geom_b_end(q0_merge); 
+% w_R_b = merge_1.w_R_base;
+% J_w = blkdiag(w_R_b,w_R_b)*J; % using class function
+% J_error = abs(jacobian_mod-J_w);
+% if max(abs(J_error(:))) > 1e-10 
+%     fprintf('Test (Jacobian): failed! \n')
+% else
+%     fprintf('Test (Jacobian): pass! \n')
+% end
+% 
+% % Mass matrix
+% [~,M_fd,~,G_fd] = merge_1.fordyn_ne_w_end(q0_merge,0*q0_merge, 0*q0_merge, zeros(6,merge_1.nj+2),0);
+% M = massMatrix(rst_modelmerge,q0_merge); % using RST function
+% M_error = abs(M-M_fd);
+% if max(abs(M_error(:))) > 1e-10 
+%     fprintf('Test (Mass Matrix): failed! \n')
+% else
+%     fprintf('Test (Mass Matrix): pass! \n')
+% end
 
 %% merge method 2 (consider the finger base position and orientation)
-% consider the base pos&orientation of the finger and fix the world origin to
+% consider the base pose & orientation of the finger and fix the world origin to
 % the wrist endeffector
 % rst_model_base
 % rst_model_finger_1, rst_model_finger_2
-% 
 close all
 q_base = [20,20]'*pi/180;
 q_finger1 = rand(finger_1.nj,1);
@@ -307,12 +273,12 @@ for i = 1:20
     end
 end
 if test_failed == 1
-    fprintf('Test (finger position): failed! \n')
+    fprintf('Test Hand position: failed! \n')
 else
-    fprintf('Test (finger position): pass! \n')
+    fprintf('Test Hand position: pass! \n')
 end
-%% test the Jacobian of a hand with two fingers
-
+%% test the Jacobian function 
+% Jacobian_geom_w_one_finger
 test_failed = 0;
 for i = 1:20
     q_hand = rand(hand.nj,1);
@@ -334,49 +300,51 @@ for i = 1:20
     end
 end
 if test_failed == 1
-    fprintf('Test (finger Jacobian): failed! \n')
+    fprintf('Test Hand Jacobian: failed! \n')
 else
-    fprintf('Test (finger Jacobian): pass! \n')
+    fprintf('Test Hand Jacobian: pass! \n')
 end
 
-%%  Jacobian with given q and index_link
+%%  Jacobian 
+% Jacobian_geom_w_point
+
 test_failed = 0;
 hand = create_hand_random('hand_Obstacle_Set', [2,3,3,4] );
 hand_rst = hand.update_rst_model;
-
-q = rand(hand.nj,1);
-hand.update_hand(q);
-plot_par = hand.plot_parameter_init;
-figure(10)
-hand.plot_hand(plot_par)
-axis equal
-hand_rst.show(q,'Frames','on');
-
-w_T_all = hand.get_w_T_links_inhand;
-plot3(reshape(w_T_all(1,4,:),hand.nl,1),reshape(w_T_all(2,4,:),...
-    hand.nl,1),reshape(w_T_all(3,4,:),hand.nl,1),'k+','MarkerSize',15)
-J_rst = nan(6,hand.nl,hand.nl);
-J = nan(6,hand.nl,hand.nl);
-J1 = nan(6,hand.nl,hand.nl);
-for i = 1:hand.nl
-    link_i = hand.list_links(i);
-    J_rst_tmp = geometricJacobian(hand_rst,q,link_i.name);
-    J_rst(:,:,i) = [J_rst_tmp(4:6,:);J_rst_tmp(1:3,:)];
-    [J_trans,J_all] = hand.Jacobian_geom_w_point(i,[0,0,0]);
-    J(:,:,i) = J_all;
-end
-J_error = J_rst - J;
-if max(abs(J_error(:))) > 1e-10
-    test_failed = 1;
+for i = 1:20
+    q = rand(hand.nj,1);
+    hand.update_hand(q);
+    plot_par = hand.plot_parameter_init;
+%     figure(10)
+%     hand.plot_hand(plot_par)
+%     axis equal
+%     hand_rst.show(q,'Frames','on');
+%     w_T_all = hand.get_w_T_links_inhand;
+%     plot3(reshape(w_T_all(1,4,:),hand.nl,1),reshape(w_T_all(2,4,:),...
+%         hand.nl,1),reshape(w_T_all(3,4,:),hand.nl,1),'k+','MarkerSize',15)
+    J_rst = nan(6,hand.nl,hand.nl);
+    J = nan(6,hand.nl,hand.nl);
+    J1 = nan(6,hand.nl,hand.nl);
+    for ii = 1:hand.nl
+        link_i = hand.list_links(ii);
+        J_rst_tmp = geometricJacobian(hand_rst,q,link_i.name);
+        J_rst(:,:,ii) = [J_rst_tmp(4:6,:);J_rst_tmp(1:3,:)];
+        [J_trans,J_all] = hand.Jacobian_geom_w_point(ii,[0,0,0]);
+        J(:,:,ii) = J_all;
+    end
+    J_error = J_rst - J;
+    if max(abs(J_error(:))) > 1e-10
+        test_failed = 1;
+    end
 end
 if test_failed == 1
-    fprintf('Test (finger Jacobian): failed! \n')
+    fprintf('Test Hand Jacobian: failed! \n')
 else
-    fprintf('Test (finger Jacobian): pass! \n')
+    fprintf('Test Hand Jacobian: pass! \n')
 end
-%% dynamics
 
-hand.update_hand_par_dyn
+
+
 
 
 

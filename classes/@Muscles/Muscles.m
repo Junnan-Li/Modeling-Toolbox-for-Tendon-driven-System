@@ -1,7 +1,12 @@
 %% Class of Muscles:
 % Base Muscle object with pathway informations enabling obstacle-set algorithms
-
-
+% 
+% How to create a Muscle object:
+%       1. Muscle_1 = Muscles("muscle_1")
+% 
+% How to add viapoint to Muscle
+%       Muscle.add_viapoints
+% 
 % Comment: 
 %       properties:
 %           name:    name of the muscle

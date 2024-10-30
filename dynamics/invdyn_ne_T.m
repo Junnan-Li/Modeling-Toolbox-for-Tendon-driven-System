@@ -2,22 +2,22 @@
 % only end-effector external force input
 % parameters
 % Input:
-%     q,qD,qDD:         [n_qx1] joint states
-%     T:                [4x4x n_frame] each Finger object has nqi+2  
+%     q,qD,qDD:         [n_q] joint states
+%     T:                [4,4, n_frame] each Finger object has nqi+2  
 %     kin_str           [struct] nb: number of bases; njb [nb,1]: nq of
 %                       each base; nf: number of fingers; njf [nf,1]: 
 %     Mass:             [n_q+(nb+nf)] mass vector. the first mass is the base 
-%     X_base:           [6x1] eulerxyz
-%     XD_base:          [6x1] translational and angular velocity
-%     F_ext:            [6xnf] force/moment that exerted by the environment to the endeffector frame (each finger). 
-%     CoM:              [3xn_q+1] in local frame; last column is endeffector
-%     I:                [6xn_q+1] in local frame with respect to center of mass. in sequence of [xx yy zz yz xz xy]
-%     g:                [3x1] gravity term in world frame
+%     X_base:           [6] eulerxyz
+%     XD_base:          [6] translational and angular velocity
+%     F_ext:            [6,nf] force/moment that exerted by the environment to the endeffector frame (each finger). 
+%     CoM:              [3,n_q+1] in local frame; last column is endeffector
+%     I:                [6,n_q+1] in local frame with respect to center of mass. in sequence of [xx yy zz yz xz xy]
+%     g:                [3] gravity term in world frame
 
 % 
 % Output:
-%     Tau:              [n_qx1] joint torque 
-%     F:                [6xn_q+2] force/moment vectors that the i link exert to the i+1 link
+%     Tau:              [n_q] joint torque 
+%     F:                [6,n_q+2] force/moment vectors that the i link exert to the i+1 link
 
 % internal variable:
 %   n_q: number of joints

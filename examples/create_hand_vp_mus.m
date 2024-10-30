@@ -1,4 +1,6 @@
 % test script for viapoint and muscle object functionalities within the hand
+% 
+% not used 
 
 
 clear all

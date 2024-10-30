@@ -1,12 +1,13 @@
 % test script for viapoint and muscle object functionalities within the hand
-
+% 
+% 
 
 clear all
 close all
 clc
 
 %% create hand 
-hand = create_hand_random('hand_IK_test', [2,2,2,4] );
+hand = create_hand_random('hand_viapoint_test', [2,2,2,4] );
 hand_rst = hand.update_rst_model;
 q = rand(hand.nj,1);
 hand.update_hand(q);
@@ -20,9 +21,9 @@ par_plot.axis_len = 0.4;
 
 %% add VP 
 
-vp01 = hand.base(1).add_ViaPoint('VP01', 0, -0.5*rand(1,3));
-vp02 = hand.base(1).add_ViaPoint('VP02', 0, -0.5*rand(1,3));
-vp03 = hand.base(1).add_ViaPoint('VP03', 0, -0.5*rand(1,3));
+% vp01 = hand.base(1).add_ViaPoint('VP01', 0, -0.5*rand(1,3));
+% vp02 = hand.base(1).add_ViaPoint('VP02', 0, -0.5*rand(1,3));
+% vp03 = hand.base(1).add_ViaPoint('VP03', 0, -0.5*rand(1,3));
 
 vp1 = hand.base(1).add_ViaPoint('VP1', 1, 0.5*rand(1,3));
 vp2 = hand.base(1).add_ViaPoint('VP2', 2, 0.5*rand(1,3));

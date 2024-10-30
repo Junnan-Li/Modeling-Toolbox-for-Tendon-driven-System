@@ -38,22 +38,42 @@
 %       2. create_hand_random(hand_name, varargin )
 %           
 %       
-% 
+%%%%%%%%%%%%%%%%%%%%%%% 
 % Kinematics
-%       position
+%       position:
 %           get_w_T_ee_all: get transformation matrix of all finger ee
 %       Jacobian:
 %           hand.Jacobian_geom_w_point.m: point/frame Jacobian 
 %               give the index of link and position of point in the link 
 %               frame. it gives the Jacobian of that point.
 % 
-%           Jacobian_geom_w_vp.m: viapoint Jacobian 
-%               input 
+%           Jacobian_geom_w_vp: geometric Jacobian with given ViaPoint 
+%               object. calling Jacobian_geom_T_hand.m  
+% 
+%           Jacobian_geom_w_point: geometric Jacobian with given attached
+%               link and position in link frame
+%               
+% 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Dynamics:
+%       ID:
+%           invdyn_ne_hand_w_end: inverse dynamic newton-euler with frame
+%                   external wrench. calling invdyn_ne_T.m
+% 
+%       FD:
+%           fordyn_ne_hand_w_end: forward dynamics. calling fordyn_ne_T.m
+% 
+%           fordyn_step: 
 % 
 %%%%%%%%%%%%%%%%%%%%%%%%%
 %   Functions for Simulink
-%       
+%       state: state for simulation: q, qd, l_mus, alpha
+%               [obj.nj] q; [obj.nj] qd; [obj.nmus] l_mus; [obj.nmus] alpha;
 % 
+%       fordyn_step:
+%       init_state
+%       set_state
+%       
 % 
 % 
 

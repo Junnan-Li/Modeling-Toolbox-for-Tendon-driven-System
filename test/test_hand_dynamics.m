@@ -8,7 +8,12 @@ clc
 
 %% 
 
-run examples\create_hand_vp_mus.m
+% run examples\create_hand_vp_mus.m
+
+hand = create_hand_random('hand_with_VP_Mus', [2,2,2,4] );
+q = rand(hand.nj,1);
+hand.update_hand(q);
+
 plot_par = hand.plot_parameter_init;
 plot_par.axis_len = 0.5;
 hand.update_hand_par_dyn
@@ -25,7 +30,7 @@ hand_rst.show(q,'Frames','on');
 q_init = zeros(hand.nj,1);
 test_failed = 0;
 
-for test_iter = 1:10
+for test_iter = 1:20
     
     hand.set_base(rand(3,1),euler2R_XYZ(rand(3,1)));
     hand.update_hand(q_init);
@@ -38,11 +43,11 @@ for test_iter = 1:10
     hand.update_hand(q);
 
 %     % plot 
-    figure(2)
-    hand.plot_hand(plot_par)
-    hand.plot_hand_com
-    axis equal
-    hand_rst.show(q,'Frames','on');
+%     figure(2)
+%     hand.plot_hand(plot_par)
+%     hand.plot_hand_com
+%     axis equal
+%     hand_rst.show(q,'Frames','on');
 
     tau_rst = hand_rst.inverseDynamics(q,qd,qdd); % gravity torque
     Tau = hand.invdyn_ne_hand_w_end(q,qd,qdd);
@@ -60,10 +65,10 @@ else
 end
 
 % return
-%% Mass matrix, coriolis and gravity
+%% FD, Mass matrix, coriolis and gravity
 q_init = zeros(hand.nj,1);
 test_failed = 0;
-for test_iter = 1:10
+for test_iter = 1:20
     % 
     hand.set_base(rand(3,1),euler2R_XYZ(rand(3,1)));
     hand.update_hand(q_init);
@@ -75,11 +80,11 @@ for test_iter = 1:10
     hand.update_hand(q);
 
     % plot 
-    figure(2)
-    hand.plot_hand(plot_par)
-    hand.plot_hand_com
-    axis equal
-    hand_rst.show(q,'Frames','on');
+%     figure(2)
+%     hand.plot_hand(plot_par)
+%     hand.plot_hand_com
+%     axis equal
+%     hand_rst.show(q,'Frames','on');
 
     M_rst = hand_rst.massMatrix(q);
     G_rst = hand_rst.gravityTorque(q);
@@ -104,7 +109,9 @@ else
     fprintf('Test (FD): pass! \n')
 end
 
-%% forward dynamics
+%% forward dynamics using fordyn_step
+% unfinished 
+% need vp, muscle path, muscle model. 
 
 
 q_init = zeros(hand.nj,1);
@@ -127,12 +134,12 @@ for i = 0:sim_step:sim_t_end
 end
 
 %%
-figure(10)
-for i = 1:length(data.time)
-    hand.update_hand(data.state(i,1:hand.nj));
-    hand.plot_hand(plot_par);
-    drawnow
-    hold off
-end
+% figure(10)
+% for i = 1:length(data.time)
+%     hand.update_hand(data.state(i,1:hand.nj));
+%     hand.plot_hand(plot_par);
+%     drawnow
+%     hold off
+% end
 
 

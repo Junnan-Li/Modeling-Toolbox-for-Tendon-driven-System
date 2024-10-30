@@ -1,21 +1,23 @@
 %% Class of ViaPoint
 % ViaPoint defines the origin, insertion, and pathway of the muscles. This object will also
 % used in the obstacle-set algorithms of calculating moment arm at joints.
-% ViaPoint is defined as a fixed point of a body frame 
+% ViaPoint is defined as a fixed point in a link frame 
 %           
-
+% 
+% 
+% 
 
 classdef ViaPoint < handle %& matlab.System
 
     properties (Access = public)
-        name                 % [char] name of ViaPoint
+        name                % [char] name of ViaPoint
         link_p              % [3x1] position in the link frame
     end
     properties (SetAccess = private)
         index_link_inhand        % index of the related link in q of hand
         index_inhand            % index of via points of hand
         Link
-        base_p          % used for Finger.get_p_all_viapoints
+        base_p                    % used for Finger.get_p_all_viapoints
         w_p_VP          
         w_p_VP_inhand
     end
