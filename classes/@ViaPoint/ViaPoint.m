@@ -3,8 +3,22 @@
 % used in the obstacle-set algorithms of calculating moment arm at joints.
 % ViaPoint is defined as a fixed point in a link frame 
 %           
+% Test script: test_viapoint.m
 % 
+% How is a ViaPoint object defined:
+%       1. vp = ViaPoint(name, obj, link_p)
 % 
+%       2. vp = Finger.add_ViaPoint('VP1', 1, 0.5*rand(1,3));
+%               which calls 
+%               Link.add_viapoint_link
+% 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   Properties update
+%       index_link_inhand:    Hand.update_list_viapoints
+%       index_inhand          Hand.update_list_viapoints
+%       base_p                Hand.update_hand/Finger.update_finger/Link.update
+%       w_p_VP                Hand.update_hand/Finger.update_finger/Finger.update_viapoints
+%       w_p_VP_inhand         Hand.update_hand/Finger.update_finger/Finger.update_viapoints
 % 
 
 classdef ViaPoint < handle %& matlab.System
@@ -16,10 +30,10 @@ classdef ViaPoint < handle %& matlab.System
     properties (SetAccess = private)
         index_link_inhand        % index of the related link in q of hand
         index_inhand            % index of via points of hand
-        Link
-        base_p                    % used for Finger.get_p_all_viapoints
-        w_p_VP          
-        w_p_VP_inhand
+        Link                    % attached Link object 
+        base_p                  % used for Finger.get_p_all_viapoints
+        w_p_VP                  % position of vp in Finger world frame
+        w_p_VP_inhand           % position of vp in Hand world frame
     end
 
     methods
@@ -43,12 +57,12 @@ classdef ViaPoint < handle %& matlab.System
         end
 
         function set_index_inhand(obj,index_inhand)
-            % 
+            % called in Hand.update_list_viapoints
             obj.index_inhand = index_inhand;
         end
 
         function set_index_link_inhand(obj,index_link_inhand)
-            % 
+            % called in Hand.update_list_viapoints
             obj.index_link_inhand = index_link_inhand;
         end
 

@@ -14,6 +14,13 @@
 % from Finger/Hand functions
 % 
 % 
+%   Link.update(): is called in Finger.update_finger(), 
+% 
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+%       Viapoint:
+%           add_viapoint_link
+% 
+% 
 classdef Links < handle & matlab.mixin.Copyable 
     
     properties (Access = public)

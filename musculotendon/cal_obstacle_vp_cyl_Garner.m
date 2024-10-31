@@ -1,14 +1,21 @@
-% calculate the obstacle via points coordinates 
+% calculate muscle length wrapping around the Cylinder Obstacle and via points
 % 
 % Input:
+%           w_T_obs:        [4,4] transformation matrix of obstacles
+%           w_P_p:          [3,1] position of P point
+%           w_S_p:          [3,1] position of S point
+%           radius:         [1]   radius 
+%           wrap_direction: [1]   +/- 1 direction of wrapping  
 % Output:
-% 
+%           l_muscle:       Length of muscle 
+%           w_status:       wrapping status
+%           w_Q_p           position of Q point
+%           w_T_p           position of T point
 % 
 % Reference:
 %   [1] Garner, B. A., & Pandy, M. G. (2000). The obstacle-set method for representing 
 %   muscle paths in musculoskeletal models. Computer Methods in Biomechanics and
 %   Biomedical Engineering, 3(1), 1–30. https://doi.org/10.1080/10255840008915251
-% 
 % 
 % Junnan Li, junnan.li@tum.de, 07.2024
 

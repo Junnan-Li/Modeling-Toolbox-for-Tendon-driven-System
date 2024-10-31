@@ -45,15 +45,13 @@ vp10 = hand.list_fingers(2).add_ViaPoint('VP10', 2, 0.5*rand(1,3));
 vp11 = hand.list_fingers(2).add_ViaPoint('VP11', 3, 0.5*rand(1,3));
 vp12 = hand.list_fingers(2).add_ViaPoint('VP12', 4, 0.5*rand(1,3));
 
-
-
 hand.update_list_viapoints;
 q = rand(hand.nj,1);
 hand.update_hand(q);
-% figure(1)
-% hand.plot_hand(par_plot);
-% hand.plot_hand_viapoints(par_plot);
-% hand_rst.show(q,'Frames','on');
+figure(1)
+hand.plot_hand(par_plot);
+hand.plot_hand_viapoints(par_plot);
+hand_rst.show(q,'Frames','on');
 
 
 
@@ -90,9 +88,5 @@ T_base = hand.list_fingers(1).get_w_T_base_inhand;
 plot3(T_base(1,4),T_base(2,4),T_base(3,4),'rx')
 end
 
-l_mus_1 = hand.get_muscle_length_all;
-tic
-MA = hand.get_Muscle_Momentarm_1st_c([1,2]);
-t1 = toc;
 
 

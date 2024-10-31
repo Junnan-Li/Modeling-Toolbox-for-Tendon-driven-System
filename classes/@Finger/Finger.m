@@ -59,12 +59,14 @@
 %       Functions:
 %           obj.update_finger(q_a):
 %               with given q. this function sets q to obj.mdh.theta and 
-%               updates: 
-%               Link.base_p, Link.base_R, Link.w_T_Link, w_T_Link_inhand 
+%               udpates: 
+%                       Link.base_p, Link.base_R, and associated 
+%                       Contact, Viapoint, and Obstacles on that Link
+%                       Link.w_T_Link, w_T_Link_inhand 
 %               and calls: 
-%               update_viapoints.m, 
-%               update_M_coupling.m, 
-%               update_obstacles.m 
+%                   update_viapoints.m, 
+%                   update_M_coupling.m, 
+%                   update_obstacles.m 
 % 
 % 
 %           obj.update_finger_par_dyn:
@@ -139,23 +141,31 @@
 %           step
 %       cal_selected_Muscle_momentarm_1st_c
 % 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 %   viapoint related
-%       add_ViaPoint(obj, name, link_index, link_p_obj): add viapoint to a
+%       Finger. add_ViaPoint(obj, name, link_index, link_p_obj): add viapoint to a
 %           link of given index (0: base)  
 %       update_list_viapoints(obj): update Finger.list_viapoints and Finger.nv
+
 %       update_viapoints: update the w_p_viapoint for all viapoints, using 
 %           Finger.get_p_viapoint_inhand and viapoint_i.update_w_p_VP.
-%       get_p_all_viapoints: get the position of viapoints in wowrld frame
+%           called in Finger.update_finger
+
+%       get_p_all_viapoints: calculate the position of viapoints in wowrld frame
 %           and base frame
+
 %       get_p_viapoint
 %       get_p_all_viapoints_inhand
 %       get_p_viapoint_inhand
 %       delete_all_viapoint: delete all viapoints and empty list_viapoints
 % 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %   Obstacle related:
 %       add_Obstacle(obj, name, link_index, link_p_obj,link_R_obj): add
 %           obstacle to the link of given index and related position and orientation
+%       
 %       update_list_obstacles: update Finger.list_obstacles and Finger.nobs
+% 
 %       update_obstacles: update the transformation matrix of each
 %           obstacles (obstacles.update_w_T_Obs and .update_w_T_Obs_inhand)
 %       get_p_obstacle: get position of the obstacle frame origin
@@ -425,6 +435,7 @@ classdef Finger < handle & matlab.mixin.Copyable
                 base_p_link_i = b_T_i(1:3,4);
                 base_R_link_i = b_T_i(1:3,1:3);
                 obj.list_links(i).update(base_p_link_i,base_R_link_i);
+                % Link.update
                 obj.list_links(i).update_w_T_Link(obj.w_T_base*b_T_i);
                 obj.list_links(i).update_w_T_Link_inhand(obj.w_T_base_inhand*b_T_i);
             end
@@ -1266,7 +1277,7 @@ classdef Finger < handle & matlab.mixin.Copyable
         end
 
         function [w_p_viapoint,b_p_viapoint] = get_p_viapoint(obj, VP_index)
-            % plot 3d contact points
+            % 
             w_R_b = obj.w_R_base;
             w_p_b = obj.w_p_base;
 

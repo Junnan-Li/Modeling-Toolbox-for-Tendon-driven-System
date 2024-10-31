@@ -1,11 +1,17 @@
 %% Class of Muscles:
 % Base Muscle object with pathway informations enabling obstacle-set algorithms
+% Muscle objects are stacked in the list_muscles of Finger or Hand objects
 % 
+% 
+% 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 % How to create a Muscle object:
 %       1. Muscle_1 = Muscles("muscle_1")
 % 
+%       2. Hand/Finger.add_Muscle
+% 
 % How to add viapoint to Muscle
-%       Muscle.add_viapoints
+%       Muscle.add_viapoints(vp)
 % 
 % Comment: 
 %       properties:
@@ -24,13 +30,17 @@
 %           constr_obs:     cell array of muscle path constrains containing
 %                           containing obstacles and adjacent vps
 %           
+%%%%%%%%%%%%%%%%%%%%%%%%%% 
+%  Functions 
+%           update_viapoints:   update Muscle.n_vp from Muscle.list_vp
+%           update_obstacles:   update Muscle.n_obs from Muscle.list_obs
 % 
-%       functions: 
-%           set_via_point
-%           delete_via_point
-%           update_viapoints()
-%           cal_muscle_length(q)
-%           cal_muscle_length_inhand
+%           cal_Muscle_length_ObstacleSet_Cyl_Garner:
+%                               Calculate the length of muscles with
+%                               Cylinder Obstacles. 
+%                               see cal_obstacle_vp_cyl_Garner.m
+% 
+% 
 % 
 
 classdef Muscles < handle & matlab.mixin.Copyable 
@@ -94,13 +104,13 @@ classdef Muscles < handle & matlab.mixin.Copyable
 
         %% obstacles
         function add_Muscle_Obstacles(obj, obstacles_obj)
-            % update the number of the viapoint
+            % update list_obs
             obj.list_obs = {obj.list_obs{:}, obstacles_obj}';
             obj.update_obstacles;
         end
             
         function update_obstacles(obj)
-            % update the number of the viapoint
+            % update the number of the obstacles
             obj.n_obs = length(obj.list_obs);
 %             muscle.init_list_constr;
         end
@@ -110,7 +120,12 @@ classdef Muscles < handle & matlab.mixin.Copyable
 
         function init_list_constr(obj)
             % init constraint list 
-            %%% called by obj.update_obstacles
+            % This function summarizes all obs and vps in Muscle.list_constr
+            % in a specific order. 
+            % Furthermore, it separates the constrains into sections of vp
+            % only and obstacles. 
+            % 
+            % called by Finger.update_muscles
 
             list_constr_tmp = cell(obj.n_obs+obj.n_vp,1);
             list_constr_index_tmp = nan(obj.n_vp,1);
@@ -180,6 +195,7 @@ classdef Muscles < handle & matlab.mixin.Copyable
         function [l_total, wrap_status,w_PS_p] = cal_Muscle_length_ObstacleSet_Cyl_Garner(obj, varargin)
             % calculate the muscle length with Cylinder obstacle set
             % using cal_obstacle_vp_cyl_Garner.m 
+            % TODO
             if nargin <= 1
                 in_hand = 0;
             else

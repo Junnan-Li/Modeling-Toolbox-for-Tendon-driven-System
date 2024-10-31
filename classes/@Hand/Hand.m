@@ -65,6 +65,12 @@
 % 
 %           fordyn_step: 
 % 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   Muscle 
+%       Moment arm calculation
+%           Hand.cal_hand_Muscle_l_J_Garner: calculate muscle length and
+%           moment arm 
+% 
 %%%%%%%%%%%%%%%%%%%%%%%%%
 %   Functions for Simulink
 %       state: state for simulation: q, qd, l_mus, alpha
@@ -689,7 +695,7 @@ classdef Hand < handle & matlab.mixin.Copyable
 
         %% viapoints
         function update_list_viapoints(obj)
-            % update the Link Class property: Links.nc 
+            %  update the obj.list_viapoints and set index of vps
             
             obj.list_viapoints = []; % init list_contacts
             num_viapoints = 0;
@@ -834,10 +840,10 @@ classdef Hand < handle & matlab.mixin.Copyable
 
             if nargin == 1
                 muscle_index = (1:obj.nmus)';
-                eps = 1e-8;
+                eps = 1e-6;
             elseif nargin == 2
                 muscle_index = varargin{1};
-                eps = 1e-8;
+                eps = 1e-6;
             elseif nargin == 3
                 muscle_index = varargin{1};
                 eps = varargin{2};
@@ -851,7 +857,7 @@ classdef Hand < handle & matlab.mixin.Copyable
                     q_f(i) = q_f(i) + eps;
                     obj.update_hand(q_f);
                     l_f = obj.get_muscle_length(muscle_index); % forward 
-                    MA(i,:) = (l_f-l_ori)./(eps); 
+                    MA(i,:) = -(l_f-l_ori)./(eps); % the symbol is "-"
 %                 end
             end
             obj.update_hand(q_ori);
@@ -865,10 +871,10 @@ classdef Hand < handle & matlab.mixin.Copyable
 
             if nargin == 1
                 muscle_index = (1:obj.nmus)';
-                eps = 1e-8;
+                eps = 1e-6;
             elseif nargin == 2
                 muscle_index = varargin{1};
-                eps = 1e-8;
+                eps = 1e-6;
             elseif nargin == 3
                 muscle_index = varargin{1};
                 eps = varargin{2};
@@ -885,7 +891,7 @@ classdef Hand < handle & matlab.mixin.Copyable
                     q_b(i) = q_b(i) - eps;
                     obj.update_hand(q_b);
                     l_b = obj.get_muscle_length(muscle_index); % forward 
-                    MA(i,:) = (l_f-l_b)./(2*eps); 
+                    MA(i,:) = -(l_f-l_b)./(2*eps); % the symbol is "-"
 %                 end
             end
             obj.update_hand(q_ori);

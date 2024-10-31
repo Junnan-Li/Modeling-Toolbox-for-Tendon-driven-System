@@ -1,4 +1,5 @@
-% test script for viapoint and muscle object functionalities within the hand
+% test script for Obstacles
+
 
 
 clear all
@@ -10,7 +11,7 @@ clc
 finger_r = create_finger_random('finger_Obstacle_test', 6);
 % finger_r.set_base(zeros(3,1),euler2R_XYZ(zeros(1,3)))
 %% set random states
-rst_model = finger_r.update_rst_model;
+finger_r.update_rst_model;
 % load rst model from finger class
 rst_model = finger_r.rst_model;
 
@@ -29,10 +30,10 @@ hold on
 
 %% obstacles
 
-Obs1 = finger_r.add_Obstacle('obstacle_1', 2, [0,0,0]',euler2R_XYZ([0,0,0]));
+Obs1 = finger_r.add_Obstacle('obstacle_1', 1, [0,0,0]',euler2R_XYZ([0,0,0]));
 Obs2 = finger_r.add_Obstacle('obstacle_2', 2, [0,0,0]',euler2R_XYZ([pi/2,0,0]));
-Obs3 = finger_r.add_Obstacle('obstacle_3', 2, [0,0,0]',euler2R_XYZ([pi,0,0]));
-Obs4 = finger_r.add_Obstacle('obstacle_4', 2, [0,0,0]',euler2R_XYZ([pi/2*3,0,0]));
+Obs3 = finger_r.add_Obstacle('obstacle_3', 3, [0,0,0]',euler2R_XYZ([pi,0,0]));
+Obs4 = finger_r.add_Obstacle('obstacle_4',4, [0,0,0]',euler2R_XYZ([pi/2*3,0,0]));
 % % 
 % finger_r.update_finger(q_r);
 % finger_r.plot_obstacles(plot_par)

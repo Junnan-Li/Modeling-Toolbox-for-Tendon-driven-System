@@ -101,7 +101,7 @@ for i_mus = 1:nmus
                     J_lq_constr_obs_i_l1 = cal_muscle_vp_Jacobian(J_vp(:,:,1:2), [w_P_p,w_Q_p]);
                     J_lq_constr_obs_i_l2 = cal_muscle_vp_Jacobian(J_vp(:,:,3:4), [w_T_p,w_S_p]);
                     J_lq_constr_obs_i = J_lq_constr_obs_i_l1 + J_lq_constr_obs_i_l2;
-                    w_PS_p{i_mus,i} = [w_Q_p,w_T_p];
+                    w_PS_p{i_mus,i} = [w_Q_p,w_T_p]; 
                 else
                     J_vp = zeros(3,nj,2);
                     J_vp(:,:,1) = w_J_P;
@@ -110,7 +110,7 @@ for i_mus = 1:nmus
                     w_PS_p{i_mus,i} = nan;
                 end
             else
-                disp('[Muscle.cal_Muscle_length_ObstacleSet_Cyl_Garner]: constr_obs has more than 3 elements! ')
+                disp('[Hand.cal_hand_Muscle_l_J_Garner]: constr_obs has more than 3 elements! ')
             end
             wrap_status{i_mus,i} = wrap_status_i;
             length(i_mus) = length(i_mus) + l_QT_i;

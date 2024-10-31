@@ -1,5 +1,13 @@
 %% Class of Obstacles
-
+% Obstacle is defined in the Link frame with position and orientation. The
+% shape of Obstacles are determined in the subclasses
+% 
+% How is a Obstacle object defined:
+%       1. obs = Obstacles(name);
+% 
+%       2. vp = Finger.add_Obstacle
+%               which calls --> Link.add_obstacle_link
+% 
 % Descriptions: 
 %       properties:
 %           name:    name of the muscle
@@ -17,6 +25,19 @@
 %           update_w_T_Obs
 %           plot_obs:   plot the obstacle origin and Z axis (override by subclass)
 % 
+%%%%%%%%%%%%%%%%%%%%%%
+%   Properties update
+%           index_link_inhand
+%           link_T_obs
+%           base_T_obs      Hand.update_hand/Finger.update_finger/Link.update
+%           w_T_Obs         Hand.update_hand/Finger.update_finger/Finger.update_obstacles
+%           w_T_Obs_inhand  Hand.update_hand/Finger.update_finger/Finger.update_obstacles
+% 
+% Subclasses
+%       Cylinder_obs
+%           Finger.add_Obstacle_cylinder
+%       
+% 
 
 classdef Obstacles < handle
     
@@ -26,9 +47,9 @@ classdef Obstacles < handle
         link_R              % [3x3] orientation in the link frame
     end
     properties (SetAccess = private)
-        Link
-        index_link_inhand        % index of the related link in q of hand
-        link_T_obs
+        Link                    % attached Link object
+        index_link_inhand       % index of the related link in q of hand
+        link_T_obs              % transformation to Link frame
         base_T_obs          
         w_T_Obs          
         w_T_Obs_inhand
@@ -89,7 +110,7 @@ classdef Obstacles < handle
         end
 
         function plot_obs(obj, plot_par)
-
+            % this function is overlapped in the subclasses
             if plot_par.inhand == 0
                 [p, R] = T2pR(obj.w_T_Obs);
             else
