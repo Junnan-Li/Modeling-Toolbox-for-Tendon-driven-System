@@ -196,39 +196,50 @@ axis equal
 %%
 close all
 
-q_init = 0.5 + rand(hand.nj,1);
-hand.update_hand(q_init);
-hand.plot_hand(par_plot)
-axis equal
-hand.plot_hand_viapoints(par_plot)
-hand.plot_hand_muscles(par_plot)
-tic
-[length1,J1, wrap_status1,w_PS_p1] = hand.cal_hand_Muscle_l_J_Garner(hand.get_w_T_links_inhand);
-t1 = toc;
-%
-tics
-J2 = hand.get_Muscle_Momentarm_1st_f; 
-t2 = toc;
+t1 = 0;
+t2 = 0;
+t3 = 0;
+test_failed = 0;
+for i_ma = 1:100
+    q_init = 0.5 + rand(hand.nj,1);
+    hand.update_hand(q_init);
+%     hand.plot_hand(par_plot)
+%     axis equal
+%     hand.plot_hand_viapoints(par_plot)
+%     hand.plot_hand_muscles(par_plot)
+    tic
+    [length1,J1, wrap_status1,w_PS_p1] = hand.cal_hand_Muscle_l_J_Garner(hand.get_w_T_links_inhand);
+    t1 = t1 + toc;
+    %
+    tic
+    J2 = hand.get_Muscle_Momentarm_1st_f;
+    t2 = t2 + toc;
 
-tic
-J3 = hand.get_Muscle_Momentarm_1st_c;
-t3 = toc;
-J_error1 = J1 - J2;
-J_error2 = J1 - J3;
-J_error = [J_error1;J_error2];
-
-if max(abs(J_error(:))) > 1e-6 
-    fprintf('Test (muscle Jacobian): failed! \n')
-else
-    fprintf('Test (muscle Jacobian): pass! \n')
+    tic
+    J3 = hand.get_Muscle_Momentarm_1st_c;
+    t3 = t3 + toc;
+    J_error1 = J1 - J2;
+    J_error2 = J1 - J3;
+    J_error = [J_error1;J_error2];
+    if max(abs(J_error(:))) > 1e-6 
+        test_failed = 1;
+    end
 end
 fprintf('------------------------------------- \n')
-fprintf('cal_hand_Muscle_l_J_Garner: %f! \n',t1)
-fprintf('get_Muscle_Momentarm_1st_f: %f! \n',t2)
-fprintf('get_Muscle_Momentarm_1st_c: %f! \n',t3)
+if test_failed
+    fprintf('Test (muscle Jacobian): FAILED! \n')
+else
+    fprintf('Test (muscle Jacobian): PASS! \n')
+end
+fprintf('Average time cost:  \n')
+fprintf('cal_hand_Muscle_l_J_Garner: %f! \n',t1/i_ma)
+fprintf('get_Muscle_Momentarm_1st_f: %f! \n',t2/i_ma)
+fprintf('get_Muscle_Momentarm_1st_c: %f! \n',t3/i_ma)
+fprintf('------------------------------------- \n')
 
+return
 %% gradient-based optimization method 
-
+%  TODO
 
 w_T_obs = eye(4);
 radius = 1;

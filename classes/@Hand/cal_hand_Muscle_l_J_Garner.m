@@ -92,8 +92,10 @@ for i_mus = 1:nmus
                 w_J_S = J_vp_all(:,:,constr_obs_i{3}.index_inhand);
                 if wrap_status_i
                     J_vp = zeros(3,nj,4);
-                    w_J_Q = obj.Jacobian_geom_w_point(constr_obs_i{2}.index_link_inhand, w_Q_p,w_T_links_all);
-                    w_J_T = obj.Jacobian_geom_w_point(constr_obs_i{2}.index_link_inhand, w_T_p,w_T_links_all);
+                    i_Q_p = T_p31(inv(w_T_links_all(:,:,constr_obs_i{2}.index_link_inhand)), w_Q_p);
+                    i_T_p = T_p31(inv(w_T_links_all(:,:,constr_obs_i{2}.index_link_inhand)), w_T_p);
+                    w_J_Q = obj.Jacobian_geom_w_point(constr_obs_i{2}.index_link_inhand, i_Q_p,w_T_links_all);
+                    w_J_T = obj.Jacobian_geom_w_point(constr_obs_i{2}.index_link_inhand, i_T_p,w_T_links_all);
                     J_vp(:,:,1) = w_J_P;
                     J_vp(:,:,2) = w_J_Q;
                     J_vp(:,:,3) = w_J_T;

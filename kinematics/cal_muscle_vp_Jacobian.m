@@ -23,7 +23,7 @@ J = zeros(nj,1);
 for i = 1:n_vp-1
     w_p_i = w_p_vp(:,i+1) - w_p_vp(:,i);
     w_p_i_norm = w_p_i/norm(w_p_i);
-    J_i =  (w_J_vp(:,:,i+1) - w_J_vp(:,:,i))' * w_p_i_norm;
+    J_i =  - (w_J_vp(:,:,i+1) - w_J_vp(:,:,i))' * w_p_i_norm;
     J = J + J_i;
 end
 
