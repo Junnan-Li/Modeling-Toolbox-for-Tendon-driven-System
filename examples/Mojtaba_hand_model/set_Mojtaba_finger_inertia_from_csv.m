@@ -39,5 +39,9 @@ for i = 1:3
     finger.list_links(i+1).set_inertia([dynpar_inertia(i,:),zeros(1,3)]);
     finger.list_links(i+1).set_com([finger.list_links(i+1).Length/2,0,0]);
 end
+% set base parameters
+finger.base.set_mass(0); % in kg
+finger.base.set_inertia(zeros(6,1)); % in kg
+
 finger.update_finger_par_dyn;
 end
