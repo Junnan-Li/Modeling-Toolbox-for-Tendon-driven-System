@@ -223,12 +223,12 @@ com_palm = mean(MC_palm,1)' - position_new_base;
 
 w_T_all = wrist.get_T_all_links;
 wrist.base.set_mass(1);
-wrist.base.set_com(position_EL_EM-position_US_RS);
+wrist.base.set_com(wrist.w_R_base' *(position_EL_EM-position_US_RS));
 wrist.list_links(1).set_mass(0);
 wrist.list_links(1).set_inertia(zeros(6,1));
 wrist.list_links(2).set_mass(0.332);
 wrist.list_links(2).set_inertia([1e-4;1e-4;1e-4;0;0;0]);
-wrist.list_links(2).set_com(reshape(w_T_all(1:3,1:3)'*com_palm,3,1));
+wrist.list_links(2).set_com(reshape(w_T_all(1:3,1:3,end)'*com_palm,3,1));
 wrist.update_finger_par_dyn
 
 wrist.plot_finger(plot_par)
@@ -274,18 +274,28 @@ Mojtaba_hand.update_hand(q0);
 Mojtaba_hand.update_hand_par_dyn;
 
 plot_hand_par = Mojtaba_hand.plot_parameter_init;
+plot_hand_par.axis_len = 0.03;
 plot_hand_par.markersize = 10;
 plot_hand_par.markercolor = 'k';
 Mojtaba_hand.plot_hand(plot_hand_par);
 Mojtaba_hand.plot_hand_com(plot_hand_par);
-plot_Mojtaba_landmarkers
+% plot_Mojtaba_landmarkers
 axis equal
 % rst_model.show(q0,'Frames','on')
 
 %% Simulation
-
+Mojtaba_hand.update_sim_mdh;
 [qDD,M,C,G] = Mojtaba_hand.fordyn_ne_hand_w_end(q0);
+tic
 Tau = Mojtaba_hand.invdyn_ne_hand_w_end(q0);
+t = toc
+
+%% symbolic code generation
+% invdyn_ne_T
+
+
+
+
 
 
 %%

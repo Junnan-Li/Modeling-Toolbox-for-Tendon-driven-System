@@ -122,7 +122,7 @@ classdef Hand < handle & matlab.mixin.Copyable
 
         index_q_b           % [njb,2] start and end index of base joint in q
         index_q_f           % [njf,2] start and end index of base joint in q
-
+        sim
         sim_mdh
         sim_mdh_index
         sim_q_index
@@ -185,7 +185,7 @@ classdef Hand < handle & matlab.mixin.Copyable
             obj.par_dyn_h = struct();
             
             % generate matrix for simulink 
-            obj.sim_mdh = [];
+%             obj.sim_mdh = [];
         end
 
 
@@ -939,37 +939,56 @@ classdef Hand < handle & matlab.mixin.Copyable
 
         %% simulation functions
         function update_sim_mdh(obj)
-            % mdh in order: alpha,a,theta,d
-            obj.sim_mdh = [];
-            obj.sim_mdh_index = [];
-            obj.sim_n_links = [obj.nb,obj.nf];
-            obj.sim_w_T_b = [];
-            obj.sim_q_index = [obj.index_q_b;obj.index_q_f];
+            % update the simulation dataset for Simulink function
+            obj.sim.mdh = [];
+            obj.sim.mdh_index = [];
+            obj.sim.n_links = [obj.nb,obj.nf];
+            obj.sim.w_T_b = [];
+            obj.sim.q_index = [obj.index_q_b;obj.index_q_f];
+            
+%             obj.sim.kin_str = struct();
+%             obj.sim.kin_str.nb = obj.nb;
+%             obj.sim.kin_str.njb = zeros(obj.nb,1);
+%             obj.sim.kin_str.nf = obj.nf;
+%             obj.sim.kin_str.njf = zeros(obj.nf,1);
+%             
+%             obj.sim.Mass = [];
+%             obj.sim.CoM = [];
+%             obj.sim.I = [];
+%             obj.sim.g = obj.par_dyn_h.g;
+
             mdh_index_start = 1;
             if obj.nb ~= 0
                 for i = 1:obj.nb
                     base_i = obj.base(i);
                     mdh_i = mdh_struct_to_matrix(base_i.mdh_ori,1);
-                    obj.sim_mdh = [obj.sim_mdh; ...
+                    obj.sim.mdh = [obj.sim.mdh; ...
                         mdh_i];
-                    obj.sim_mdh_index = [obj.sim_mdh_index;
+                    obj.sim.mdh_index = [obj.sim.mdh_index;
                         mdh_index_start,mdh_index_start+size(mdh_i,1)-1];
-                    obj.sim_w_T_b = [obj.sim_w_T_b; ...
+                    obj.sim.w_T_b = [obj.sim.w_T_b; ...
                         base_i.w_T_base];
-                    mdh_index_start = obj.sim_mdh_index(end,2)+1;
+                    mdh_index_start = obj.sim.mdh_index(end,2)+1;
+
+%                     base_i = obj.base(i);
+%                     Mass = [Mass;obj.par_dyn_h.mass_all{i,1}];
+%                     CoM = [CoM,obj.par_dyn_h.com_all{i,1}];
+%                     I = [I,obj.par_dyn_h.inertia_all{i,1}];
+%                     kin_str.njb(i) = base_i.nj;
+
                 end
             end
             if obj.nf ~= 0
                for i = 1:obj.nf
                     finger_i = obj.list_fingers(i);
                     mdh_i = mdh_struct_to_matrix(finger_i.mdh_ori,1);
-                    obj.sim_mdh = [obj.sim_mdh; ...
+                    obj.sim.mdh = [obj.sim.mdh; ...
                         mdh_i];
-                    obj.sim_mdh_index = [obj.sim_mdh_index;
+                    obj.sim.mdh_index = [obj.sim.mdh_index;
                         mdh_index_start,mdh_index_start+size(mdh_i,1)-1];
-                    obj.sim_w_T_b = [obj.sim_w_T_b; ...
+                    obj.sim.w_T_b = [obj.sim.w_T_b; ...
                         finger_i.w_T_base];
-                    mdh_index_start = obj.sim_mdh_index(end,2)+1;
+                    mdh_index_start = obj.sim.mdh_index(end,2)+1;
                 end
             end
         end

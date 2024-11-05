@@ -41,6 +41,7 @@ for i = 1:3
 end
 % set base parameters
 finger.base.set_mass(0); % in kg
+% finger.base.set_com([-finger.list_links(2).Length/2,0,0]); % in kg
 finger.base.set_inertia(zeros(6,1)); % in kg
 
 finger.update_finger_par_dyn;

@@ -41,7 +41,7 @@ for i = 1:nf
     hold on
 end
 hold off
-
+axis equal
 status = 1;
-pause(0.01)
+pause(0.1)
 end
