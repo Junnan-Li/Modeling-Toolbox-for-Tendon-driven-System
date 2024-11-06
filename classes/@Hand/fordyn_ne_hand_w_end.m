@@ -53,12 +53,7 @@ Mass = [];
 CoM = [];
 I = [];
 
-% kinematic description
-kin_str = struct();
-kin_str.nb = obj.nb;
-kin_str.njb = zeros(obj.nb,1);
-kin_str.nf = obj.nf;
-kin_str.njf = zeros(obj.nf,1);
+
 
 if obj.nb ~= 0
     for i = 1:obj.nb
@@ -88,9 +83,9 @@ g = obj.par_dyn_h.g;
 
 
 if mex
-    error('[invdyn_ne_hand_w_end] not implemented yet!')
+    error('[fordyn_ne_hand_w_end] not implemented yet!')
 else
-    [qDD,M,C,G] = fordyn_ne_T(q,qD,Tau,T, kin_str, Mass, X_base, ...
-        XD_base,XDD_base, F_ext, CoM, I, g, mex);
+    [qDD,M,C,G] = fordyn_ne_T(T,qD,Tau,obj.sim.n_links,obj.sim.q_index, ...
+        Mass, X_base, XD_base,XDD_base, F_ext, CoM, I, g, mex);
 end
 end

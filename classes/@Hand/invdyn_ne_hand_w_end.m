@@ -50,42 +50,36 @@ assert(length(qD)== obj.nj, '[invdyn_ne_hand_w_end] dimension of qd is incorrect
 assert(length(qDD)== obj.nj, '[invdyn_ne_hand_w_end] dimension of qdd is incorrect!')
 
 T = obj.get_w_T_all();
-Mass = [];
-CoM = [];
-I = [];
+% Mass = [];
+% CoM = [];
+% I = [];
+% 
+% 
+% if obj.nb ~= 0
+%     for i = 1:obj.nb
+% %         base_i = obj.base(i);
+%         Mass = [Mass;obj.par_dyn_h.mass_all{i,1}];
+%         CoM = [CoM,obj.par_dyn_h.com_all{i,1}];
+%         I = [I,obj.par_dyn_h.inertia_all{i,1}];
+%     end
+% end
+% if obj.njf ~= 0
+%     for i = 1:obj.nf
+% %         finger_i = obj.list_fingers(i);
+%         Mass = [Mass;obj.par_dyn_h.mass_all{i,2}];
+%         CoM = [CoM,obj.par_dyn_h.com_all{i,2}];
+%         I = [I,obj.par_dyn_h.inertia_all{i,2}];
+%     end
+% end
+% g = obj.par_dyn_h.g;
 
-% kinematic description
-kin_str = struct();
-kin_str.nb = obj.nb;
-kin_str.njb = zeros(obj.nb,1);
-kin_str.nf = obj.nf;
-kin_str.njf = zeros(obj.nf,1);
-
-if obj.nb ~= 0
-    for i = 1:obj.nb
-        base_i = obj.base(i);
-        Mass = [Mass;obj.par_dyn_h.mass_all{i,1}];
-        CoM = [CoM,obj.par_dyn_h.com_all{i,1}];
-        I = [I,obj.par_dyn_h.inertia_all{i,1}];
-        kin_str.njb(i) = base_i.nj;
-    end
-end
-if obj.njf ~= 0
-    for i = 1:obj.nf
-        finger_i = obj.list_fingers(i);
-        Mass = [Mass;obj.par_dyn_h.mass_all{i,2}];
-        CoM = [CoM,obj.par_dyn_h.com_all{i,2}];
-        I = [I,obj.par_dyn_h.inertia_all{i,2}];
-        kin_str.njf(i) = finger_i.nj;
-    end
-end
 
 X_base = zeros(6,1);
 X_base(1:3) = obj.w_p_base;
 X_base(4:6) = R2euler_XYZ(obj.w_R_base);
 XD_base = zeros(6,1);
 XDD_base = zeros(6,1);
-g = obj.par_dyn_h.g;
+
 
 
 if mex
@@ -93,8 +87,8 @@ if mex
 %         X_base, XD_base, XDD_base, F_ext_ne, CoM_ne, I_ne, g);
     error('[invdyn_ne_hand_w_end] not implemented yet!')
 else
-    [Tau,F] = invdyn_ne_T(q,qD,qDD,T, kin_str, Mass, ...
-        X_base, XD_base,XDD_base, F_ext, CoM, I, g);
+    [Tau,F] = invdyn_ne_T(T,qD,qDD,obj.sim.n_links,obj.sim.q_index, obj.sim.Mass, ...
+        X_base, XD_base,XDD_base, F_ext, obj.sim.CoM, obj.sim.I, obj.sim.g);
 end
 
 end

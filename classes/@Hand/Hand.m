@@ -123,11 +123,11 @@ classdef Hand < handle & matlab.mixin.Copyable
         index_q_b           % [njb,2] start and end index of base joint in q
         index_q_f           % [njf,2] start and end index of base joint in q
         sim
-        sim_mdh
-        sim_mdh_index
-        sim_q_index
-        sim_n_links
-        sim_w_T_b
+%         sim_mdh
+%         sim_mdh_index
+%         sim_q_index
+%         sim_n_links
+%         sim_w_T_b
     end
     
     properties (SetAccess = private)
@@ -938,24 +938,18 @@ classdef Hand < handle & matlab.mixin.Copyable
         end       
 
         %% simulation functions
-        function update_sim_mdh(obj)
+        function update_sim_par(obj)
             % update the simulation dataset for Simulink function
             obj.sim.mdh = [];
             obj.sim.mdh_index = [];
             obj.sim.n_links = [obj.nb,obj.nf];
             obj.sim.w_T_b = [];
             obj.sim.q_index = [obj.index_q_b;obj.index_q_f];
-            
-%             obj.sim.kin_str = struct();
-%             obj.sim.kin_str.nb = obj.nb;
-%             obj.sim.kin_str.njb = zeros(obj.nb,1);
-%             obj.sim.kin_str.nf = obj.nf;
-%             obj.sim.kin_str.njf = zeros(obj.nf,1);
 %             
-%             obj.sim.Mass = [];
-%             obj.sim.CoM = [];
-%             obj.sim.I = [];
-%             obj.sim.g = obj.par_dyn_h.g;
+            obj.sim.Mass = [];
+            obj.sim.CoM = [];
+            obj.sim.I = [];
+            obj.sim.g = obj.par_dyn_h.g;
 
             mdh_index_start = 1;
             if obj.nb ~= 0
@@ -970,12 +964,9 @@ classdef Hand < handle & matlab.mixin.Copyable
                         base_i.w_T_base];
                     mdh_index_start = obj.sim.mdh_index(end,2)+1;
 
-%                     base_i = obj.base(i);
-%                     Mass = [Mass;obj.par_dyn_h.mass_all{i,1}];
-%                     CoM = [CoM,obj.par_dyn_h.com_all{i,1}];
-%                     I = [I,obj.par_dyn_h.inertia_all{i,1}];
-%                     kin_str.njb(i) = base_i.nj;
-
+                    obj.sim.Mass = [obj.sim.Mass;obj.par_dyn_h.mass_all{i,1}];
+                    obj.sim.CoM = [obj.sim.CoM,obj.par_dyn_h.com_all{i,1}];
+                    obj.sim.I = [obj.sim.I,obj.par_dyn_h.inertia_all{i,1}];
                 end
             end
             if obj.nf ~= 0
@@ -989,6 +980,10 @@ classdef Hand < handle & matlab.mixin.Copyable
                     obj.sim.w_T_b = [obj.sim.w_T_b; ...
                         finger_i.w_T_base];
                     mdh_index_start = obj.sim.mdh_index(end,2)+1;
+
+                    obj.sim.Mass = [obj.sim.Mass;obj.par_dyn_h.mass_all{i,2}];
+                    obj.sim.CoM = [obj.sim.CoM,obj.par_dyn_h.com_all{i,2}];
+                    obj.sim.I = [obj.sim.I,obj.par_dyn_h.inertia_all{i,2}];
                 end
             end
         end

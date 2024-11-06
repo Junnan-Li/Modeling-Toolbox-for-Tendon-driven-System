@@ -109,6 +109,7 @@ else
     fprintf('Test (FD): pass! \n')
 end
 
+return
 %% forward dynamics using fordyn_step
 % unfinished 
 % need vp, muscle path, muscle model. 

@@ -284,15 +284,16 @@ axis equal
 % rst_model.show(q0,'Frames','on')
 
 %% Simulation
-Mojtaba_hand.update_sim_mdh;
+Mojtaba_hand.update_sim_par;
 [qDD,M,C,G] = Mojtaba_hand.fordyn_ne_hand_w_end(q0);
 tic
 Tau = Mojtaba_hand.invdyn_ne_hand_w_end(q0);
-t = toc
+t = toc;
 
 %% symbolic code generation
 % invdyn_ne_T
-
+w_T_all_frames = sim_w_T_all_frames_from_q(Mojtaba_hand.sim.mdh,Mojtaba_hand.sim.mdh_index,...
+                        Mojtaba_hand.sim.q_index,Mojtaba_hand.sim.w_T_b,Mojtaba_hand.sim.n_links,q0);
 
 
 

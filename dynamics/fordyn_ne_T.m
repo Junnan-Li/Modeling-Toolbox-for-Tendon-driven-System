@@ -1,7 +1,7 @@
 % recursive Newton-Euler method to compute inverse dynamic with
 % transformation matrix
 % Input:
-%     q,qD:             [n_q] joint states
+%     qD:             [n_q] joint states
 %     Tau               [n_q] joint torque
 %     T:                [4x4x n_frame] each Finger object has nqi+2  
 %     kin_str           [struct] nb: number of bases; njb [nb,1]: nq of
@@ -19,18 +19,16 @@
 %     C_fd:             [n_q] velocity-dependent torque 
 %     G_fd:             [n_q] gravity torque  
 
-function [qDD,M,C,G] = fordyn_ne_T(q,qD,Tau,T, kin_str, Mass, X_base, XD_base,XDD_base, F_ext, CoM, I, g, varargin)
+function [qDD,M,C,G] = fordyn_ne_T(T,qD,Tau, n_links, q_index, Mass, X_base, XD_base,XDD_base, F_ext, CoM, I, g, varargin)
 
-n_q = length(q);
-assert(n_q == length(qD),'[invdyn_ne_T] dimension error!');
-n_b = kin_str.nb; % number of bases
-n_f = kin_str.nf; % number of fingers
-njb = kin_str.njb; % number of joints of each base
-njf = kin_str.njf; % number of joints of each finger
+n_b = n_links(1); % number of bases
+n_f = n_links(2); % number of fingers
+njb = q_index(1:n_b,2)-q_index(1:n_b,1) + 1; % number of joints of each base
+njf = q_index((1+n_b):(n_b+n_f),2)-q_index((1+n_b):(n_b+n_f),1) + 1; % number of joints of each finger
+n_q = sum(njb) + sum(njf);
+assert(n_q == length(qD),'[fordyn_ne_T] dimension error!');
 n_frame = n_q + 2*(n_b+n_f); % each Finger has nqi + 2 frames (except world frame) 
 assert(n_b == length(njb) && n_f == length(njf),'[fordyn_ne_T] kin_str input error!');
-assert(n_q == sum(njb) + sum(njf),'[fordyn_ne_T] kin_str input error!');
-
 assert(all(size(F_ext) == [6,n_f]),'[fordyn_ne_T] F_ext dimension error!');
 assert(all(size(T) == [4,4,n_frame]),'[fordyn_ne_T] T dimension error!');
 
@@ -46,18 +44,18 @@ C = zeros(n_q,1);
 
 % gravity term
 if mex
-    G = invdyn_ne_T_mex(q,zeros(n_q,1),zeros(n_q,1),T, kin_str, ...
+    G = invdyn_ne_T_mex(T,zeros(n_q,1),zeros(n_q,1), n_links, q_index, ...
         Mass, X_base, XD_base,XDD_base, F_ext, CoM, I, g);
 else
-    G = invdyn_ne_T(q,zeros(n_q,1),zeros(n_q,1),T, kin_str, ...
+    G = invdyn_ne_T(T,zeros(n_q,1),zeros(n_q,1), n_links, q_index, ...
         Mass, X_base, XD_base,XDD_base, F_ext, CoM, I, g);
 end
 % C term
 if mex
-    C = invdyn_ne_T_mex(q,qD,zeros(n_q,1),T, kin_str, ...
+    C = invdyn_ne_T_mex(T,qD,zeros(n_q,1), n_links, q_index, ...
         Mass, X_base, XD_base,XDD_base, F_ext, CoM, I, g);
 else
-    C = invdyn_ne_T(q,qD,zeros(n_q,1),T, kin_str, ...
+    C = invdyn_ne_T(T,qD,zeros(n_q,1), n_links, q_index, ...
         Mass, X_base, XD_base,XDD_base, F_ext, CoM, I, g);
 end
 C = C - G;
@@ -67,10 +65,10 @@ for i = 1:n_q
     qDD_M = zeros(n_q,1);
     qDD_M(i) = 1;
     if mex
-        M(:,i) = invdyn_ne_T_mex(q,zeros(n_q,1),qDD_M,T, kin_str, ...
+        M(:,i) = invdyn_ne_T_mex(T,zeros(n_q,1),qDD_M, n_links, q_index, ...
         Mass, X_base, XD_base,XDD_base, F_ext, CoM, I, g);
     else
-        M(:,i) = invdyn_ne_T(q,zeros(n_q,1),qDD_M,T, kin_str, ...
+        M(:,i) = invdyn_ne_T(T,zeros(n_q,1),qDD_M, n_links, q_index, ...
         Mass, X_base, XD_base,XDD_base, F_ext, CoM, I, g);
     end
     M(:,i) = M(:,i) - G;
