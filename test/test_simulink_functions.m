@@ -23,21 +23,21 @@ tic
 finger.update_finger(q);
 w_T_all = finger.get_T_all_links();
 t1 = toc;
-tic
-w_T_all_sym = T_all_links_from_q_finger_example(q(:));
-t2 = toc;
-tic
-w_T_all_sym_opt = T_all_links_from_q_opt_finger_example(q(:));
-t3 = toc;
-tic
-w_T_all_sym_opt = T_all_links_from_q_finger_example_mex(q(:));
-t4 = toc;
+% tic
+% w_T_all_sym = T_all_links_from_q_finger_example(q(:));
+% t2 = toc;
+% tic
+% w_T_all_sym_opt = T_all_links_from_q_opt_finger_example(q(:));
+% t3 = toc;
+% tic
+% w_T_all_sym_opt = T_all_links_from_q_finger_example_mex(q(:));
+% t4 = toc;
 
 fprintf('Finger function Time cost: \n')
 fprintf('object function:            %f \n',t1)
-fprintf('symbolic function:          %f \n',t2)
-fprintf('optimized symbolc function: %f \n',t3)
-fprintf('compiled symbolic function: %f \n',t4)
+% fprintf('symbolic function:          %f \n',t2)
+% fprintf('optimized symbolc function: %f \n',t3)
+% fprintf('compiled symbolic function: %f \n',t4)
 fprintf('------------------------------------- \n')
 %% generate hand 
 hand = create_hand_random('hand_function_test', [2,2,4,4] );
@@ -112,7 +112,18 @@ hand.update_hand(q);
 hand.update_sim_par;
 hand.update_hand_par_dyn;
 hand_rst = hand.update_rst_model;
+w_T_all_frames = sim_w_T_all_frames_from_q(hand.sim.mdh,hand.sim.mdh_index,...
+        hand.sim.q_index,hand.sim.w_T_b,hand.sim.n_links,q);
 
-tau_obj =  hand.invdyn_ne_hand_w_end(q,qd,qdd);
+X_base = zeros(6,1);
+X_base(1:3) = hand.w_p_base;
+X_base(4:6) = R2euler_XYZ(hand.w_R_base);
+XD_base = zeros(6,1);
+XDD_base = zeros(6,1);
+F_ext = zeros(6,hand.nf);
+
+tau_obj =  invdyn_ne_T(w_T_all_frames,qd,qdd, hand.sim.n_links, hand.sim.q_index, ...
+    hand.sim.Mass, X_base, XD_base,XDD_base, F_ext, hand.sim.CoM, hand.sim.I, hand.sim.g);
+
 tau_rst = hand_rst.inverseDynamics(q,qd,qdd);
 error_tau = max(abs(tau_obj - tau_rst))

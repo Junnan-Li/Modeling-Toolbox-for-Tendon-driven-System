@@ -50,17 +50,17 @@ n_b = n_links(1); % number of bases
 n_f = n_links(2); % number of fingers
 njb = q_index(1:n_b,2)-q_index(1:n_b,1) + 1; % number of joints of each base
 njf = q_index((1+n_b):(n_b+n_f),2)-q_index((1+n_b):(n_b+n_f),1) + 1; % number of joints of each finger
-n_q = sum(njb) + sum(njf);
-assert(n_q == length(qD) && n_q == length(qDD),'[invdyn_ne_T] dimension error!');
+n_q = length(qD);
 n_frame = n_q + 2*(n_b+n_f); % each Finger has nqi + 2 frames (except world frame) 
-assert(n_b == length(njb) && n_f == length(njf),'[invdyn_ne_T] kin_str input error!');
 
+assert(n_b == length(njb) && n_f == length(njf),'[invdyn_ne_T] kin_str input error!');
+% assert(n_q == length(qD) && n_q == length(qDD),'[invdyn_ne_T] dimension error!');
 assert(all(size(F_ext) == [6,n_f]),'[invdyn_ne_T] F_ext dimension error!');
 assert(all(size(T) == [4,4,n_frame]),'[invdyn_ne_T] T dimension error!');
 
 % F (force and moment) with respect to the Wolrd Frame
 % dimension: [6xn_frame]; 1st column is base
-Tau = zeros(n_q,1);
+Tau = zeros(length(qD),1);
 F = zeros(6,n_frame);
 % F(:,end) = -F_ext;
 
@@ -94,6 +94,9 @@ i_frame_base_end = zeros(n_b,1);
 i_frame_finger_start = zeros(n_f,1);
 i_frame_finger_end = zeros(n_f,1);
 i_frame_q = zeros(n_q,1);
+
+% initialize for simulink
+W_i_r_c = nan(3,1);
 
 %% forward recursion: 
 % for bases
