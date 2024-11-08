@@ -477,8 +477,9 @@ classdef Hand < handle & matlab.mixin.Copyable
          end
 
          function w_T_all = get_w_T_all(obj)
-            % get the T of the all figners
-            % [4*nf, 4]
+            % get the T of the all frames
+            % [4,4,nframe]
+            
 %             W_T_b = obj.get_W_T_B();
             w_T_all = zeros(4,4,obj.nl+2*(obj.nb+obj.nf)); 
             % each Finger has base, link1, ... linkn, ee

@@ -88,11 +88,15 @@ t1 = 0;
 for iter = 1:100
     q = rand(hand.nj,1);
     hand.update_hand(q);
-    w_T_all_frames = sim_w_T_all_frames_from_q(hand.sim.mdh,hand.sim.mdh_index,...
+    [w_T_all_frames,w_T_all_links] = sim_w_T_all_frames_from_q(hand.sim.mdh,hand.sim.mdh_index,...
         hand.sim.q_index,hand.sim.w_T_b,hand.sim.n_links,q);
+   
     T = hand.get_w_T_all();
+    w_T_links_inhand = hand.get_w_T_links_inhand;
+
     T_f_error = w_T_all_frames-T;
-    if max(abs(T_f_error(:))) > 1e-8
+    T_l_error = w_T_all_links - w_T_links_inhand;
+    if max(abs([T_f_error(:);T_l_error(:)])) > 1e-8
         test_failed = 1;
     end
 end
@@ -102,8 +106,7 @@ else
     fprintf('Test (frames transformation): pass! \n')
 end
 fprintf('------------------------ \n')
-%%
-
+%% Inverse dynamic 
 
 q = rand(hand.nj,1);
 qd = rand(hand.nj,1);
@@ -126,4 +129,27 @@ tau_obj =  invdyn_ne_T(w_T_all_frames,qd,qdd, hand.sim.n_links, hand.sim.q_index
     hand.sim.Mass, X_base, XD_base,XDD_base, F_ext, hand.sim.CoM, hand.sim.I, hand.sim.g);
 
 tau_rst = hand_rst.inverseDynamics(q,qd,qdd);
-error_tau = max(abs(tau_obj - tau_rst))
+error_tau = max(abs(tau_obj - tau_rst));
+
+%% Test forward dynamic and individual terms
+% 
+
+q = rand(hand.nj,1);
+qd = rand(hand.nj,1);
+qdd = rand(hand.nj,1);
+hand.update_hand(q);
+hand.update_sim_par;
+hand.update_hand_par_dyn;
+hand_rst = hand.update_rst_model;
+[w_T_all_frames,w_T_all_links] = sim_w_T_all_frames_from_q(hand.sim.mdh,hand.sim.mdh_index,...
+        hand.sim.q_index,hand.sim.w_T_b,hand.sim.n_links,q);
+
+
+[qDD,M,C,G] = hand.fordyn_ne_hand_w_end(q);
+M_sym = invdyn_lag_T_M(w_T_all_links, hand.sim.Mass, hand.sim.CoM, hand.sim.I)
+error_M = double(M_sym) - M
+max(error_M(:))
+
+
+
+

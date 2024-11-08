@@ -12,15 +12,15 @@
 % Output:
 %           J: [6,n_q] Jacobian matrix 
 % 
-% Junnan Li, junnan.li@tum.de, 08.2024
+% %  Not finished yet
 
 
-function J = Jacobian_geom_T_hand(w_T_all_links, index_base, index_finger, index_link, w_p_point)
+function J = sim_w_Jacobian_geom_from_T_links(w_T_all_links, index_base, index_finger, index_link, w_p_point)
 
 nl = size(w_T_all_links,3);
-assert(index_base(2) <= nl, '[Jacobian_geom_T_sharedbase]: input index_base is incorrect! ')
-assert(index_link <= nl, '[Jacobian_geom_T_sharedbase]: input index_base is incorrect! ')
-assert(length(w_p_point) == 3, '[Jacobian_geom_T_sharedbase]: input index_base is incorrect! ')
+% assert(index_base(2) <= nl, '[Jacobian_geom_T_sharedbase]: input index_base is incorrect! ')
+% assert(index_link <= nl, '[Jacobian_geom_T_sharedbase]: input index_base is incorrect! ')
+% assert(length(w_p_point) == 3, '[Jacobian_geom_T_sharedbase]: input index_base is incorrect! ')
 J = zeros(6,nl);
 % w_p_point = T_p31(w_T_all(:,:,index_link),reshape(i_p_point,3,1));
 

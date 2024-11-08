@@ -9,6 +9,10 @@
 %           nb:         [1]     number of base finger of a hand
 %           q:          [nj]    joint angle
 % 
+% output:
+%           w_T_all_links: [4,4,nl] transformation matrix for all links 
+% 
+%   
 
 
 function w_T_all_links = sim_w_T_all_links_from_q(mdh,mdh_index,q_index,w_T_b,n_links,q)

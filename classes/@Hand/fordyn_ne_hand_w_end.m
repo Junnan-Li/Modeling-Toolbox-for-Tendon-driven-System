@@ -12,7 +12,7 @@
 %           qDD: [obj.nj] 
 % 
 % 
-% TODO: need to adapt to the passive joint mode
+% TODO: mex function is not used 
 
 function [qDD,M,C,G] = fordyn_ne_hand_w_end(obj, q,varargin)
 %  qD, Tau, F_ext, 
@@ -82,10 +82,10 @@ XDD_base = zeros(6,1);
 g = obj.par_dyn_h.g;
 
 
-if mex
-    error('[fordyn_ne_hand_w_end] not implemented yet!')
-else
+% if mex
+%     error('[fordyn_ne_hand_w_end] not implemented yet!')
+% else
     [qDD,M,C,G] = fordyn_ne_T(T,qD,Tau,obj.sim.n_links,obj.sim.q_index, ...
-        Mass, X_base, XD_base,XDD_base, F_ext, CoM, I, g, mex);
-end
+        Mass, X_base, XD_base,XDD_base, F_ext, CoM, I, g);
+% end
 end

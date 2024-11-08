@@ -5,9 +5,9 @@
 %                       noted that the theta should exclude from mdh parameters 
 %     x_base            [6x1]
 %     Mass:             [n_q+1] mass vector. the first mass is the base 
-%     CoM:              [3,n_q+1] in local frame; last column is endeffector
-%     I:                [6,n_q+1] in local frame with respect to center of mass. in sequence of [xx yy zz yz xz xy]
-%     g:                [3,1] gravity term in world frame
+%     CoM:              [3xn_q+1] in local frame; last column is endeffector
+%     I:                [6xn_q+1] in local frame with respect to center of mass. in sequence of [xx yy zz yz xz xy]
+%     g:                [3x1] gravity term in world frame
 % 
 
 
@@ -15,34 +15,28 @@
 % needed 
 % 
 % tested in test_finger.m
+% 
+% % To be continued 
 
 
-function M = invdyn_lag_mdh_M(q, mdh, x_base, Mass, CoM, I) % , X_base, XD_base,XDD_base 
+function M = invdyn_lag_T_M(w_T_link_frames, n_links, q_index,  Mass, CoM, I) % , X_base, XD_base,XDD_base 
 %#codegen
 
-n_q = length(q);
+n_q = size(w_T_link_frames,3);
 M = zeros(n_q,n_q);
-mdh_q = mdh;
-mdh_q(1:end-1,3) = mdh_q(1:end-1,3) + q;
-
-w_T_base = [euler2R_XYZ(x_base(4:6)),x_base(1:3);...
-                0 0 0 1];
-base_T_all = zeros(4,4*n_q);
-for i = 1:n_q
-    base_T_all(:,4*i-3:4*i) = T_mdh_multi(mdh_q(1:i,:)); % transformation to each frame
-end
-w_T_all = w_T_base*base_T_all;
+nb = n_links(1);
+nf = n_links(2);
 
 for i = 1:n_q
     % for each frame/link, base is fixed,  start from the first link
-    w_T_i = w_T_all(:,4*i-3:4*i);
+    w_T_i = w_T_link_frames(:,4*i-3:4*i);
     w_R_i = w_T_i(1:3,1:3);
     w_p_i = w_T_i(1:3,4);
     w_p_mi = w_p_i + w_R_i * CoM(:,i+1); % pos of com_i in base frame
     Jt_i = zeros(3,n_q);
     Jr_i = zeros(3,n_q);
     for j = 1:i % iteration from 1 to i
-        w_T_j = w_T_all(:,4*j-3:4*j);
+        w_T_j = w_T_link_frames(:,4*j-3:4*j);
         w_R_j = w_T_j(1:3,1:3);
         w_p_j = w_T_j(1:3,4);
         Jt_ij = cross(w_R_j*[0;0;1],w_p_mi-w_p_j); % translational J
@@ -50,12 +44,9 @@ for i = 1:n_q
         Jt_i(:,j) = Jt_ij;
         Jr_i(:,j) = Jr_ij;
     end
-    
     I_i = inertia_tensor2matrix(I(:,i+1)); % matrix of Inertia
     M_i = Mass(i+1) * Jt_i'*Jt_i + Jr_i'*w_R_i*I_i*w_R_i'*Jr_i; % calculate Mass matrix
-    
     M = M + M_i;
-
 end
 
 

@@ -10,9 +10,13 @@
 %           n_links:    [1]     number of base finger of a hand
 %           q:          [nj]    joint angle
 % 
+% Output:   
+%           w_T_all_frames: [4,4,nframes] transformation matrix for all frames
+%           w_T_all_links:  [4,4,nl]      transformation matrix for all links
+% 
+% 
 
-
-function w_T_all_frames = sim_w_T_all_frames_from_q(mdh,mdh_index,q_index,w_T_b,n_links,q)
+function [w_T_all_frames,w_T_all_links] = sim_w_T_all_frames_from_q(mdh,mdh_index,q_index,w_T_b,n_links,q)
 %#codegen
 
 nl = length(q);
@@ -23,7 +27,10 @@ nframe = nl + 2*size(w_T_b,1)/4;
 w_T_b_prior = eye(4);
 % w_T_all_frames = zeros(4,4,q_index(end,2)+2*sum(n_links));% 
 w_T_all_frames = zeros(4,4,nframe);
+w_T_all_links = zeros(4,4,nl);
+
 frame_index = 1;
+link_index = 1;
 if nb ~= 0
     for i = 1:nb
         mdh_i = mdh(mdh_index(i,1):mdh_index(i,2),:);
@@ -37,7 +44,9 @@ if nb ~= 0
         for j = 1:nl_i
             b_T_i = T_mdh_multi(mdh_i(1:j,:));
             w_T_all_frames(:,:,frame_index) = w_T_bi_inhand*b_T_i;
+            w_T_all_links(:,:,link_index) = w_T_all_frames(:,:,frame_index);
             frame_index = frame_index+1;
+            link_index = link_index+1;
         end
         % w_T_b_prior is the world frame for the next finger
         w_T_b_prior = w_T_bi_inhand * T_mdh_multi(mdh_i);
@@ -58,7 +67,9 @@ if nf ~= 0
         for j = 1:nl_i
             b_T_i = T_mdh_multi(mdh_i(1:j,:));
             w_T_all_frames(:,:,frame_index) = w_T_bi_inhand*b_T_i;
+            w_T_all_links(:,:,link_index) = w_T_all_frames(:,:,frame_index);
             frame_index = frame_index+1;
+            link_index = link_index+1;
         end
         w_T_ee_i = w_T_bi_inhand * T_mdh_multi(mdh_i);
         w_T_all_frames(:,:,frame_index) = w_T_ee_i;

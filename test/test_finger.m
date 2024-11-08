@@ -302,23 +302,42 @@ end
 % return
 %% Test 6 Forward dynamic test
 % test Finger.fordyn_ne_w_end function with random F_ee 
+test_failed = 0;
+for i = 1:100
+    % random states
+    q_rD = rand(size(q_r));
+    tau = rand(size(q_r));
+    F_ext = [zeros(6,finger_r.nj+1),rand(6,1)];
 
-% random states
-q_rD = rand(size(q_r));
-tau = rand(size(q_r));
-F_ext = [zeros(6,finger_r.nj+1),rand(6,1)];
+    [qDD_class,M_fd,C_fd,G_fd] = finger_r.fordyn_ne_w_end(q_r,q_rD,tau,F_ext,0);
+    
+    % Lagrangian method 1
+    x_base = [finger_r.w_p_base;R2euler_XYZ(finger_r.w_R_base)];
+    M_lag1 = invdyn_lag_mdh_M(q_r, mdh_struct_to_matrix(finger_r.mdh_ori,1), x_base, finger_r.par_dyn_f.mass_all,...
+        finger_r.par_dyn_f.com_all, finger_r.par_dyn_f.inertia_all);
+    % Lagrangian method 2
+    w_T_all = finger_r.get_T_all_links;
+    w_T_link = w_T_all(:,:,2:end-1);
+    M_lag2 = invdyn_lag_T_M(w_T_link, finger_r.par_dyn_f.mass_all,...
+        finger_r.par_dyn_f.com_all, finger_r.par_dyn_f.inertia_all);
+    
+    % transfer the external force exerting on the
+    transform = getTransform(rst_model,q_r,rst_model.BodyNames{end});
+    W_R_end = transform(1:3,1:3);
+    F_ext_rst = externalForce(rst_model,rst_model.BodyNames{end},[W_R_end'*F_ext(4:6,end);W_R_end'*F_ext(1:3,end)],q_r);
+    qDD_rst = forwardDynamics(rst_model,q_r,q_rD,tau,F_ext_rst);
+    M_rst = rst_model.massMatrix(q_r);
 
-[qDD_class,M_fd,C_fd,G_fd] = finger_r.fordyn_ne_w_end(q_r,q_rD,tau,F_ext,0);
+    qDD_error = abs(qDD_class-qDD_rst);
+    M_error = M_fd - M_rst;
+    M_error_1 = M_rst - M_lag1;
+    M_error_2 = M_rst - M_lag2;
 
-% transfer the external force exerting on the 
-transform = getTransform(rst_model,q_r,rst_model.BodyNames{end});
-W_R_end = transform(1:3,1:3);
-F_ext_rst = externalForce(rst_model,rst_model.BodyNames{end},[W_R_end'*F_ext(4:6,end);W_R_end'*F_ext(1:3,end)],q_r);
-qDD_rst = forwardDynamics(rst_model,q_r,q_rD,tau,F_ext_rst);
-
-qDD_error = abs(qDD_class-qDD_rst);
-
-if max(qDD_error(:)) > 1e-10
+    if max(abs([qDD_error(:);M_error(:);M_error_2(:);M_error_1(:)])) > 1e-10
+        test_failed = 1;
+    end
+end
+if test_failed
     fprintf('Test 6 (forward dynamic): failed! \n')
 else
     fprintf('Test 6 (forward dynamic): pass! \n')
