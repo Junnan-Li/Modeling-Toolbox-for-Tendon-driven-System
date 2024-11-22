@@ -1,4 +1,4 @@
-% calculate Mass matrix using Lagrangian Euler method
+% calculate Mass matrix using Lagrangian Euler method For finger object
 % Input:
 %     q:         [n_qx1] joint states
 %     mdh:              [n_q+1x4] in sequence of [alpha,a,theta,d] To be
@@ -16,16 +16,13 @@
 % 
 % tested in test_finger.m
 % 
-% % To be continued 
 
 
-function M = invdyn_lag_T_M(w_T_link_frames, n_links, q_index,  Mass, CoM, I) % , X_base, XD_base,XDD_base 
+function M = invdyn_lag_T_M(w_T_link_frames, Mass, CoM, I) % , X_base, XD_base,XDD_base 
 %#codegen
 
 n_q = size(w_T_link_frames,3);
 M = zeros(n_q,n_q);
-nb = n_links(1);
-nf = n_links(2);
 
 for i = 1:n_q
     % for each frame/link, base is fixed,  start from the first link
