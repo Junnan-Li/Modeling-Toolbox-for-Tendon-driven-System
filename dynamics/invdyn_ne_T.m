@@ -3,7 +3,7 @@
 % parameters
 % Input:
 %       T:                [4,4, n_frame] each Finger object has nqi+2  
-%       qD,qDD:         [n_q] joint states
+%       qD,qDD:           [n_q] joint states
 %       n_links
 %       q_index
 %       Mass:             [n_q+(nb+nf)] mass vector. the first mass is the base 
@@ -41,7 +41,7 @@
 % Comment: [04/23] XDbase not updated (VD_c)
 
 
-function [Tau,F] = invdyn_ne_T(T,qD,qDD, n_links, q_index, Mass, X_base, XD_base,XDD_base, F_ext, CoM, I, g)
+function [Tau,F] = invdyn_ne_T(T,qD,qDD, n_links, q_index, Mass, XD_base,XDD_base, F_ext, CoM, I, g)
 %#codegen
 
 % test input dimension
@@ -79,7 +79,8 @@ Mass_n_frame(1) = Mass(1);
 CoM_n_frame(:,1) = CoM(:,1);
 I_n_frame(:,1) = I(:,1);
 % update VD_c of base
-W_b_r_c = euler2R_XYZ(X_base(4:6))*CoM(:,1);
+% W_b_r_c = euler2R_XYZ(X_base(4:6))*CoM(:,1);
+W_b_r_c = T(1:3,1:3,1)*CoM(:,1);
 VD_c(1:3,1) = VD(1:3,1) + cross(VD(4:6,1),W_b_r_c) + cross(V(4:6,1),cross(V(4:6,1),W_b_r_c));
 
 i_frame = 1;

@@ -23,6 +23,10 @@ q_index = %q_index%;
 
 J = zeros(6,%nq%);
 
+if index_link <= 0
+    return
+end
+
 i_link = max(find((index_link - q_index(:,1))>=0));% point in ith link
 if i_link <= %nb% % the point is on the base not finger
     for i = 1:index_link

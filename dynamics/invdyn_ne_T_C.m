@@ -3,7 +3,7 @@
 % parameters
 % Input:
 %       T:                [4,4, n_frame] each Finger object has nqi+2  
-%       qD,qDD:         [n_q] joint states
+%       qD,qDD:           [n_q] joint states
 %       n_links
 %       q_index
 %       Mass:             [n_q+(nb+nf)] mass vector. the first mass is the base 
@@ -41,39 +41,33 @@
 % Comment: [04/23] XDbase not updated (VD_c)
 
 
-function [Tau,F] = %HandName%_invdyn_ne_T(T,qD,qDD, XD_base,XDD_base, F_ext)
+function C = invdyn_ne_T_C(T,qD,n_links, q_index, Mass, XD_base,XDD_base, CoM, I)
 %#codegen
 
 % test input dimension
 
-n_b = %nb%; % number of bases
-n_f = %nf%; % number of fingers
-q_index = %q_index%;
-n_q = %nq%;
-n_frame = %nframe%; % each Finger has nqi + 2 frames (except world frame) 
-njb = q_index(1:%nb%,2)-q_index(1:%nb%,1) + 1; % number of joints of each base
-njf = q_index((1+%nb%):(%nb%+%nf%),2)-q_index((1+%nb%):(%nb%+%nf%),1) + 1; % number of joints of each finger
+n_b = n_links(1); % number of bases
+n_f = n_links(2); % number of fingers
+njb = q_index(1:n_b,2)-q_index(1:n_b,1) + 1; % number of joints of each base
+njf = q_index((1+n_b):(n_b+n_f),2)-q_index((1+n_b):(n_b+n_f),1) + 1; % number of joints of each finger
+n_q = length(qD);
+n_frame = n_q + 2*(n_b+n_f); % each Finger has nqi + 2 frames (except world frame) 
 
-
-Mass = %Mass%;
-CoM = %CoM%;
-I = %I%;
-g = %g%;
-
-
+assert(n_b == length(njb) && n_f == length(njf),'[invdyn_ne_T] kin_str input error!');
+% assert(n_q == length(qD) && n_q == length(qDD),'[invdyn_ne_T] dimension error!');
+assert(all(size(T) == [4,4,n_frame]),'[invdyn_ne_T] T dimension error!');
 
 % F (force and moment) with respect to the Wolrd Frame
 % dimension: [6xn_frame]; 1st column is base
-Tau = zeros(%nq%,1);
-F = zeros(6,%nframe%);
-% F(:,end) = -F_ext;
+C = zeros(length(qD),1);
+F = zeros(6,n_frame);
 
 % initializing
-V = zeros(6,%nframe%);
-VD = zeros(6,%nframe%);
-Mass_n_frame = zeros(%nframe%,1);
-CoM_n_frame = zeros(3,%nframe%);
-I_n_frame = zeros(6,%nframe%);
+V = zeros(6,n_frame);
+VD = zeros(6,n_frame);
+Mass_n_frame = zeros(n_frame,1);
+CoM_n_frame = zeros(3,n_frame);
+I_n_frame = zeros(6,n_frame);
 
 % updating the base information
 V(:,1) = XD_base;
@@ -86,6 +80,7 @@ I_n_frame(:,1) = I(:,1);
 W_b_r_c = T(1:3,1:3,1)*CoM(:,1);
 VD_c(1:3,1) = VD(1:3,1) + cross(VD(4:6,1),W_b_r_c) + cross(V(4:6,1),cross(V(4:6,1),W_b_r_c));
 
+
 i_frame = 1;
 i_q_start = 0;
 i_q_end = 0;
@@ -93,18 +88,18 @@ i_com_start = 0;
 i_com_end = 0;
 
 % frame index of Base&Finger start and end
-i_frame_base_start = zeros(%nb%,1);
-i_frame_base_end = zeros(%nb%,1);
-i_frame_finger_start = zeros(%nf%,1);
-i_frame_finger_end = zeros(%nf%,1);
-i_frame_q = zeros(%nq%,1);
+i_frame_base_start = zeros(n_b,1);
+i_frame_base_end = zeros(n_b,1);
+i_frame_finger_start = zeros(n_f,1);
+i_frame_finger_end = zeros(n_f,1);
+i_frame_q = zeros(n_q,1);
 
 % initialize for simulink
-W_i_r_c = zeros(3,1);
+W_i_r_c = nan(3,1);
 
 %% forward recursion: 
 % for bases
-for base_i = 1:%nb%
+for base_i = 1:n_b
     i_frame_base_start(base_i) = i_frame;
     i_q_start = i_q_end+1;
     i_q_end = i_q_start + njb(base_i)-1;
@@ -126,12 +121,12 @@ for base_i = 1:%nb%
         if i == 1 
             % the base, without joint 
             qD_i = 0;
-            qDD_i = 0;
+%             qDD_i = 0;
             CoM_i = CoM(:,i_com);
         elseif i == njb(base_i)+2 
             % the endeffector, no joint, no links, only frame
             qD_i = 0;
-            qDD_i = 0;
+%             qDD_i = 0;
             CoM_i = [0;0;0]; % virtual endeffector link
             Mass_n_frame(i_frame) = 0;
             CoM_n_frame(:,i_frame) = CoM_i;
@@ -139,7 +134,7 @@ for base_i = 1:%nb%
         else
             %         q_i = q(i-1);
             qD_i = qD(i_q);
-            qDD_i = qDD(i_q);
+%             qDD_i = qDD(i_q);
             CoM_i = CoM(:,i_com);
             i_frame_q(i_q) = i_frame;
         end
@@ -156,7 +151,7 @@ for base_i = 1:%nb%
         V(4:6,i_frame) = V(4:6,i_frame-1) + qD_i*W_R_i*[0 0 1]';
         V(1:3,i_frame) = V(1:3,i_frame-1) + cross(V(4:6,i_frame-1),W_i_1_r_i);
         % update frame acceleration
-        VD(4:6,i_frame) = VD(4:6,i_frame-1) + qDD_i*W_R_i*[0 0 1]' + qD_i*cross(V(4:6,i_frame-1),W_R_i*[0 0 1]');
+        VD(4:6,i_frame) = VD(4:6,i_frame-1) + qD_i*cross(V(4:6,i_frame-1),W_R_i*[0 0 1]');
         VD(1:3,i_frame) = VD(1:3,i_frame-1) + cross(VD(4:6,i_frame-1),W_i_1_r_i)+cross(V(4:6,i_frame-1),cross(V(4:6,i_frame-1),W_i_1_r_i));
         % calculate acceleration with respect to the center of mass
         VD_c(4:6,i_frame) = VD(4:6,i_frame);
@@ -166,14 +161,14 @@ for base_i = 1:%nb%
     end
     i_frame_base_end(base_i) = i_frame-1;
 end
-W_T_base_ee = T(:,:,2*%nb% + sum(njb));
+W_T_base_ee = T(:,:,2*n_b + sum(njb));
 V_base_ee = V(:, i_frame-1);
 VD_base_ee = VD(:, i_frame-1);
-% W_T_i
+
 
 
 % for fingers that share the same endeffector of the lase base
-for finger_i = 1:%nf%
+for finger_i = 1:n_f
     i_frame_finger_start(finger_i) = i_frame;
     i_q_start = i_q_end+1;
     i_q_end = i_q_start + njf(finger_i)-1;
@@ -193,7 +188,7 @@ for finger_i = 1:%nf%
             % the base, without joint
             W_T_i_1 = W_T_base_ee;
             qD_i = 0;
-            qDD_i = 0;
+%             qDD_i = 0;
             CoM_i = CoM(:,i_com);
             Mass_n_frame(i_frame) = Mass(i_com);
             CoM_n_frame(:,i_frame) = CoM(:,i_com);
@@ -206,7 +201,7 @@ for finger_i = 1:%nf%
             % the endeffector, no joint, no links, only frame
             W_T_i_1 = T(:,:,i_frame-1);
             qD_i = 0;
-            qDD_i = 0;
+%             qDD_i = 0;
             CoM_i = [0;0;0]; % virtual endeffector link
             Mass_n_frame(i_frame) = 0;
             CoM_n_frame(:,i_frame) = CoM_i;
@@ -216,7 +211,7 @@ for finger_i = 1:%nf%
         else
             W_T_i_1 = T(:,:,i_frame-1);
             qD_i = qD(i_q);
-            qDD_i = qDD(i_q);
+%             qDD_i = qDD(i_q);
             CoM_i = CoM(:,i_com);
             i_frame_q(i_q) = i_frame;
             Mass_n_frame(i_frame) = Mass(i_com);
@@ -237,7 +232,7 @@ for finger_i = 1:%nf%
         V(4:6,i_frame) = V_prior(4:6) + qD_i*W_R_i*[0 0 1]';
         V(1:3,i_frame) = V_prior(1:3) + cross(V_prior(4:6),W_i_1_r_i);
         % update frame acceleration
-        VD(4:6,i_frame) = VD_prior(4:6) + qDD_i*W_R_i*[0 0 1]' + qD_i*cross(V_prior(4:6),W_R_i*[0 0 1]');
+        VD(4:6,i_frame) = VD_prior(4:6) + qD_i*cross(V_prior(4:6),W_R_i*[0 0 1]');
         VD(1:3,i_frame) = VD_prior(1:3) + cross(VD_prior(4:6),W_i_1_r_i)+cross(V_prior(4:6),cross(V_prior(4:6),W_i_1_r_i));
         % calculate acceleration with respect to the center of mass
         VD_c(4:6,i_frame) = VD(4:6,i_frame);
@@ -247,13 +242,14 @@ for finger_i = 1:%nf%
     end
     i_frame_finger_end(finger_i) = i_frame-1;
 end
+assert(i_frame == n_frame+1,'[invdyn_ne_T] test condition: wrong n_frame');
 
 %% backward recursion
-for i = %nframe%:-1:1 
+for i = n_frame:-1:1 % n_q+1:-1:1
     % if the frame is the endeffector of one finger
     [is_ee,index] = ismember(i,i_frame_finger_end);
     if is_ee
-        F(:,i) = -F_ext(index); % end effector
+%         F(:,i) = -F_ext(index); % end effector
         continue
     end
 
@@ -277,8 +273,9 @@ for i = %nframe%:-1:1
             F(1:3,i) = F(1:3,i) + F(1:3,i_frame_finger_start(j));
             F(4:6,i) = F(4:6,i) + F(4:6,i_frame_finger_start(j)) - cross(W_c_r_ip1,-F(1:3,i_frame_finger_start(j)));
         end
-        F(1:3,i) = F(1:3,i) - m_i*g + m_i*VD_c(1:3,i);
-        F(4:6,i) = F(4:6,i) - cross(-W_i_r_c,F(1:3,i))+W_I_i*VD_c(4:6,i) + cross(V(4:6,i),W_I_i*V(4:6,i));
+        F(1:3,i) = F(1:3,i)+ m_i*VD_c(1:3,i);
+        F(4:6,i) = F(4:6,i) - cross(-W_i_r_c,F(1:3,i))  ...
+                + W_I_i*VD_c(4:6,i) + cross(V(4:6,i),W_I_i*V(4:6,i));
     else
         % forces exerted on the current frame by the last frame
         % calculate the W_c_r_ip1
@@ -289,18 +286,19 @@ for i = %nframe%:-1:1
         W_i_r_c = W_R_i*CoM_n_frame(:,i);
         W_c_r_ip1 = W_i_r_ip1-W_i_r_c;
 
-        F(1:3,i) = F(1:3,i+1) - m_i*g + m_i*VD_c(1:3,i);
-        F(4:6,i) = F(4:6,i+1)-cross(-W_i_r_c,F(1:3,i))-cross(W_c_r_ip1,-F(1:3,i+1))+W_I_i*VD_c(4:6,i) + cross(V(4:6,i),W_I_i*V(4:6,i));
+        F(1:3,i) = F(1:3,i+1)+ m_i*VD_c(1:3,i);
+        F(4:6,i) = F(4:6,i+1) - cross(-W_i_r_c,F(1:3,i)) - cross(W_c_r_ip1,-F(1:3,i+1)) ...
+            + W_I_i*VD_c(4:6,i) + cross(V(4:6,i),W_I_i*V(4:6,i));
     end
 end
 
 
 % frame force/moment to each joint torque
-for i = 1:%nq%
+for i = 1:length(i_frame_q)
     % frame qi to World
     W_T_i = T(:,:,i_frame_q(i));
     W_R_i = W_T_i(1:3,1:3);
-    Tau(i) = F(4:6,i_frame_q(i))'*W_R_i*[0 0 1]';
+    C(i) = F(4:6,i_frame_q(i))'*W_R_i*[0 0 1]';
 end
 
 end

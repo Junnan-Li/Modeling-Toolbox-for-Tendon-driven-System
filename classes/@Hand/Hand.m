@@ -959,6 +959,7 @@ classdef Hand < handle & matlab.mixin.Copyable
             obj.sim.q_index = [obj.index_q_b;obj.index_q_f];
             obj.sim.l_index = []; % the index in w_T_all_links
             obj.sim.l_index_in_frame = []; % the index in w_T_all_links
+            obj.sim.q_index_in_frame = []; % the index in w_T_all_links
 
             obj.sim.Mass = [];
             obj.sim.CoM = [];
@@ -967,6 +968,7 @@ classdef Hand < handle & matlab.mixin.Copyable
             
             link_index_start = 1;
             link_index_in_frame_start = 1;
+            q_index_in_frame_start = 1;
             mdh_index_start = 1;
             if obj.nb ~= 0
                 for i = 1:obj.nb
@@ -987,6 +989,11 @@ classdef Hand < handle & matlab.mixin.Copyable
                     obj.sim.l_index_in_frame = [obj.sim.l_index_in_frame;...
                         (link_index_in_frame_start:(link_index_in_frame_start+base_i.nl))'];
                     link_index_in_frame_start = link_index_in_frame_start+base_i.nl+2;
+
+                    obj.sim.q_index_in_frame = [obj.sim.q_index_in_frame;...
+                        (q_index_in_frame_start+1:(q_index_in_frame_start+base_i.nl))'];
+                    q_index_in_frame_start = q_index_in_frame_start+base_i.nl+2;
+
                     obj.sim.Mass = [obj.sim.Mass;obj.par_dyn_h.mass_all{i,1}];
                     obj.sim.CoM = [obj.sim.CoM,obj.par_dyn_h.com_all{i,1}];
                     obj.sim.I = [obj.sim.I,obj.par_dyn_h.inertia_all{i,1}];
@@ -1011,6 +1018,10 @@ classdef Hand < handle & matlab.mixin.Copyable
                     obj.sim.l_index_in_frame = [obj.sim.l_index_in_frame;...
                         (link_index_in_frame_start:(link_index_in_frame_start+finger_i.nl))'];
                     link_index_in_frame_start = link_index_in_frame_start+finger_i.nl+2;
+                    
+                    obj.sim.q_index_in_frame = [obj.sim.q_index_in_frame;...
+                        (q_index_in_frame_start+1:(q_index_in_frame_start+finger_i.nl))'];
+                    q_index_in_frame_start = q_index_in_frame_start+finger_i.nl+2;
 
                     obj.sim.Mass = [obj.sim.Mass;obj.par_dyn_h.mass_all{i,2}];
                     obj.sim.CoM = [obj.sim.CoM,obj.par_dyn_h.com_all{i,2}];

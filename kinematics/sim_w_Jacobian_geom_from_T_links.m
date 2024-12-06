@@ -27,6 +27,10 @@ n_b = n_links(1); % number of bases
 J = zeros(6,n_q);
 % w_p_point = T_p31(w_T_all(:,:,index_link),reshape(i_p_point,3,1));
 
+if index_link <= 0
+    return
+end
+
 i_link = max(find((index_link - q_index(:,1))>=0));% point in ith link
 if i_link <= n_b % the point is on the base not finger
     for i = 1:index_link

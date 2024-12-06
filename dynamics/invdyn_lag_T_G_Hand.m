@@ -1,4 +1,4 @@
-% calculate Mass matrix using Lagrangian Euler method For Hand object with
+% calculate Gravity torque (for compensation) using Lagrangian Euler method For Hand object with
 % Transformation matrix as input 
 % 
 % Input:
@@ -8,16 +8,16 @@
 %     l_index_in_frame
 %     q_index_in_frame
 % 
-%     Mass:             [n_q+1] mass vector. the first mass is the base 
-%     CoM:              [3xn_q+1] in local frame; last column is endeffector
-%     I:                [6xn_q+1] in local frame with respect to center of mass. in sequence of [xx yy zz yz xz xy]
+%     Mass:             [nlinks] mass vector. the first mass is the base 
+%     CoM:              [3,n_q+1] in local frame; last column is endeffector
+%     g:                [3,1] in local frame with respect to center of mass. in sequence of [xx yy zz yz xz xy]
 % 
 % 
 % tested in test_simulation_functions.m
-% link to invdyn_lag_T_M_Hand.m.template
+% link to invdyn_lag_T_G_Hand.m.template
 
 
-function M = invdyn_lag_T_M_Hand(w_T_all_frames, q_index, n_links,l_index_in_frame,q_index_in_frame, Mass, CoM, I) % , X_base, XD_base,XDD_base 
+function G = invdyn_lag_T_G_Hand(w_T_all_frames, q_index, n_links,l_index_in_frame,q_index_in_frame, Mass, CoM, g)  
 %#codegen
 
 n_b = n_links(1); % number of bases
@@ -27,7 +27,7 @@ njf = q_index((1+n_b):(n_b+n_f),2)-q_index((1+n_b):(n_b+n_f),1) + 1; % number of
 
 n_q = q_index(end,2);
 
-M = zeros(n_q,n_q);
+G = zeros(n_q,1);
 w_T_q_frames = w_T_all_frames(:,:,q_index_in_frame);
 w_T_links_frames = w_T_all_frames(:,:,l_index_in_frame);
 % 
@@ -47,10 +47,8 @@ for base_index = 1:n_b
         w_p_mi = w_p_i + w_R_i * CoM(:,index_l); % pos of com_i in base frame
         J = sim_w_Jacobian_geom_from_T_links(w_T_q_frames, n_links, q_index, index_q, w_p_mi);
         J_t = J(1:3,:);
-        J_r = J(4:6,:);
-        I_i = inertia_tensor2matrix(I(:,index_l)); % matrix of Inertia
-        M_i = Mass(index_l) * J_t'*J_t + J_r'*w_R_i*I_i*w_R_i'*J_r; % calculate Mass matrix
-        M = M + M_i;    
+        G_i = Mass(index_l) * J_t' * g; % calculate Mass matrix
+        G = G - G_i;    
     end
 end
 
@@ -68,10 +66,8 @@ for finger_index = 1:n_f
             J = sim_w_Jacobian_geom_from_T_links(w_T_q_frames, n_links, q_index, index_q, w_p_mi);
         end
         J_t = J(1:3,:);
-        J_r = J(4:6,:);
-        I_i = inertia_tensor2matrix(I(:,index_l)); % matrix of Inertia
-        M_i = Mass(index_l) * J_t'*J_t + J_r'*w_R_i*I_i*w_R_i'*J_r; % calculate Mass matrix
-        M = M + M_i; 
+        G_i = Mass(index_l) * J_t' * g; % calculate Mass matrix
+        G = G - G_i;    
     end
 end
 

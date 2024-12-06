@@ -45,12 +45,12 @@ C = zeros(n_q,1);
 % gravity term
 
 G = invdyn_ne_T(T,zeros(n_q,1),zeros(n_q,1), n_links, q_index, ...
-    Mass, X_base, XD_base,XDD_base, F_ext, CoM, I, g);
+    Mass, XD_base,XDD_base, F_ext, CoM, I, g);
 
 % C term
 
 C = invdyn_ne_T(T,qD,zeros(n_q,1), n_links, q_index, ...
-    Mass, X_base, XD_base,XDD_base, F_ext, CoM, I, g);
+    Mass, XD_base,XDD_base, F_ext, CoM, I, g);
 
 C = C - G;
 
@@ -59,7 +59,7 @@ for i = 1:n_q
     qDD_M = zeros(n_q,1);
     qDD_M(i) = 1;
     M(:,i) = invdyn_ne_T(T,zeros(n_q,1),qDD_M, n_links, q_index, ...
-        Mass, X_base, XD_base,XDD_base, F_ext, CoM, I, g);
+        Mass, XD_base,XDD_base, F_ext, CoM, I, g);
     M(:,i) = M(:,i) - G;
 end
 
