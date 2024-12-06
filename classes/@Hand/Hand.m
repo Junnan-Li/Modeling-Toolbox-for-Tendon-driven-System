@@ -80,8 +80,19 @@
 %       init_state
 %       set_state
 %       
+%   structure of information for simulink functions
+%       sim:        
+%           sim.mdh         [nl+nb+nf] stack of mdh parameters
+%           mdh_index       [nb+nf,2]  index of mdh rows for each finger
+%           n_links         [1,2]      number of bases, number of fingers
+%           w_T_b           [4x(nb+nf),4] T of base for each base/finger
+%           q_index         [nb+nf,2]  index of q for each base/finger
+%           l_index         [nb+nf,2]  index of links for each base/finger
 % 
-% 
+%           Mass            [nl+nb+nf,1] Mass of links and base of fingers
+%           CoM             [3,nl+nb+nf] CoM of links and base of fingers
+%           I               [6,nl+nb+nf] I of links and base of fingers
+%           g               [3,1] gravity vector
 
 
 classdef Hand < handle & matlab.mixin.Copyable
@@ -946,12 +957,16 @@ classdef Hand < handle & matlab.mixin.Copyable
             obj.sim.n_links = [obj.nb,obj.nf];
             obj.sim.w_T_b = [];
             obj.sim.q_index = [obj.index_q_b;obj.index_q_f];
-%             
+            obj.sim.l_index = []; % the index in w_T_all_links
+            obj.sim.l_index_in_frame = []; % the index in w_T_all_links
+
             obj.sim.Mass = [];
             obj.sim.CoM = [];
             obj.sim.I = [];
             obj.sim.g = obj.par_dyn_h.g;
-
+            
+            link_index_start = 1;
+            link_index_in_frame_start = 1;
             mdh_index_start = 1;
             if obj.nb ~= 0
                 for i = 1:obj.nb
@@ -964,7 +979,14 @@ classdef Hand < handle & matlab.mixin.Copyable
                     obj.sim.w_T_b = [obj.sim.w_T_b; ...
                         base_i.w_T_base];
                     mdh_index_start = obj.sim.mdh_index(end,2)+1;
+                    
+                    obj.sim.l_index = [obj.sim.l_index;link_index_start, ...
+                            link_index_start+base_i.nl];
+                    link_index_start = link_index_start + base_i.nl +1;
 
+                    obj.sim.l_index_in_frame = [obj.sim.l_index_in_frame;...
+                        (link_index_in_frame_start:(link_index_in_frame_start+base_i.nl))'];
+                    link_index_in_frame_start = link_index_in_frame_start+base_i.nl+2;
                     obj.sim.Mass = [obj.sim.Mass;obj.par_dyn_h.mass_all{i,1}];
                     obj.sim.CoM = [obj.sim.CoM,obj.par_dyn_h.com_all{i,1}];
                     obj.sim.I = [obj.sim.I,obj.par_dyn_h.inertia_all{i,1}];
@@ -981,6 +1003,14 @@ classdef Hand < handle & matlab.mixin.Copyable
                     obj.sim.w_T_b = [obj.sim.w_T_b; ...
                         finger_i.w_T_base];
                     mdh_index_start = obj.sim.mdh_index(end,2)+1;
+                    
+                    obj.sim.l_index = [obj.sim.l_index;link_index_start, ...
+                            link_index_start+finger_i.nl];
+                    link_index_start = link_index_start + finger_i.nl +1;
+
+                    obj.sim.l_index_in_frame = [obj.sim.l_index_in_frame;...
+                        (link_index_in_frame_start:(link_index_in_frame_start+finger_i.nl))'];
+                    link_index_in_frame_start = link_index_in_frame_start+finger_i.nl+2;
 
                     obj.sim.Mass = [obj.sim.Mass;obj.par_dyn_h.mass_all{i,2}];
                     obj.sim.CoM = [obj.sim.CoM,obj.par_dyn_h.com_all{i,2}];

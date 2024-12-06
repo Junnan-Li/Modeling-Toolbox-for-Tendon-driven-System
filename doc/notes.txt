@@ -1,4 +1,6 @@
-
+ToDo:
+    1. in the Hand object, the base of each finger has a wrong index_inhand value (4)
+    2. 
 
 Classes:
 1. tendon class 

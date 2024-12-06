@@ -42,6 +42,7 @@ fprintf('------------------------------------- \n')
 %% generate hand 
 hand = create_hand_random('hand_function_test', [2,2,4,4] );
 
+hand.create_sim_functions_hand
 %% transformation matrix of each links
 %  sim_w_T_all_links_from_q.m
 test_failed = 0;
@@ -90,7 +91,7 @@ for iter = 1:100
     hand.update_hand(q);
     [w_T_all_frames,w_T_all_links] = sim_w_T_all_frames_from_q(hand.sim.mdh,hand.sim.mdh_index,...
         hand.sim.q_index,hand.sim.w_T_b,hand.sim.n_links,q);
-   
+    hand.sim.w_T_b
     T = hand.get_w_T_all();
     w_T_links_inhand = hand.get_w_T_links_inhand;
 
@@ -105,6 +106,45 @@ if test_failed
 else
     fprintf('Test (frames transformation): pass! \n')
 end
+fprintf('------------------------ \n')
+
+%% Jacobian matrix 
+% sim_w_Jacobian_geom_from_T_links.m
+% compare to 
+% 
+test_failed = 0;
+t1 = 0;
+t2 = 0;
+for iter = 1:100
+    q = rand(hand.nj,1);
+    hand.update_hand(q);
+    w_T_links_inhand = hand.get_w_T_links_inhand;
+    link_index = randi(hand.nl);
+    i_p_point = rand(3,1);
+    w_p_point = T_p31(w_T_links_inhand(:,:,link_index), i_p_point);
+    [~,J_all] = hand.Jacobian_geom_w_point(link_index,i_p_point);
+    tic
+    J = sim_w_Jacobian_geom_from_T_links(w_T_links_inhand,...
+        hand.sim.n_links, hand.sim.q_index, link_index, w_p_point);   
+    t1 = t1 + toc;
+    tic
+    J_sim = hand_function_test_sim_w_Jacobian_geom_from_T_links( ...
+        w_T_links_inhand, link_index, w_p_point);
+    t2 = t2 + toc;
+    J_error = J_all - J;
+    J_error2 = J_all - J_sim;
+    if max(abs([J_error(:);J_error2(:)])) > 1e-8
+        test_failed = 1;
+    end
+end
+if test_failed
+    fprintf('Test (Jacobian): failed! \n')
+else
+    fprintf('Test (Jacobian): pass! \n')
+end
+fprintf('Hand Jacobian Time cost: \n')
+fprintf('sim_w_Jacobian_geom_from_T_links:     %f \n',t1/iter)
+fprintf('sim_w_Jacobian_geom_from_T_links.template:     %f \n',t2/iter)
 fprintf('------------------------ \n')
 %% Inverse dynamic 
 
@@ -148,7 +188,7 @@ fprintf('invdyn_ne_T:            %f \n',t1/iter)
 fprintf('------------------------ \n')
 %%
 
-hand.create_sim_functions_hand
+
 test_failed = 0;
 % t1 = 0;
 for iter = 1:100
@@ -207,12 +247,12 @@ for iter = 1:100
     end
 end
 if test_failed
-    fprintf('Test (Inverse dynamic): failed! \n')
+    fprintf('Test (Inverse dynamic sim): failed! \n')
 else
-    fprintf('Test (Inverse dynamic): pass! \n')
+    fprintf('Test (Inverse dynamic sim): pass! \n')
 end
 fprintf('Hand ID Time cost: \n')
-fprintf('invdyn_ne_T    :            %f \n',t1/iter)
+fprintf('invdyn_ne_T:                %f \n',t1/iter)
 fprintf('invdyn_ne_T sim:            %f \n',t2/iter)
 fprintf('------------------------ \n')
 

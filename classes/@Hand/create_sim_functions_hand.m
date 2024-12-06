@@ -1,21 +1,25 @@
-
-
-
-
-
-
+% create functions for simulink application with individual Hand model
+% parameters for static memory allocation
+% 
+% template functions:
+%       sim_w_T_all_frames_from_q
+%       invdyn_ne_T
+%       
+% 
+% 
 
 function create_sim_functions_hand(obj)
 
-
+%
 template_func_list = {...
     'sim_w_T_all_frames_from_q';...
     'invdyn_ne_T';...
+    'sim_w_Jacobian_geom_from_T_links';...
     };
 
 % string to replace
 str_old = {'%HandName%';...
-        '%nl%'; ...
+        '%nl%'; ... 
         '%nb%';...
         '%nq%';...
         '%nf%';...
@@ -45,6 +49,7 @@ str_old = {'%HandName%';...
         mat2str(obj.sim.I);...
         mat2str(obj.sim.g);...
         };
+fprintf('Start to generate Hand functions from templates \n');    
 for func_index = 1:length(template_func_list)
     % open template functions
 
@@ -61,6 +66,7 @@ for func_index = 1:length(template_func_list)
     fid2 = fopen(strcat('./output/',fun_name,'.m'),'wt');
     fwrite(fid2,func_char);
     fclose (fid2);
+    fprintf('Function %s is generated  \n', template_func_list{func_index});
 end
 end
 
