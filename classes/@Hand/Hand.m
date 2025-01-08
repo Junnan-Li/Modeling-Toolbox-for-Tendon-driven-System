@@ -59,11 +59,20 @@
 %       ID:
 %           invdyn_ne_hand_w_end: inverse dynamic newton-euler with frame
 %                   external wrench. calling invdyn_ne_T.m
+%                   verified in test_hand_dynamics.m
 % 
 %       FD:
 %           fordyn_ne_hand_w_end: forward dynamics. calling fordyn_ne_T.m
-% 
+%                   verified in test_hand_dynamics.m
+%                   (need to be computationally optimized)
+%           
 %           fordyn_step: 
+% 
+%   for individual terms of dynamic
+%           invdyn_lag_T_G_Hand
+%           invdyn_lag_T_M_Hand
+%           invdyn_ne_T_C
+%       
 % 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 %   Muscle 

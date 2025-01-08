@@ -88,7 +88,7 @@ if mex
     error('[invdyn_ne_hand_w_end] not implemented yet!')
 else
     [Tau,F] = invdyn_ne_T(T,qD,qDD,obj.sim.n_links,obj.sim.q_index, obj.sim.Mass, ...
-        X_base, XD_base,XDD_base, F_ext, obj.sim.CoM, obj.sim.I, obj.sim.g);
+        XD_base,XDD_base, F_ext, obj.sim.CoM, obj.sim.I, obj.sim.g);
 end
 
 end

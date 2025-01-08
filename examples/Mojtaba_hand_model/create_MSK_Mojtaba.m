@@ -341,7 +341,7 @@ Mojtaba_hand.plot_hand_obstacles(plot_hand_par)
 Mojtaba_hand.plot_hand_muscles(plot_hand_par)
 
 %% 
-
+Mojtaba_hand.update_sim_par;
 [qDD,M,C,G] = Mojtaba_hand.fordyn_ne_hand_w_end(q0);
 Tau = Mojtaba_hand.invdyn_ne_hand_w_end(q0);
 

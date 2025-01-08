@@ -86,6 +86,6 @@ g = obj.par_dyn_h.g;
 %     error('[fordyn_ne_hand_w_end] not implemented yet!')
 % else
     [qDD,M,C,G] = fordyn_ne_T(T,qD,Tau,obj.sim.n_links,obj.sim.q_index, ...
-        Mass, X_base, XD_base,XDD_base, F_ext, CoM, I, g);
+        Mass, XD_base,XDD_base, F_ext, CoM, I, g);
 % end
 end

@@ -42,9 +42,9 @@ for iter = 1:100
     end
 end
 if test_failed
-    fprintf('Test (Links transformation): FAILED!!! \n')
+    fprintf('Test (sim_w_T_all_links_from_q.m): FAILED!!! \n')
 else
-    fprintf('Test (Links transformation): PASS!!! \n')
+    fprintf('Test (sim_w_T_all_links_from_q.m): PASS!!! \n')
 end
 
 fprintf('Time cost: \n')
@@ -52,7 +52,7 @@ fprintf('object function:            %f \n',t1/iter)
 fprintf('sim function:               %f \n',t2/iter)
 fprintf('------------------------ \n')
 %% Transformation matrix for all frames
-% sim_w_T_all_frames_from_q.m
+% test sim_w_T_all_frames_from_q.m with hand.get_w_T_all
 test_failed = 0;
 % t1 = 0;
 for iter = 1:100
@@ -70,15 +70,15 @@ for iter = 1:100
     end
 end
 if test_failed
-    fprintf('Test (frames transformation): FAILED!!! \n')
+    fprintf('Test (sim_w_T_all_frames_from_q.m): FAILED!!! \n')
 else
-    fprintf('Test (frames transformation): PASS!!! \n')
+    fprintf('Test (sim_w_T_all_frames_from_q.m): PASS!!! \n')
 end
 fprintf('------------------------ \n')
 
 %% Jacobian matrix 
 % sim_w_Jacobian_geom_from_T_links.m
-% compare to 
+% compare to hand.Jacobian_geom_w_point
 % 
 test_failed = 0;
 t1 = 0;
@@ -106,15 +106,16 @@ for iter = 1:100
     end
 end
 if test_failed
-    fprintf('Test (Jacobian): FAILED!!! \n')
+    fprintf('Test (sim_w_Jacobian_geom_from_T_links.m): FAILED!!! \n')
 else
-    fprintf('Test (Jacobian): PASS!!! \n')
+    fprintf('Test (sim_w_Jacobian_geom_from_T_links.m): PASS!!! \n')
 end
 fprintf('Time cost: \n')
 fprintf('sim_w_Jacobian_geom_from_T_links:            %f \n',t1/iter)
 fprintf('sim_w_Jacobian_geom_from_T_links.t:          %f \n',t2/iter)
 fprintf('------------------------ \n')
 %% Inverse dynamic 
+% test invdyn_ne_T.m with rst.inverseDynamics
 
 test_failed = 0;
 t1 = 0;
@@ -147,16 +148,16 @@ for iter = 1:100
     end
 end
 if test_failed
-    fprintf('Test (Inverse dynamic): FAILED!!! \n')
+    fprintf('Test (invdyn_ne_T.m): FAILED!!! \n')
 else
-    fprintf('Test (Inverse dynamic): PASS!!! \n')
+    fprintf('Test (invdyn_ne_T.m): PASS!!! \n')
 end
 fprintf('Time cost: \n')
 fprintf('invdyn_ne_T:                  %f \n',t1/iter)
 fprintf('------------------------ \n')
 %%
-
-
+% test hand_function_test_sim_w_T_all_frames_from_q.m 
+% with sim_w_T_all_frames_from_q.m
 test_failed = 0;
 % t1 = 0;
 for iter = 1:100
@@ -214,16 +215,16 @@ for iter = 1:100
     end
 end
 if test_failed
-    fprintf('Test (Inverse dynamic sim): FAILED!!! \n')
+    fprintf('Test (invdyn_ne_T sim): FAILED!!! \n')
 else
-    fprintf('Test (Inverse dynamic sim): PASS!!! \n')
+    fprintf('Test (invdyn_ne_T sim): PASS!!! \n')
 end
 fprintf('Time cost: \n')
 fprintf('invdyn_ne_T:                  %f \n',t1/iter)
 fprintf('invdyn_ne_T.t:                %f \n',t2/iter)
 fprintf('------------------------ \n')
 
-%% Test forward dynamic and individual terms
+%% Test forward dynamic and mass matrix 
 % 
 test_failed = 0;
 t1 = 0;
@@ -259,6 +260,7 @@ for iter = 1:100
     error_M = [error_M1;error_M2;error_M3];
     if max(abs(error_M(:))) > 1e-8
         test_failed = 1;
+        break
     end
 
 end

@@ -19,7 +19,7 @@
 %     C_fd:             [n_q] velocity-dependent torque 
 %     G_fd:             [n_q] gravity torque  
 
-function [qDD,M,C,G] = fordyn_ne_T(T,qD,Tau, n_links, q_index, Mass, X_base, XD_base,XDD_base, F_ext, CoM, I, g)
+function [qDD,M,C,G] = fordyn_ne_T(T,qD,Tau, n_links, q_index, Mass, XD_base,XDD_base, F_ext, CoM, I, g)
 
 n_b = n_links(1); % number of bases
 n_f = n_links(2); % number of fingers

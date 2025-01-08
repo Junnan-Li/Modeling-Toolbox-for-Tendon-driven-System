@@ -18,7 +18,7 @@ plot_par = hand.plot_parameter_init;
 plot_par.axis_len = 0.5;
 hand.update_hand_par_dyn
 hand_rst = hand.update_rst_model;
-
+hand.update_sim_par;
 figure(1)
 hand.plot_hand(plot_par)
 hand.plot_hand_com(plot_par)
@@ -26,7 +26,7 @@ axis equal
 hand_rst.show(q,'Frames','on');
 
 %% ID test
-
+% verify hand.invdyn_ne_hand_w_end with rst.inverseDynamics function
 q_init = zeros(hand.nj,1);
 test_failed = 0;
 
@@ -66,6 +66,9 @@ end
 
 % return
 %% FD, Mass matrix, coriolis and gravity
+% verify hand.fordyn_ne_hand_w_end with rst.forwardDynamics function
+% and massMAtrix, gravityTorque, velocityProduct
+
 q_init = zeros(hand.nj,1);
 test_failed = 0;
 for test_iter = 1:20
@@ -101,6 +104,7 @@ for test_iter = 1:20
     error_vec = [error_C;error_G;error_qdd];
     if max(abs(error_M(:))) > 1e-10 || max(abs(error_vec(:))) > 1e-10
         test_failed = 1;
+        break
     end
 end
 if test_failed == 1
