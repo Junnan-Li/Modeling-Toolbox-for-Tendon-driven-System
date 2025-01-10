@@ -1328,10 +1328,10 @@ classdef Finger < handle & matlab.mixin.Copyable
             % delete all contacts of the finger
             if obj.nl 
                 for i = 1:obj.nl
-                    obj.list_links(i).delete_all_contacts_link();
+                    obj.list_links(i).delete_all_viapoints_link();
                 end
             end
-            obj.update_list_contacts;
+            obj.update_list_viapoints;
         end
 
 
