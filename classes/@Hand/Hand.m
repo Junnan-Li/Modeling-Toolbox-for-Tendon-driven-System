@@ -694,6 +694,7 @@ classdef Hand < handle & matlab.mixin.Copyable
                     obj.par_dyn_h.inertia_all{i,2} = finger_i.par_dyn_f.inertia_all;
                 end
             end
+            obj.par_dyn_h.g = [0,0,-9.81]';
         end
 
         function set_g_w(obj,g)
@@ -748,13 +749,13 @@ classdef Hand < handle & matlab.mixin.Copyable
         end
         
         function w_p_viapoints_all = get_p_all_viapoints_inhand(obj)
-            % plot 3d viapoints
+            % 
             w_p_viapoints_all = NaN(3,obj.nvia);
             vp_index = 1;
             if obj.nb ~= 0
                 for i = 1:obj.nb
                     base_i = obj.base(i);
-                    w_p_viapoints_all(3,vp_index:vp_index+base_i.nvia-1) = ...
+                    w_p_viapoints_all(:,vp_index:vp_index+base_i.nvia-1) = ...
                         base_i.get_p_all_viapoints_inhand;
                     vp_index = vp_index + base_i.nvia;
                 end
@@ -762,7 +763,7 @@ classdef Hand < handle & matlab.mixin.Copyable
             if obj.nf ~= 0
                for i = 1:obj.nf
                     finger_i = obj.list_fingers(i);
-                    w_p_viapoints_all(3,vp_index:vp_index+base_i.nvia-1) = ...
+                    w_p_viapoints_all(:,vp_index:vp_index+finger_i.nvia-1) = ...
                         finger_i.get_p_all_viapoints_inhand;
                     vp_index = vp_index + finger_i.nvia;
                 end

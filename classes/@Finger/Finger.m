@@ -709,7 +709,7 @@ classdef Finger < handle & matlab.mixin.Copyable
             obj.w_p_base = reshape(w_p_base,3,1);
             obj.w_R_base = w_R_base;
 
-            obj.w_T_base = pR2T(w_p_base,w_R_base);
+            obj.w_T_base = pR2T(obj.w_p_base,w_R_base);
             obj.w_T_base_inhand = obj.w_T_base;
 
             obj.update_finger(obj.q_a);

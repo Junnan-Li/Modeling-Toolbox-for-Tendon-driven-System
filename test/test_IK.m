@@ -155,3 +155,51 @@ fprintf('Hand IK Test (invkin_numeric NR):    status: %d; time: %f; iter: %d \n'
 fprintf('Hand IK Test (invkin_numeric_LM LM): status: %d; time: %f; iter: %d \n', info3.status,t3,info3.iter)
 fprintf('Hand IK Test (invkin_rst):           status: %d; time: %f; iter: %d \n', solnInfo.ExitFlag==1,t1,solnInfo.Iterations)
 
+%% IK of multiple viapoints 
+
+hand = create_hand_random('hand_IK_test', [0,0,2,4] );
+
+vp1 = hand.list_fingers(1).add_ViaPoint('VP1', 1, 0.5*rand(1,3));
+vp2 = hand.list_fingers(1).add_ViaPoint('VP1', 2, 0.5*rand(1,3));
+vp3 = hand.list_fingers(1).add_ViaPoint('VP1', 3, 0.5*rand(1,3));
+vp4 = hand.list_fingers(1).add_ViaPoint('VP1', 4, 0.5*rand(1,3));
+
+hand.update_list_viapoints;
+q_hand_init = rand(hand.nj,1);
+hand.update_hand(q_hand_init);
+
+par_plot = hand.plot_parameter_init();
+par_plot.axis_len = 0.1;
+
+figure(3)
+hand.plot_hand(par_plot)
+hand.plot_hand_viapoints(par_plot)
+
+%%
+hand.Jacobian_geom_w_vp()
+hand.get_p_all_viapoints_inhand
+hand.Jacobian_geom_w_vp([vp1;vp2])
+%% 
+q_hand_des = rand(hand.nj,1);
+hand.update_hand(q_hand_des);
+x_vp_des = hand.get_p_all_viapoints_inhand + 0.1*rand(3,4);
+figure(13)
+par_plot.viapoint_marker = '.';
+hand.plot_hand(par_plot)
+hand.plot_hand_viapoints(par_plot)
+
+q_hand_init = rand(hand.nj,1);
+hand.update_hand(q_hand_init);
+[q_res, info] = hand.invkin_numeric_LM_vp(x_vp_des,[1:hand.nvia]);
+par_plot.viapoint_marker = '*';
+hand.plot_hand(par_plot)
+hand.plot_hand_viapoints(par_plot)
+
+
+
+
+
+
+
+
+
