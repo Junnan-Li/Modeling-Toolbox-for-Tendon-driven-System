@@ -58,15 +58,11 @@ end
 for retry_i = 0:retry_num
     try
         for i = 1:iter_max
-           
-
             x_vp_all_i = obj.get_p_all_viapoints_inhand();
             x_i_vec = reshape(x_vp_all_i(:,vp_list),3*num_vp,1);
-
-
             q_i = obj.q;
             q_all(i,:) = q_i;
-            
+           
             if par.visual % visualization
                 obj.plot_hand;
             end
@@ -81,9 +77,6 @@ for retry_i = 0:retry_num
 %             J = obj.Jacobian_geom_w_vp(vp1)
             J = obj.Jacobian_geom_w_vp(obj.list_viapoints(vp_list));
             
-%             if rank(J) < min(size(J))
-%                 disp('[invkin_numeric_LM]: Jacobian rank deficit')
-%             end
             g_i = J'* W_e *delta_x_i;
             delta_q = inv(J'*W_e*J + W_d) * g_i;
             q_i_new = q_i + delta_q;

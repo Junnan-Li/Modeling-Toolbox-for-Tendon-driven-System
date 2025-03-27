@@ -327,8 +327,9 @@ classdef Hand < handle & matlab.mixin.Copyable
             % update hand configuration
             % and update the w_p_base_inhand & w_R_base_inhand for all 
             % bases and fingers
-            assert(length(q) == obj.nj, '[update_hand] dimension of q is incorrect!');
-            obj.q = q;
+            assert(length(q(:)) == obj.nj, '[update_hand] dimension of q is incorrect!');
+            assert(~anynan(q), '[update_hand] q has NaN value!');
+            obj.q = reshape(q,obj.nj,1);
             W_T_b_prior = eye(4);
             if obj.njb ~= 0
                 q_b = q(1:obj.njb); % joint of base
