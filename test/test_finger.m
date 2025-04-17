@@ -34,7 +34,7 @@ finger_r = create_finger_random('finger_example', 4);
 % set random base position and orientation
 finger_r.update_rst_model;
 % joint configurations
-q_r = rand(finger_r.nj,1);
+q_r = 0*rand(finger_r.nj,1);
 
 % udpate finger with given joint configurations
 finger_r.update_finger(q_r);
@@ -46,10 +46,44 @@ rst_model = finger_r.rst_model;
 show(rst_model,q_r,'Frames','on');
 hold on
 %% test finger plot
+q = zeros(finger_r.nj,1);
+finger_r.update_finger(q);
 plot_par = finger_r.plot_parameter_init();
 plot_par.axis_len = 0.5;
 finger_r.plot_finger(plot_par)
+axis equal 
+grid on
 
+
+% test par_T_Link
+
+w_T_all = finger_r.get_T_all_links;
+for i = 1:finger_r.nl+2
+    plot_coord_T(w_T_all(:,:,i),plot_par);
+end
+% plot_coord_T(w_T_all,plot_par);
+
+plot_par.linewidth = 5;
+pre_T = finger_r.w_T_base;
+for i = 1:finger_r.nl+1
+    T_i = pre_T*finger_r.par_T_link(4*i-3:4*i,:);
+    plot_coord_T(T_i,plot_par);
+    pre_T = T_i;
+end
+%% test update finger with par_T_Link
+for i = 1:100
+    q = rand(finger_r.nj,1);
+    finger_r.update_finger(q);
+    w_T_all = finger_r.get_T_all_links;
+
+    finger_r.update_finger_from_T(q);
+    w_T_all_fromT = finger_r.get_T_all_links;
+    error = w_T_all-w_T_all_fromT;
+    if max(error(:)) > 1e-10 
+        fprintf('Test 1 (Transformation matrix): failed! \n')
+    end
+    finger_r.get_T_all_links;
+end
 
 %% Test 1:  Transformation matrix test with respect to mdh parameters 
 % mdh parameter from class properties (end effector)

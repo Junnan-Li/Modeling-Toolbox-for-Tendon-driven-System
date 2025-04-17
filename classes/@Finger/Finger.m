@@ -34,7 +34,8 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%
 %       Links(Finger.base & Finger.list_links):
 %           Base: a link object define the base of a finger with parameters
-%               saved in Finger.base
+%               saved in Finger.base. 
+%               for attaching viapoints.  
 %           Links: a link object for each link connected by joints saved in
 %               Finger.list_links
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
@@ -227,7 +228,7 @@ classdef Finger < handle & matlab.mixin.Copyable
         par_dyn_f           % [nj+1x1]mass_all, [3xnj+1]com_all, [6xNJ+1] inertial regarding com, [3x1] g 
         M_coupling          % [njxnt] coupling matrix of the finger
 
-%         w_T_links_all
+        par_T_link          % [nl+1,6] for each link to replace mdh parameters (include end)
     end
     
     methods
@@ -238,11 +239,12 @@ classdef Finger < handle & matlab.mixin.Copyable
             %            
             obj.name = name;
             obj.mdh_ori = [];
-            
+
+            obj.par_T_link = [];
             % Finger constructor input
             ip = inputParser;
             %    validScalarPosNum = @(x) isnumeric(x) && isscalar(x) && (x > 0);
-            ip.addParameter('mdh',[]);
+            ip.addParameter('mdh',[]); 
             ip.addParameter('type',[]);
             ip.addParameter('l_links',[]);
             parse(ip,varargin{:});
@@ -302,6 +304,9 @@ classdef Finger < handle & matlab.mixin.Copyable
             obj.mdh = obj.mdh_ori;
             obj.mdh_all = obj.mdh_ori;
             
+            % update par_T_link
+            obj.get_par_T_from_mdh_ori;
+
             % init list of contact and tendon
             % default contacts in the middle of each links
             obj.nc = 0;
@@ -383,6 +388,9 @@ classdef Finger < handle & matlab.mixin.Copyable
             obj.mdh = mdh_new;
             obj.mdh_all = mdh_new;
 %             obj.update_rst_model;
+
+            % update par_T_link
+            obj.get_par_T_from_mdh_ori;
         end
         
         function mdh_ori = get_finger_mdh_ori(obj)
@@ -390,7 +398,6 @@ classdef Finger < handle & matlab.mixin.Copyable
             % update mhl parameters and par_kin, opt_pkin, ...
 
             % update mdh parameters 
-            
             mdh_ori = struct;
             mdh_ori.alpha = zeros(obj.nj+1,1);
             mdh_ori.a = zeros(obj.nj+1,1);% [0;0;obj.list_links(1).Length;obj.list_links(2).Length;obj.list_links(3).Length];
@@ -399,6 +406,74 @@ classdef Finger < handle & matlab.mixin.Copyable
             for i = 1:obj.nj
                 mdh_ori.a(i+1) = obj.list_links(i).Length;
             end
+        end
+
+        function get_par_T_from_mdh_ori(obj)
+            % 
+            obj.par_T_link = nan(4*obj.nl,4);
+            mdh_ori_matrix = mdh_struct_to_matrix(obj.mdh_ori, 1);
+            b_T_pre = eye(4);
+            for i = 1:obj.nl + 1
+                b_T_i = T_mdh_multi(mdh_ori_matrix(1:i,:));
+                obj.par_T_link(4*i-3:4*i,:) = inv(b_T_pre)*b_T_i;
+                b_T_pre = b_T_i;
+            end
+        end
+
+        function update_finger_from_T(obj,varargin)
+            % 
+            if nargin == 1
+                q_new = obj.q;
+            elseif nargin == 2
+                q_new = varargin{1};
+                assert(length(q_new)== obj.nja, '[update_finger]: dinput dimension is incorrect!')
+                q_new = reshape(q_new,[obj.nj,1]);
+            end
+            
+            if obj.limit_joint_on
+                % saturate q with joint limits
+                q_sat = vec_saturation(q_new,obj.limits_q);
+                obj.q = q_sat; 
+                obj.q_a = q_sat;
+            else
+                obj.q = q_new; % update joint angle
+                obj.q_a = q_new;
+            end
+
+            b_T_pre = eye(4); % init homogeous transformation matrix
+            for i = 1:obj.nl
+                % icalculate b_T_i from par_T_link 
+                b_T_i_wtR = b_T_pre*obj.par_T_link(4*i-3:4*i,:);
+                R_q = eul2rotm([0,0,obj.q(i)],'XYZ');
+                % default rotation around z axis
+                T_q = [R_q,zeros(3,1);[0,0,0,1]];
+                b_T_i = b_T_i_wtR*T_q;
+                b_T_pre = b_T_i; 
+                % update link properties
+                base_p_link_i = b_T_i(1:3,4);
+                base_R_link_i = b_T_i(1:3,1:3);
+                obj.list_links(i).update(base_p_link_i,base_R_link_i);
+                % Link.update
+                obj.list_links(i).update_w_T_Link(obj.w_T_base*b_T_i);
+                obj.list_links(i).update_w_T_Link_inhand(obj.w_T_base_inhand*b_T_i);
+            end
+            obj.base.update_w_T_Link(obj.w_T_base);
+            obj.base.update_w_T_Link_inhand(obj.w_T_base_inhand);
+            % update viapoints
+            obj.update_viapoints;
+            % update joints info
+%             obj.update_joints_info;
+            % update the list of tendons
+            obj.update_M_coupling(obj.q_a); 
+            
+            % update the obstacle
+            obj.update_obstacles;
+            % update tendon force limits
+%             obj.update_tendon_force_limits;
+            % update dynamic parameters
+%             obj.update_finger_par_dyn;    
+            % update rsi model
+%             obj.update_rst_model;
         end
 
         function update_finger(obj, varargin)
@@ -777,23 +852,6 @@ classdef Finger < handle & matlab.mixin.Copyable
             p_link_all_w(:,end) = w_p_b + w_R_b * b_T_i(1:3,4);
         end
 
-%         function w_T_all = get_T_all_links(obj)
-%             % get all transformation matrix of all links
-%             w_T_b = obj.get_W_T_B();
-%             w_T_all = zeros(4,4,obj.nl+2); % base, link1, ... linkn, ee
-%             w_T_all(:,:,1) = w_T_b;
-%             for i = 1:obj.nl
-%                 b_p_i = obj.list_links(i).base_p;
-%                 b_R_i = obj.list_links(i).base_R;
-%                 b_T_i = [b_R_i,b_p_i; 0 0 0 1];
-%                 w_T_all(:,:,i+1) = w_T_b*b_T_i;
-%             end
-%             % fingertip position
-%             mdh_all_matrix = mdh_struct_to_matrix(obj.mdh_all, 1);
-%             b_T_ee = T_mdh_multi(mdh_all_matrix);
-%             w_T_all(:,:,end) = w_T_b*b_T_ee;
-%         end
-
         function w_T_all = get_T_all_links(obj)
             % get all transformation matrix of all links
             w_T_b = obj.get_W_T_B();
@@ -802,6 +860,9 @@ classdef Finger < handle & matlab.mixin.Copyable
             for i = 1:obj.nl
                 w_T_all(:,:,i+1) = obj.list_links(i).w_T_Link;
             end
+            link_T_ee = obj.par_T_link(end-3:end,:);
+            w_T_ee_T = w_T_all(:,:,i+1)*link_T_ee;
+
             % fingertip position
             mdh_all_matrix = mdh_struct_to_matrix(obj.mdh_all, 1);
             b_T_ee = T_mdh_multi(mdh_all_matrix);

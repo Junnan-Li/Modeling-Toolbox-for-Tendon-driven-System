@@ -44,6 +44,8 @@ classdef Links < handle & matlab.mixin.Copyable
         base_R            % [3x3] b_R_i: position of the frame with respect to Finger base frame. 
         w_T_Link          
         w_T_Link_inhand
+
+%         pre_T_Link        % [4,4] new property: the T from the previous Link to this without q
     end
     
     methods
@@ -80,6 +82,11 @@ classdef Links < handle & matlab.mixin.Copyable
             obj.update_link_viapoints;
             obj.update_link_obstacles;
         end
+
+%         function set_pre_T_Link(obj,pre_T_Link)
+%             % new property: to replace mdh parameters
+%             obj.pre_T_Link = pre_T_Link;
+%         end
 
         function set_index_inhand(obj,index_inhand)
             % 
