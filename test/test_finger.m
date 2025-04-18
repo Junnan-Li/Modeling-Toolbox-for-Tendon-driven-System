@@ -70,20 +70,6 @@ for i = 1:finger_r.nl+1
     plot_coord_T(T_i,plot_par);
     pre_T = T_i;
 end
-%% test update finger with par_T_Link
-for i = 1:100
-    q = rand(finger_r.nj,1);
-    finger_r.update_finger(q);
-    w_T_all = finger_r.get_T_all_links;
-
-    finger_r.update_finger_from_T(q);
-    w_T_all_fromT = finger_r.get_T_all_links;
-    error = w_T_all-w_T_all_fromT;
-    if max(error(:)) > 1e-10 
-        fprintf('Test 1 (Transformation matrix): failed! \n')
-    end
-    finger_r.get_T_all_links;
-end
 
 %% Test 1:  Transformation matrix test with respect to mdh parameters 
 % mdh parameter from class properties (end effector)
@@ -606,8 +592,75 @@ grid on
 axis equal
 
 
+%% test 12 update finger with par_T_Link
+
+finger_r = create_finger_random('finger_example', 6);
+q = zeros(finger_r.nj,1);
+finger_r.update_finger(q);
+plot_par = finger_r.plot_parameter_init();
+plot_par.axis_len = 0.5;
+
+Test_fail = zeros(5,1);
+% Test_2_fail = 0;
+% Test_3_fail = 0;
+% Test_4_fail = 0;
+% Test_5_fail
+for i = 1:100
+    q = rand(finger_r.nj,1);
+    % use mdh-based methods
+    finger_r.kin_use_T = 0; % 
+    finger_r.update_finger(q);
+    w_T_all = finger_r.get_T_all_links; 
+    b_T_all = finger_r.get_b_T_all_links;
+    [~,~, w_T_ee] = finger_r.get_T_ee_w;
+    b_J = finger_r.Jacobian_geom_b_end;
+
+    % use T-based methods
+    finger_r.kin_use_T = 1;  
+    % Test 1 : update_finger_from_T.m
+    finger_r.update_finger(q);
+    w_T_all_update_fromT = finger_r.get_T_all_links;
+    error1 = w_T_all-w_T_all_update_fromT;
+    if max(error1(:)) > 1e-10 
+        Test_fail(1) = 1;
+    end
+    
+    % Test 2 : get_T_all_links_fromT.m
+    w_T_all_fromT = finger_r.get_T_all_links;
+    error2 = w_T_all-w_T_all_fromT;
+    if max(error2(:)) > 1e-10 
+        Test_fail(2) = 1;
+    end
+  
+    % Test 3: get_T_ee_w.m
+    [~,~, w_T_ee_fromT] = finger_r.get_T_ee_w;
+    error3 = w_T_ee-w_T_ee_fromT;
+    if max(error3(:)) > 1e-10 
+        Test_fail(3) = 1;
+    end
+    
+    % Test 4: get_b_T_all_links.m
+    b_T_all_fromT = finger_r.get_b_T_all_links;
+    error4 = b_T_all-b_T_all_fromT;
+    if max(error4(:)) > 1e-10 
+        Test_fail(4) = 1;
+    end
+
+    % Test 5: Jacobian_geom_b_end.m
+    b_J_fromT = finger_r.Jacobian_geom_b_end;
+    error5 = b_J-b_J_fromT;
+    if max(error5(:)) > 1e-10 
+        Test_fail(5) = 1;
+    end
 
 
+end
+
+if isempty(find(Test_fail))
+    fprintf('Test par_T_Link: all pass! \n')
+else
+    fprintf('Test par_T_Link failed: %d ! \n',find(Test_fail))
+end
 
 
 

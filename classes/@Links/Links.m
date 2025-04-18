@@ -42,6 +42,7 @@ classdef Links < handle & matlab.mixin.Copyable
         index_inhand
         base_p            % [3x1] b_p_i: position of the frame with respect to Finger base frame. 
         base_R            % [3x3] b_R_i: position of the frame with respect to Finger base frame. 
+        b_T_Link          % 
         w_T_Link          
         w_T_Link_inhand
 
@@ -78,15 +79,11 @@ classdef Links < handle & matlab.mixin.Copyable
 %             assert(size(base_R) == 3, 'Function error: input dimension of link position is incorrect');           
             obj.base_p = reshape(base_p,[3,1]);
             obj.base_R = base_R;
+            obj.b_T_Link = pR2T(obj.base_p,obj.base_R);
             obj.update_link_contacts;
             obj.update_link_viapoints;
             obj.update_link_obstacles;
         end
-
-%         function set_pre_T_Link(obj,pre_T_Link)
-%             % new property: to replace mdh parameters
-%             obj.pre_T_Link = pre_T_Link;
-%         end
 
         function set_index_inhand(obj,index_inhand)
             % 
@@ -112,7 +109,7 @@ classdef Links < handle & matlab.mixin.Copyable
 
         function base_T_link = get_base_T_link(obj)
             % get transformation matrix from base_p and base_R
-            base_T_link = [obj.base_R,obj.base_p; 0 0 0 1];
+            base_T_link = obj.b_T_Link;
         end
         
 
