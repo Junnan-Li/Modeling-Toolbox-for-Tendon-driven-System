@@ -29,7 +29,7 @@ symbolic_test = 0;
 
 %% create random finger
 finger_r = create_finger_random('finger_example', 4);
-
+finger_r.kin_use_T = 1;
 %% set random states
 % set random base position and orientation
 finger_r.update_rst_model;
@@ -72,14 +72,9 @@ for i = 1:finger_r.nl+1
 end
 
 %% Test 1:  Transformation matrix test with respect to mdh parameters 
-% mdh parameter from class properties (end effector)
-mdh = mdh_struct_to_matrix(finger_r.mdh,1);
-b_T_class = T_mdh_multi(mdh);
-W_T_b = finger_r.get_W_T_B();
-T_class = W_T_b * b_T_class;
-
-% mdh parameters from rst model
-T_rst = getTransform(rst_model,q_r,rst_model.BodyNames{end});
+% 
+q_r = rand(finger_r.nj,1);
+finger_r.update_finger(q_r);
 
 % transformnation matrix of each frame test
 w_T_all = finger_r.get_T_all_links;
@@ -90,9 +85,8 @@ for i = 1:finger_r.nj+1
 end 
 
 % validaiton
-T_error = abs(T_class-T_rst);
 T_error_all = max(abs(w_T_all_rst-w_T_all));
-if max(T_error(:)) > 1e-10 | max(T_error_all(:))> 1e-10
+if max(T_error_all(:))> 1e-10
     fprintf('Test 1 (Transformation matrix): failed! \n')
 else
     fprintf('Test 1 (Transformation matrix): pass! \n')
@@ -717,4 +711,27 @@ show(rst_model,q,'Frames','on');
 
 axis equal
 grid on
+
+%% Test 14: changing kin_par_T
+
+finger_dimension = [1,1,1,1];
+finger_r = Finger('finger_example','type','R_RRRR','l_links', finger_dimension);
+finger_r.kin_use_T = 1;
+mdh_default_struct = finger_r.mdh_ori;
+mdh_matrix = mdh_struct_to_matrix(mdh_default_struct, 1);
+finger_r.set_mdh_parameters(mdh_matrix);
+
+for i = 1:finger_r.nl
+    finger_r.set_par_T_link(i, [eul2rotm(rand(1,3),'XYZ'),rand(3,1);0 0 0 1]);
+end
+q_r = 0*rand(finger_r.nj,1);
+finger_r.update_finger(q_r);
+rst_model = finger_r.update_rst_model;
+finger_r.plot_finger(plot_par);
+show(rst_model,q_r,'Frames','on');
+axis equal
+grid on
+
+
+
 

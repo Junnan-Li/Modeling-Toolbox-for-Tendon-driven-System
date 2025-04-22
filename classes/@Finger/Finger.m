@@ -395,6 +395,16 @@ classdef Finger < handle & matlab.mixin.Copyable
             % update par_T_link
             obj.get_par_T_from_mdh_ori;
         end
+
+        function set_par_T_link(obj, index_link,T_link)
+            % set the mdh parameters with the given values 
+            % sequence: alpha, a theta, d
+            assert(index_link <= obj.nl, 'dimension of index_link is incorrect!')
+%             assert(size(T_link,2) == 4, 'dimension of mdh_matrix is incorrect!')
+            
+            obj.par_T_link(4*index_link-3:4*index_link,:) = T_link;
+            obj.update_finger;
+        end
         
         function mdh_ori = get_finger_mdh_ori(obj)
             % get mdh parameter from the given joint angle
