@@ -600,11 +600,8 @@ finger_r.update_finger(q);
 plot_par = finger_r.plot_parameter_init();
 plot_par.axis_len = 0.5;
 
-Test_fail = zeros(5,1);
-% Test_2_fail = 0;
-% Test_3_fail = 0;
-% Test_4_fail = 0;
-% Test_5_fail
+Test_fail = zeros(6,1);
+
 for i = 1:100
     q = rand(finger_r.nj,1);
     % use mdh-based methods
@@ -614,6 +611,9 @@ for i = 1:100
     b_T_all = finger_r.get_b_T_all_links;
     [~,~, w_T_ee] = finger_r.get_T_ee_w;
     b_J = finger_r.Jacobian_geom_b_end;
+    w_J = finger_r.Jacobian_geom_w_end;
+%     [p_link_all_w,p_link_all_b] = finger_r.get_p_all_links;
+    
 
     % use T-based methods
     finger_r.kin_use_T = 1;  
@@ -653,6 +653,14 @@ for i = 1:100
         Test_fail(5) = 1;
     end
 
+    % Test 6: Jacobian_geom_w_end.m
+    w_J_fromT = finger_r.Jacobian_geom_w_end;
+    error6 = w_J-w_J_fromT;
+    if max(error6(:)) > 1e-10 
+        Test_fail(6) = 1;
+    end
+    
+
 
 end
 
@@ -664,11 +672,49 @@ end
 
 
 
+Test_dyn_fail = zeros(6,1);
+for i = 1:100
 
+    finger_r.kin_use_T = 0; % 
+    q = rand(finger_r.nj,1);
+    qd = rand(finger_r.nj,1);
+    qdd = rand(finger_r.nj,1);
+    F_ext = rand(6,1);
+    finger_r.update_finger(q);
+    finger_r.set_base_dynpar(rand(1),rand(3,1),[rand(3,1);zeros(3,1)] );
+    for i = 1:finger_r.nl
+        finger_r.list_links(i).set_mass(rand(1));
+        finger_r.list_links(i).set_com(rand(3,1));
+        finger_r.list_links(i).set_inertia([rand(3,1);zeros(3,1)]);
+    end
+    finger_r.update_finger_par_dyn;
 
+    Tau_class = finger_r.invdyn_ne_w_end(q,qd,qdd,F_ext);
 
+    Tau_fromT = finger_r.invdyn_ne_w_end_T(q,qd,qdd,F_ext);
+    error1 = Tau_class-Tau_fromT;
+    if max(error1(:)) > 1e-10 
+        Test_dyn_fail(1) = 1;
+    end
 
+end
+if isempty(find(Test_dyn_fail))
+    fprintf('Test par_T_Link Dyn: all pass! \n')
+else
+    fprintf('Test par_T_Link Dyn failed: %d ! \n',find(Test_dyn_fail))
+end
 
+%% Test 13: create RST model with par_T_Link 
+finger_r = create_finger_random('finger_example', 6);
+finger_r.kin_use_T = 1;
+q = zeros(finger_r.nj,1);
+finger_r.update_finger(q);
+plot_par = finger_r.plot_parameter_init();
+plot_par.axis_len = 0.5;
+finger_r.plot_finger(plot_par);
+rst_model = finger_r.update_rst_model;
+show(rst_model,q,'Frames','on');
 
-
+axis equal
+grid on
 

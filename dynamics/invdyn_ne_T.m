@@ -55,7 +55,7 @@ n_frame = n_q + 2*(n_b+n_f); % each Finger has nqi + 2 frames (except world fram
 
 assert(n_b == length(njb) && n_f == length(njf),'[invdyn_ne_T] kin_str input error!');
 % assert(n_q == length(qD) && n_q == length(qDD),'[invdyn_ne_T] dimension error!');
-assert(all(size(F_ext) == [6,n_f]),'[invdyn_ne_T] F_ext dimension error!');
+% assert(all(size(F_ext) == [6,n_f]),'[invdyn_ne_T] F_ext dimension error!');
 assert(all(size(T) == [4,4,n_frame]),'[invdyn_ne_T] T dimension error!');
 
 % F (force and moment) with respect to the Wolrd Frame
@@ -101,73 +101,83 @@ W_i_r_c = nan(3,1);
 
 %% forward recursion: 
 % for bases
-for base_i = 1:n_b
-    i_frame_base_start(base_i) = i_frame;
-    i_q_start = i_q_end+1;
-    i_q_end = i_q_start + njb(base_i)-1;
-    i_com_start = i_com_end+1;
-    i_com_end = i_com_start + njb(base_i);
-    for i = 1:njb(base_i)+2 
-        % start from the first link of base
-        % the indexes of current frame
-        i_q = i_q_start+i-2;
-        i_com = i_com_start +i-1;
-        if i_frame == 1
-            % the first base is already updated
+if n_b ~= 0
+    for base_i = 1:n_b
+        i_frame_base_start(base_i) = i_frame;
+        i_q_start = i_q_end+1;
+        i_q_end = i_q_start + njb(base_i)-1;
+        i_com_start = i_com_end+1;
+        i_com_end = i_com_start + njb(base_i);
+        for i = 1:njb(base_i)+2
+            % start from the first link of base
+            % the indexes of current frame
+            i_q = i_q_start+i-2;
+            i_com = i_com_start +i-1;
+            if i_frame == 1
+                % the first base is already updated
+                i_frame = i_frame+1;
+                continue
+            end
+            %         Mass_n_frame(i_frame) = Mass(i_com);
+            %         CoM_n_frame(:,i_frame) = CoM(:,i_com);
+            %         I_n_frame(:,i_frame) = I(:,i_com);
+            if i == 1
+                % the base, without joint
+                qD_i = 0;
+                qDD_i = 0;
+                CoM_i = CoM(:,i_com);
+                Mass_n_frame(i_frame) = Mass(i_com);
+                CoM_n_frame(:,i_frame) = CoM(:,i_com);
+                I_n_frame(:,i_frame) = I(:,i_com);
+            elseif i == njb(base_i)+2
+                % the endeffector, no joint, no links, only frame
+                qD_i = 0;
+                qDD_i = 0;
+                CoM_i = [0;0;0]; % virtual endeffector link
+                Mass_n_frame(i_frame) = 0;
+                CoM_n_frame(:,i_frame) = CoM_i;
+                I_n_frame(:,i_frame) = zeros(6,1);
+            else
+                %         q_i = q(i-1);
+                qD_i = qD(i_q);
+                qDD_i = qDD(i_q);
+                CoM_i = CoM(:,i_com);
+                i_frame_q(i_q) = i_frame;
+                Mass_n_frame(i_frame) = Mass(i_com);
+                CoM_n_frame(:,i_frame) = CoM(:,i_com);
+                I_n_frame(:,i_frame) = I(:,i_com);
+            end
+            % frame qi to World
+            W_T_i = T(:,:,i_frame);
+            W_R_i = W_T_i(1:3,1:3);
+            W_T_i_1 = T(:,:,i_frame-1);
+            i_1_T_i =  W_T_i_1\W_T_i;
+
+            W_i_1_r_i = W_T_i_1(1:3,1:3)*i_1_T_i(1:3,4);% frame i-1 to frame i
+            W_i_r_c = W_R_i*CoM_i;% frame i to center of mass
+
+            % update frame velocity
+            V(4:6,i_frame) = V(4:6,i_frame-1) + qD_i*W_R_i*[0 0 1]';
+            V(1:3,i_frame) = V(1:3,i_frame-1) + cross(V(4:6,i_frame-1),W_i_1_r_i);
+            % update frame acceleration
+            VD(4:6,i_frame) = VD(4:6,i_frame-1) + qDD_i*W_R_i*[0 0 1]' + qD_i*cross(V(4:6,i_frame-1),W_R_i*[0 0 1]');
+            VD(1:3,i_frame) = VD(1:3,i_frame-1) + cross(VD(4:6,i_frame-1),W_i_1_r_i)+cross(V(4:6,i_frame-1),cross(V(4:6,i_frame-1),W_i_1_r_i));
+            % calculate acceleration with respect to the center of mass
+            VD_c(4:6,i_frame) = VD(4:6,i_frame);
+            VD_c(1:3,i_frame) = VD(1:3,i_frame) + cross(VD(4:6,i_frame),W_i_r_c) + cross(V(4:6,i_frame),cross(V(4:6,i_frame),W_i_r_c));
+
             i_frame = i_frame+1;
-            continue  
         end
-        Mass_n_frame(i_frame) = Mass(i_com);
-        CoM_n_frame(:,i_frame) = CoM(:,i_com);
-        I_n_frame(:,i_frame) = I(:,i_com);
-        if i == 1 
-            % the base, without joint 
-            qD_i = 0;
-            qDD_i = 0;
-            CoM_i = CoM(:,i_com);
-        elseif i == njb(base_i)+2 
-            % the endeffector, no joint, no links, only frame
-            qD_i = 0;
-            qDD_i = 0;
-            CoM_i = [0;0;0]; % virtual endeffector link
-            Mass_n_frame(i_frame) = 0;
-            CoM_n_frame(:,i_frame) = CoM_i;
-            I_n_frame(:,i_frame) = zeros(6,1);
-        else
-            %         q_i = q(i-1);
-            qD_i = qD(i_q);
-            qDD_i = qDD(i_q);
-            CoM_i = CoM(:,i_com);
-            i_frame_q(i_q) = i_frame;
-        end
-        % frame qi to World
-        W_T_i = T(:,:,i_frame);
-        W_R_i = W_T_i(1:3,1:3);
-        W_T_i_1 = T(:,:,i_frame-1);
-        i_1_T_i =  W_T_i_1\W_T_i;
-
-        W_i_1_r_i = W_T_i_1(1:3,1:3)*i_1_T_i(1:3,4);% frame i-1 to frame i
-        W_i_r_c = W_R_i*CoM_i;% frame i to center of mass
-
-        % update frame velocity
-        V(4:6,i_frame) = V(4:6,i_frame-1) + qD_i*W_R_i*[0 0 1]';
-        V(1:3,i_frame) = V(1:3,i_frame-1) + cross(V(4:6,i_frame-1),W_i_1_r_i);
-        % update frame acceleration
-        VD(4:6,i_frame) = VD(4:6,i_frame-1) + qDD_i*W_R_i*[0 0 1]' + qD_i*cross(V(4:6,i_frame-1),W_R_i*[0 0 1]');
-        VD(1:3,i_frame) = VD(1:3,i_frame-1) + cross(VD(4:6,i_frame-1),W_i_1_r_i)+cross(V(4:6,i_frame-1),cross(V(4:6,i_frame-1),W_i_1_r_i));
-        % calculate acceleration with respect to the center of mass
-        VD_c(4:6,i_frame) = VD(4:6,i_frame);
-        VD_c(1:3,i_frame) = VD(1:3,i_frame) + cross(VD(4:6,i_frame),W_i_r_c) + cross(V(4:6,i_frame),cross(V(4:6,i_frame),W_i_r_c));
-
-        i_frame = i_frame+1;
+        i_frame_base_end(base_i) = i_frame-1;
     end
-    i_frame_base_end(base_i) = i_frame-1;
+    W_T_base_ee = T(:,:,2*n_b + sum(njb));
+    V_base_ee = V(:, i_frame-1);
+    VD_base_ee = VD(:, i_frame-1);
+    % W_T_i
+else
+    i_frame_base_start = 0;
+    i_frame_base_end = 0;
 end
-W_T_base_ee = T(:,:,2*n_b + sum(njb));
-V_base_ee = V(:, i_frame-1);
-VD_base_ee = VD(:, i_frame-1);
-% W_T_i
-
 
 % for fingers that share the same endeffector of the lase base
 for finger_i = 1:n_f
@@ -251,7 +261,7 @@ for i = n_frame:-1:1 % n_q+1:-1:1
     % if the frame is the endeffector of one finger
     [is_ee,index] = ismember(i,i_frame_finger_end);
     if is_ee
-        F(:,i) = -F_ext(index); % end effector
+        F(:,i) = -F_ext(:,index); % end effector
         continue
     end
 

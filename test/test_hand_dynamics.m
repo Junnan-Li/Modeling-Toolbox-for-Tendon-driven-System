@@ -64,7 +64,7 @@ else
     fprintf('Test (ID): pass! \n')
 end
 
-% return
+return
 %% FD, Mass matrix, coriolis and gravity
 % verify hand.fordyn_ne_hand_w_end with rst.forwardDynamics function
 % and massMAtrix, gravityTorque, velocityProduct
