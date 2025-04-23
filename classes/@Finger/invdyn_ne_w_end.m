@@ -70,9 +70,6 @@ assert(length(qDD)== obj.nj, '[invdyn_ne_w_end] dimension of joint vector is inc
 % elseif nargin == 6
 %     mex = varargin{1};
 % end
-
-mdh_ne = mdh_struct_to_matrix(obj.mdh_ori, 1);
-mdh_ne(1:obj.nj,3) = mdh_ne(1:obj.nj,3);
 Mass = obj.par_dyn_f.mass_all;
 X_base = zeros(6,1);
 X_base(1:3) = obj.w_p_base;
@@ -84,12 +81,27 @@ CoM_ne = obj.par_dyn_f.com_all;
 I_ne = obj.par_dyn_f.inertia_all;
 g = obj.par_dyn_f.g;
 
-if mex
-    [Tau,~,~] = invdyn_ne_mdh_mex(q,qD,qDD,mdh_ne, Mass,...
-        X_base, XD_base, XDD_base, F_ext_ne, CoM_ne, I_ne, g);
+
+if obj.kin_use_T
+    T = obj.get_T_all_links;
+    n_links = [0,1];
+    q_index = [1,obj.nj];
+    [Tau,~] = invdyn_ne_T(T,qD,qDD, n_links, q_index, Mass,...
+        XD_base,XDD_base, F_ext_ne, CoM_ne, I_ne, g);
 else
-    [Tau,~,~] = invdyn_ne_mdh(q,qD,qDD,mdh_ne, Mass,...
-        X_base, XD_base, XDD_base, F_ext_ne, CoM_ne, I_ne, g);
+    mdh_ne = mdh_struct_to_matrix(obj.mdh_ori, 1);
+    mdh_ne(1:obj.nj,3) = mdh_ne(1:obj.nj,3);
+    if mex
+        [Tau,~,~] = invdyn_ne_mdh_mex(q,qD,qDD,mdh_ne, Mass,...
+            X_base, XD_base, XDD_base, F_ext_ne, CoM_ne, I_ne, g);
+    else
+        [Tau,~,~] = invdyn_ne_mdh(q,qD,qDD,mdh_ne, Mass,...
+            X_base, XD_base, XDD_base, F_ext_ne, CoM_ne, I_ne, g);
+    end
+
 end
+
+
+
 
 end

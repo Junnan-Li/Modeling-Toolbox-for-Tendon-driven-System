@@ -28,59 +28,42 @@ clc
 symbolic_test = 0;
 
 %% create random finger
-finger_r = create_finger_random('finger_example', 4);
-finger_r.kin_use_T = 1;
+finger = create_finger_random('finger_example', 6);
+
+
 %% set random states
 % set random base position and orientation
-finger_r.update_rst_model;
+finger.update_rst_model;
 % joint configurations
-q_r = 0*rand(finger_r.nj,1);
+q_r = 0*rand(finger.nj,1);
 
 % udpate finger with given joint configurations
-finger_r.update_finger(q_r);
+finger.update_finger(q_r);
 
 % load rst model from finger class
-rst_model = finger_r.rst_model;
+rst_model = finger.rst_model;
 
 % plot rst model
 show(rst_model,q_r,'Frames','on');
 hold on
 %% test finger plot
-q = zeros(finger_r.nj,1);
-finger_r.update_finger(q);
-plot_par = finger_r.plot_parameter_init();
+q = zeros(finger.nj,1);
+finger.update_finger(q);
+plot_par = finger.plot_parameter_init();
 plot_par.axis_len = 0.5;
-finger_r.plot_finger(plot_par)
+finger.plot_finger(plot_par)
 axis equal 
 grid on
-
-
-% test par_T_Link
-
-w_T_all = finger_r.get_T_all_links;
-for i = 1:finger_r.nl+2
-    plot_coord_T(w_T_all(:,:,i),plot_par);
-end
-% plot_coord_T(w_T_all,plot_par);
-
-plot_par.linewidth = 5;
-pre_T = finger_r.w_T_base;
-for i = 1:finger_r.nl+1
-    T_i = pre_T*finger_r.par_T_link(4*i-3:4*i,:);
-    plot_coord_T(T_i,plot_par);
-    pre_T = T_i;
-end
-
 %% Test 1:  Transformation matrix test with respect to mdh parameters 
 % 
-q_r = rand(finger_r.nj,1);
-finger_r.update_finger(q_r);
+q_r = rand(finger.nj,1);
+finger.update_finger(q_r);
 
 % transformnation matrix of each frame test
-w_T_all = finger_r.get_T_all_links;
-w_T_all_rst = zeros(4,4,finger_r.nj+2);
+w_T_all = finger.get_T_all_links;
+w_T_all_rst = zeros(4,4,finger.nj+2);
 w_T_all_rst(:,:,1) = rst_model.Bodies{1}.Joint.JointToParentTransform;
-for i = 1:finger_r.nj+1
+for i = 1:finger.nj+1
     w_T_all_rst(:,:,i+1) = getTransform(rst_model,q_r,rst_model.BodyNames{i+1});
 end 
 
@@ -98,28 +81,26 @@ end
 % Jacobian_geom_w_end.m
 
 % set variable randomly
-finger_r.set_base(rand(3,1), euler2R_XYZ(rand(3,1)));
-finger_r.update_rst_model;
+finger.set_base(rand(3,1), euler2R_XYZ(rand(3,1)));
+rst_model = finger.update_rst_model;
 % joint configurations
-q_r = rand(finger_r.nj,1);
-finger_r.update_finger(q_r);
+q_r = rand(finger.nj,1);
+finger.update_finger(q_r);
 
-% load rst model from finger class
-rst_model = finger_r.rst_model;
 
 % number of active joints
-num_nja = finger_r.nja;
+num_nja = finger.nja;
 
 % geometric Jacobian computed by the class function 'Jacobian_geom_b_end'
-J_class_b = finger_r.Jacobian_geom_b_end(q_r);% with respect to the base frame
-W_R_b = finger_r.w_R_base();
+J_class_b = finger.Jacobian_geom_b_end(q_r);% with respect to the base frame
+W_R_b = finger.w_R_base();
 J_class = blkdiag(W_R_b,W_R_b)*J_class_b;
 
 % geometric Jacobian computed by the class function 'Jacobian_geom_b_end'
-J_class_w = finger_r.Jacobian_geom_w_end(q_r);% with respect to the base frame
+J_class_w = finger.Jacobian_geom_w_end(q_r);% with respect to the base frame
 
 % geometrical Jacobian using Jacobian_geom_mdh.m function
-J_geom_func_b = Jacobian_geom_mdh(mdh_struct_to_matrix(finger_r.mdh_ori,1),q_r);
+J_geom_func_b = Jacobian_geom_mdh(mdh_struct_to_matrix(finger.mdh_ori,1),q_r);
 J_geom_func = blkdiag(W_R_b,W_R_b)*J_geom_func_b;
 
 % geometric Jacobian computed by the rst toolbox
@@ -138,10 +119,10 @@ else
 end
 
 % analytical Jacobian
-J_analytic_end_b = finger_r.Jacobian_analytic_b_end(q_r);
+J_analytic_end_b = finger.Jacobian_analytic_b_end(q_r);
 J_analytic_end = blkdiag(W_R_b,W_R_b)*J_analytic_end_b;
 
-J_analytic_func_b = Jacobian_analytic_mdh(mdh_struct_to_matrix(finger_r.mdh_ori,1),q_r);
+J_analytic_func_b = Jacobian_analytic_mdh(mdh_struct_to_matrix(finger.mdh_ori,1),q_r);
 J_analytic_func = blkdiag(W_R_b,W_R_b)*J_analytic_func_b;
 
 
@@ -152,26 +133,26 @@ J_analytic_func = blkdiag(W_R_b,W_R_b)*J_analytic_func_b;
 
 for t3 = 1:20
     test_3_error = 0;
-    q_r = rand(finger_r.nj,1);
-    finger_r.update_finger(q_r);
+    q_r = rand(finger.nj,1);
+    finger.update_finger(q_r);
 
     % Base to World frame transformation of class model
-    W_p_b = finger_r.w_p_base();
-    W_R_b = finger_r.w_R_base();
+    W_p_b = finger.w_p_base();
+    W_R_b = finger.w_R_base();
 
     
-    w_T_all = finger_r.get_T_all_links;
-    T_rst_b = getTransform(finger_r.rst_model,q_r,finger_r.rst_model.BodyNames{1});
-    T_rst_ee = getTransform(finger_r.rst_model,q_r,finger_r.rst_model.BodyNames{end});
+    w_T_all = finger.get_T_all_links;
+    T_rst_b = getTransform(finger.rst_model,q_r,finger.rst_model.BodyNames{1});
+    T_rst_ee = getTransform(finger.rst_model,q_r,finger.rst_model.BodyNames{end});
 
 
-    for i = 1:finger_r.nl
+    for i = 1:finger.nl
         % rsi model: frame position & orientation in world frame
-        T_rst_link_i = getTransform(finger_r.rst_model,q_r,finger_r.list_links(i).name);
-        w_T_link_i = finger_r.list_links(i).w_T_Link;
+        T_rst_link_i = getTransform(finger.rst_model,q_r,finger.list_links(i).name);
+        w_T_link_i = finger.list_links(i).w_T_Link;
 
-        b_T_link_i = pR2T(finger_r.list_links(i).base_p,finger_r.list_links(i).base_R);
-        w_T_link_i_2 = finger_r.w_T_base * b_T_link_i;
+        b_T_link_i = pR2T(finger.list_links(i).base_p,finger.list_links(i).base_R);
+        w_T_link_i_2 = finger.w_T_base * b_T_link_i;
 
         error_T1 = T_rst_link_i - w_T_link_i;
         error_T2 = T_rst_link_i - w_T_link_i_2;
@@ -187,40 +168,41 @@ if test_3_error == 1
 else
     fprintf('Test 3 (Frame position): pass! \n')
 end
+
 %% Test 4: Contact test
 % set the contact point at the end of the link (next frame)
 % then compare the J_frame (rst) to the J_contact
 % test: add_contact & Jacobian_geom_b_contact.m
 
 % set contact point at the end of each link
-finger_r.update_finger(q_r);
-if finger_r.nc == 0
-    for i = 1:finger_r.nl-1
-        b_R_i = finger_r.list_links(i).base_R;
-        b_p_i1 = finger_r.list_links(i+1).base_p;
-        b_p_i = finger_r.list_links(i).base_p;
-        finger_r.list_links(i).add_contact_link('contact_1',b_R_i'*(b_p_i1-b_p_i));
-%         finger_r.list_links(i).add_contact([finger_r.list_links(i).Length 0 0]');
+finger.update_finger(q_r);
+if finger.nc == 0
+    for i = 1:finger.nl-1
+        b_R_i = finger.list_links(i).base_R;
+        b_p_i1 = finger.list_links(i+1).base_p;
+        b_p_i = finger.list_links(i).base_p;
+        finger.list_links(i).add_contact_link('contact_1',b_R_i'*(b_p_i1-b_p_i));
+%         finger.list_links(i).add_contact([finger_r.list_links(i).Length 0 0]');
     end
-    mdh_ori = mdh_struct_to_matrix(finger_r.mdh_ori(end,:), 1);
+    mdh_ori = mdh_struct_to_matrix(finger.mdh_ori(end,:), 1);
     T_end = T_mdh_multi(mdh_ori(end,:));
-    finger_r.list_links(finger_r.nl).add_contact_link('endeff',T_end(1:3,4));
+    finger.list_links(finger.nl).add_contact_link('endeff',T_end(1:3,4));
 end
-finger_r.update_list_contacts; % update link
+finger.update_list_contacts; % update link
 
 % figure(1)
-% finger_r.plot_finger(plot_par)
-% finger_r.plot_contacts
+% finger.plot_finger(plot_par)
+% finger.plot_contacts
 % rst_model.show(q_r,'Frames','on')
 
 % Test 4-1 geometric Jacobian test
-W_R_b = finger_r.w_R_base();
+W_R_b = finger.w_R_base();
 J_class_contacts = [];
 
-for i = 1:finger_r.nl
-    if finger_r.list_links(i).nc
-        for j = 1:finger_r.list_links(i).nc
-            b_J_c_i = finger_r.Jacobian_geom_b_contact(q_r,finger_r.list_links(i).contacts(j));
+for i = 1:finger.nl
+    if finger.list_links(i).nc
+        for j = 1:finger.list_links(i).nc
+            b_J_c_i = finger.Jacobian_geom_b_contact(q_r,finger.list_links(i).contacts(j));
             J_class_contacts = [J_class_contacts;blkdiag(W_R_b,W_R_b)*b_J_c_i];
         end
     end
@@ -228,7 +210,7 @@ end
 
 J_rst_frame = [];
 
-for i = 1:finger_r.nl
+for i = 1:finger.nl
     J_rst_frame_i = geometricJacobian(rst_model,q_r,rst_model.BodyNames{i+2});
     J_rst_frame_i = [J_rst_frame_i(4:6,:);J_rst_frame_i(1:3,:)];
     J_rst_frame_i(:,i+2:end) = 0; % the contact is not influenced by the next joint 
@@ -247,7 +229,7 @@ end
 
 show(rst_model,q_r,'Collisions','on','Visuals','off');
 hold on
-finger_r.plot_contacts
+finger.plot_contacts
 
 % return
 %% Test 5_1 inverse dynamic test (fixed base)
@@ -261,30 +243,30 @@ finger_r.plot_contacts
 %       class function (floating base, wt f_ext):  Finger.invdyn_ne_xq_fb_wt_fext_sub
 
 % random states
-q_r = rand(finger_r.nj,1);
-finger_r.update_finger(q_r);
+q_r = rand(finger.nj,1);
+finger.update_finger(q_r);
 q_rD = rand(size(q_r));
 q_rDD = rand(size(q_r));
 F_ext = rand(6,1);
 
-finger_r.set_base_dynpar(rand(1),rand(3,1),[rand(3,1);zeros(3,1)] );
-for i = 1:finger_r.nl
-    finger_r.list_links(i).set_mass(rand(1));
-    finger_r.list_links(i).set_com(rand(3,1));
-    finger_r.list_links(i).set_inertia([rand(3,1);zeros(3,1)]);
+finger.set_base_dynpar(rand(1),rand(3,1),[rand(3,1);zeros(3,1)] );
+for i = 1:finger.nl
+    finger.list_links(i).set_mass(rand(1));
+    finger.list_links(i).set_com(rand(3,1));
+    finger.list_links(i).set_inertia([rand(3,1);zeros(3,1)]);
 end
-finger_r.update_finger_par_dyn;
+finger.update_finger_par_dyn;
 
-Tau_class = finger_r.invdyn_ne_w_end(q_r,q_rD,q_rDD,F_ext);
+Tau_class = finger.invdyn_ne_w_end(q_r,q_rD,q_rDD,F_ext);
 
 % floating base method
-X_base = [finger_r.w_p_base;R2euler_XYZ(finger_r.w_R_base)];
+X_base = [finger.w_p_base;R2euler_XYZ(finger.w_R_base)];
 XD_base = zeros(6,1);
 XDD_base = zeros(6,1);
-Tau_class_fb = finger_r.invdyn_ne_xq_fb_all_fext([X_base;q_r],[XD_base;q_rD],[XDD_base;q_rDD],[zeros(6,finger_r.nj+1),F_ext]);
+Tau_class_fb = finger.invdyn_ne_xq_fb_all_fext([X_base;q_r],[XD_base;q_rD],[XDD_base;q_rDD],[zeros(6,finger.nj+1),F_ext]);
 
 % transfer the external force exerting on the 
-rst_model = finger_r.update_rst_model;
+rst_model = finger.update_rst_model;
 
 transform = getTransform(rst_model,q_r,rst_model.BodyNames{end});
 W_R_end = transform(1:3,1:3);
@@ -300,9 +282,9 @@ F_ext = zeros(6,1);
 X_base = rand(6,1);
 XD_base = rand(6,1);
 XDD_base = rand(6,1);
-Tau_class_fb = finger_r.invdyn_ne_xq_fb_all_fext([X_base;q_r],[XD_base;q_rD],[XDD_base;q_rDD],[zeros(6,finger_r.nj+1),F_ext]);
+Tau_class_fb = finger.invdyn_ne_xq_fb_all_fext([X_base;q_r],[XD_base;q_rD],[XDD_base;q_rDD],[zeros(6,finger.nj+1),F_ext]);
 
-[FTau_G,FTau_C,M_xq,FTau_M,FTau_wt_fext] = finger_r.invdyn_ne_xq_fb_wt_fext_sub([X_base;q_r],[XD_base;q_rD],[XDD_base;q_rDD]);
+[FTau_G,FTau_C,M_xq,FTau_M,FTau_wt_fext] = finger.invdyn_ne_xq_fb_wt_fext_sub([X_base;q_r],[XD_base;q_rD],[XDD_base;q_rDD]);
 sum_sub = FTau_G + FTau_C + FTau_M;
 
 Tau_error_fb = abs(Tau_class_fb - FTau_wt_fext);
@@ -321,19 +303,19 @@ for i = 1:100
     % random states
     q_rD = rand(size(q_r));
     tau = rand(size(q_r));
-    F_ext = [zeros(6,finger_r.nj+1),rand(6,1)];
+    F_ext = [zeros(6,finger.nj+1),rand(6,1)];
 
-    [qDD_class,M_fd,C_fd,G_fd] = finger_r.fordyn_ne_w_end(q_r,q_rD,tau,F_ext,0);
+    [qDD_class,M_fd,C_fd,G_fd] = finger.fordyn_ne_w_end(q_r,q_rD,tau,F_ext,0);
     
     % Lagrangian method 1
-    x_base = [finger_r.w_p_base;R2euler_XYZ(finger_r.w_R_base)];
-    M_lag1 = invdyn_lag_mdh_M(q_r, mdh_struct_to_matrix(finger_r.mdh_ori,1), x_base, finger_r.par_dyn_f.mass_all,...
-        finger_r.par_dyn_f.com_all, finger_r.par_dyn_f.inertia_all);
+    x_base = [finger.w_p_base;R2euler_XYZ(finger.w_R_base)];
+    M_lag1 = invdyn_lag_mdh_M(q_r, mdh_struct_to_matrix(finger.mdh_ori,1), x_base, finger.par_dyn_f.mass_all,...
+        finger.par_dyn_f.com_all, finger.par_dyn_f.inertia_all);
     % Lagrangian method 2
-    w_T_all = finger_r.get_T_all_links;
+    w_T_all = finger.get_T_all_links;
     w_T_link = w_T_all(:,:,2:end-1);
-    M_lag2 = invdyn_lag_T_M(w_T_link, finger_r.par_dyn_f.mass_all,...
-        finger_r.par_dyn_f.com_all, finger_r.par_dyn_f.inertia_all);
+    M_lag2 = invdyn_lag_T_M(w_T_link, finger.par_dyn_f.mass_all,...
+        finger.par_dyn_f.com_all, finger.par_dyn_f.inertia_all);
     
     % transfer the external force exerting on the
     transform = getTransform(rst_model,q_r,rst_model.BodyNames{end});
@@ -377,9 +359,9 @@ return
 %% Test 8: inverse kinematic
 % move to test_IK
 
-p_link_all_w_r = finger_r.get_p_all_links;
+p_link_all_w_r = finger.get_p_all_links;
 figure(1)
-plot3(finger_r.w_p_base(1),finger_r.w_p_base(2),finger_r.w_p_base(3),'x','MarkerSize',15);
+plot3(finger.w_p_base(1),finger.w_p_base(2),finger.w_p_base(3),'x','MarkerSize',15);
 hold on
 plot3(p_link_all_w_r(1,:)',p_link_all_w_r(2,:)',p_link_all_w_r(3,:)','o-','Color','r');
 hold on
@@ -397,9 +379,9 @@ iter_max = 100;
 alpha = 0.9;
 color_plot = [1,0,0];
 tol = 1e-9;
-[q,q_all,x_res,phi_x,iter] = finger_r.invkin_trans_numeric(x_des,iter_max,tol,alpha);
+[q,q_all,x_res,phi_x,iter] = finger.invkin_trans_numeric(x_des,iter_max,tol,alpha);
 
-p_link_all_w_r = finger_r.get_p_all_links;
+p_link_all_w_r = finger.get_p_all_links;
 plot3(p_link_all_w_r(1,:)',p_link_all_w_r(2,:)',p_link_all_w_r(3,:)','o-','Color','c');
 
 
@@ -411,21 +393,21 @@ test_9_status = 1; % 1: success; 0: failed
 
 for i_9 = 1:10
     q_init = rand(4,1);
-    finger_r.set_base(4*rand(3,1),euler2R_XYZ(rand(1,3)))
+    finger.set_base(4*rand(3,1),euler2R_XYZ(rand(1,3)))
 %     finger_r.w_p_base = rand(3,1);
 %     finger_r.w_R_base = euler2R_XYZ(rand(1,3));
-    finger_r.update_finger(q_init);
+    finger.update_finger(q_init);
 
-    p_link_all_w_r = finger_r.get_p_all_links;
+    p_link_all_w_r = finger.get_p_all_links;
     figure(1)
 
 
     % update joint limits
     q_limit = [-30,30;0,80;0,80;0,50]*pi/180;
-    for i = 1:finger_r.nj
-        finger_r.list_joints(i).q_limits = q_limit(i,:);
+    for i = 1:finger.nj
+        finger.list_joints(i).q_limits = q_limit(i,:);
     end
-    finger_r.update_joints_info;
+    finger.update_joints_info;
 
 
 
@@ -439,17 +421,17 @@ for i_9 = 1:10
     alpha = 0.8;
     color_plot = [1,0,0];
     tol = 1e-9;
-    [q,status, q_all,x_res,phi_x,iter] = finger_r.invkin_trans_numeric_joint_limits(x_des,iter_max,tol,alpha);
-    finger_r.update_finger(q_init);
+    [q,status, q_all,x_res,phi_x,iter] = finger.invkin_trans_numeric_joint_limits(x_des,iter_max,tol,alpha);
+    finger.update_finger(q_init);
     hold on
-    [q_mex,status_mex, q_all_mex,x_res_mex,phi_x_mex,iter_mex] = finger_r.invkin_trans_numeric_joint_limits(x_des,iter_max,tol,alpha,1);
-    finger_r.plot_finger();
+    [q_mex,status_mex, q_all_mex,x_res_mex,phi_x_mex,iter_mex] = finger.invkin_trans_numeric_joint_limits(x_des,iter_max,tol,alpha,1);
+    finger.plot_finger();
     hold on
 
-    mdh_matrix = mdh_struct_to_matrix(finger_r.mdh_ori, 1);
-    x_des_mod = finger_r.w_R_base' * (x_des - finger_r.w_p_base);
+    mdh_matrix = mdh_struct_to_matrix(finger.mdh_ori, 1);
+    x_des_mod = finger.w_R_base' * (x_des - finger.w_p_base);
     [q_kin,status,q_all_kin,x_res_kin,phi_x_kin,iter_kin] = ik_trans_numeric_joint_limits(mdh_matrix,x_des_mod,q_init,...
-        finger_r.limits_q(:,1:2),iter_max,tol,alpha);
+        finger.limits_q(:,1:2),iter_max,tol,alpha);
 
 
     q_error_meth = abs(q-q_kin);
@@ -486,25 +468,25 @@ for i_10 = 1:40
 
     % update joint limits
     q_limit = [-30,30;0,80;0,80;0,50]*pi/180;
-    for i = 1:finger_r.nj
-        finger_r.list_joints(i).q_limits = q_limit(i,:);
+    for i = 1:finger.nj
+        finger.list_joints(i).q_limits = q_limit(i,:);
     end
-    finger_r.update_joints_info;
+    finger.update_joints_info;
     
     % give a pose inside its workspace as the x_des
     q_init = rand(4,1).*(q_limit(:,2)-q_limit(:,1)) + q_limit(:,1);
-    finger_r.set_base(rand(3,1),euler2R_XYZ(rand(1,3)));
-    finger_r.update_finger(q_init);
-    p_link_all_w_r = finger_r.get_p_all_links;
+    finger.set_base(rand(3,1),euler2R_XYZ(rand(1,3)));
+    finger.update_finger(q_init);
+    p_link_all_w_r = finger.get_p_all_links;
     x_init = p_link_all_w_r(:,end);
     x_des = x_init;
     plot3(x_des(1),x_des(2),x_des(3),'.','Color','r','MarkerSize',40);
     hold on
     
     % initialize the joint pose
-    finger_r.update_finger(rand(4,1));
-    mdh_matrix = mdh_struct_to_matrix(finger_r.mdh_ori, 1);
-    x_des_mod = finger_r.w_R_base' * (x_des - finger_r.w_p_base);
+    finger.update_finger(rand(4,1));
+    mdh_matrix = mdh_struct_to_matrix(finger.mdh_ori, 1);
+    x_des_mod = finger.w_R_base' * (x_des - finger.w_p_base);
 
     % functino variants (normal, mex)
     % Variant 1: matlab function
@@ -516,20 +498,20 @@ for i_10 = 1:40
 %         finger_r.limits_q(:,1:2),iter_max,tol,alpha,q_diff_min,1);
 
     % Variant 3: class mex/matlab function
-    [q_kin, status, ~, x_res,phi_x,iter,q_null,phi_x_null] = finger_r.invkin_trans_numeric_joint_limits_nullspace(x_des,iter_max,tol,alpha,q_diff_min,1);
+    [q_kin, status, ~, x_res,phi_x,iter,q_null,phi_x_null] = finger.invkin_trans_numeric_joint_limits_nullspace(x_des,iter_max,tol,alpha,q_diff_min,1);
 
-    finger_r.update_finger(q_kin);
-    finger_r.plot_finger();
+    finger.update_finger(q_kin);
+    finger.plot_finger();
     hold on
-    p_link_all_w_r_1 = finger_r.get_p_all_links;
+    p_link_all_w_r_1 = finger.get_p_all_links;
 
     x_error = x_des-p_link_all_w_r_1(:,end);
 
-    finger_r.update_finger(q_null);
-    finger_r.plot_finger();
+    finger.update_finger(q_null);
+    finger.plot_finger();
     hold off
 
-    p_link_all_w_r = finger_r.get_p_all_links;
+    p_link_all_w_r = finger.get_p_all_links;
 
     q_error_null = abs(q_kin-q_null);
     x_error_null = x_des-p_link_all_w_r(:,end);
@@ -558,7 +540,7 @@ end
 %% Workspace 11
 
 
-q_limit = rand(finger_r.nja,2);
+q_limit = rand(finger.nja,2);
 q_limit(:,1) = - q_limit(:,1);
 
 [q1,q2,q3,q4] = ndgrid(q_limit(1,1):0.05:q_limit(1,2),...
@@ -572,8 +554,8 @@ for i = 1:size(q1,1)
         for k = 1:size(q1,3)
             for h = 1:size(q1,4)
                 q_i = [q1(i,j,k,h);q2(i,j,k,h);q3(i,j,k,h);q4(i,j,k,h)];
-                finger_r.update_finger(q_i);
-                p_link_all_w_r = finger_r.get_p_all_links;
+                finger.update_finger(q_i);
+                p_link_all_w_r = finger.get_p_all_links;
                 plot3(p_link_all_w_r(1,end),p_link_all_w_r(2,end),p_link_all_w_r(3,end),'.','Color','r');
                 hold on
                 
@@ -588,67 +570,67 @@ axis equal
 
 %% test 12 update finger with par_T_Link
 
-finger_r = create_finger_random('finger_example', 6);
-q = zeros(finger_r.nj,1);
-finger_r.update_finger(q);
-plot_par = finger_r.plot_parameter_init();
+finger = create_finger_random('finger_example', 6);
+q = zeros(finger.nj,1);
+finger.update_finger(q);
+plot_par = finger.plot_parameter_init();
 plot_par.axis_len = 0.5;
 
 Test_fail = zeros(6,1);
 
 for i = 1:100
-    q = rand(finger_r.nj,1);
+    q = rand(finger.nj,1);
     % use mdh-based methods
-    finger_r.kin_use_T = 0; % 
-    finger_r.update_finger(q);
-    w_T_all = finger_r.get_T_all_links; 
-    b_T_all = finger_r.get_b_T_all_links;
-    [~,~, w_T_ee] = finger_r.get_T_ee_w;
-    b_J = finger_r.Jacobian_geom_b_end;
-    w_J = finger_r.Jacobian_geom_w_end;
+    finger.kin_use_T = 0; % 
+    finger.update_finger(q);
+    w_T_all = finger.get_T_all_links; 
+    b_T_all = finger.get_b_T_all_links;
+    [~,~, w_T_ee] = finger.get_T_ee_w;
+    b_J = finger.Jacobian_geom_b_end;
+    w_J = finger.Jacobian_geom_w_end;
 %     [p_link_all_w,p_link_all_b] = finger_r.get_p_all_links;
     
 
     % use T-based methods
-    finger_r.kin_use_T = 1;  
+    finger.kin_use_T = 1;  
     % Test 1 : update_finger_from_T.m
-    finger_r.update_finger(q);
-    w_T_all_update_fromT = finger_r.get_T_all_links;
+    finger.update_finger(q);
+    w_T_all_update_fromT = finger.get_T_all_links;
     error1 = w_T_all-w_T_all_update_fromT;
     if max(error1(:)) > 1e-10 
         Test_fail(1) = 1;
     end
     
     % Test 2 : get_T_all_links_fromT.m
-    w_T_all_fromT = finger_r.get_T_all_links;
+    w_T_all_fromT = finger.get_T_all_links;
     error2 = w_T_all-w_T_all_fromT;
     if max(error2(:)) > 1e-10 
         Test_fail(2) = 1;
     end
   
     % Test 3: get_T_ee_w.m
-    [~,~, w_T_ee_fromT] = finger_r.get_T_ee_w;
+    [~,~, w_T_ee_fromT] = finger.get_T_ee_w;
     error3 = w_T_ee-w_T_ee_fromT;
     if max(error3(:)) > 1e-10 
         Test_fail(3) = 1;
     end
     
     % Test 4: get_b_T_all_links.m
-    b_T_all_fromT = finger_r.get_b_T_all_links;
+    b_T_all_fromT = finger.get_b_T_all_links;
     error4 = b_T_all-b_T_all_fromT;
     if max(error4(:)) > 1e-10 
         Test_fail(4) = 1;
     end
 
     % Test 5: Jacobian_geom_b_end.m
-    b_J_fromT = finger_r.Jacobian_geom_b_end;
+    b_J_fromT = finger.Jacobian_geom_b_end;
     error5 = b_J-b_J_fromT;
     if max(error5(:)) > 1e-10 
         Test_fail(5) = 1;
     end
 
     % Test 6: Jacobian_geom_w_end.m
-    w_J_fromT = finger_r.Jacobian_geom_w_end;
+    w_J_fromT = finger.Jacobian_geom_w_end;
     error6 = w_J-w_J_fromT;
     if max(error6(:)) > 1e-10 
         Test_fail(6) = 1;
@@ -669,23 +651,23 @@ end
 Test_dyn_fail = zeros(6,1);
 for i = 1:100
 
-    finger_r.kin_use_T = 0; % 
-    q = rand(finger_r.nj,1);
-    qd = rand(finger_r.nj,1);
-    qdd = rand(finger_r.nj,1);
+    finger.kin_use_T = 0; % 
+    q = rand(finger.nj,1);
+    qd = rand(finger.nj,1);
+    qdd = rand(finger.nj,1);
     F_ext = rand(6,1);
-    finger_r.update_finger(q);
-    finger_r.set_base_dynpar(rand(1),rand(3,1),[rand(3,1);zeros(3,1)] );
-    for i = 1:finger_r.nl
-        finger_r.list_links(i).set_mass(rand(1));
-        finger_r.list_links(i).set_com(rand(3,1));
-        finger_r.list_links(i).set_inertia([rand(3,1);zeros(3,1)]);
+    finger.update_finger(q);
+    finger.set_base_dynpar(rand(1),rand(3,1),[rand(3,1);zeros(3,1)] );
+    for i = 1:finger.nl
+        finger.list_links(i).set_mass(rand(1));
+        finger.list_links(i).set_com(rand(3,1));
+        finger.list_links(i).set_inertia([rand(3,1);zeros(3,1)]);
     end
-    finger_r.update_finger_par_dyn;
+    finger.update_finger_par_dyn;
 
-    Tau_class = finger_r.invdyn_ne_w_end(q,qd,qdd,F_ext);
+    Tau_class = finger.invdyn_ne_w_end(q,qd,qdd,F_ext);
 
-    Tau_fromT = finger_r.invdyn_ne_w_end_T(q,qd,qdd,F_ext);
+    Tau_fromT = finger.invdyn_ne_w_end_T(q,qd,qdd,F_ext);
     error1 = Tau_class-Tau_fromT;
     if max(error1(:)) > 1e-10 
         Test_dyn_fail(1) = 1;
@@ -697,40 +679,6 @@ if isempty(find(Test_dyn_fail))
 else
     fprintf('Test par_T_Link Dyn failed: %d ! \n',find(Test_dyn_fail))
 end
-
-%% Test 13: create RST model with par_T_Link 
-finger_r = create_finger_random('finger_example', 6);
-finger_r.kin_use_T = 1;
-q = zeros(finger_r.nj,1);
-finger_r.update_finger(q);
-plot_par = finger_r.plot_parameter_init();
-plot_par.axis_len = 0.5;
-finger_r.plot_finger(plot_par);
-rst_model = finger_r.update_rst_model;
-show(rst_model,q,'Frames','on');
-
-axis equal
-grid on
-
-%% Test 14: changing kin_par_T
-
-finger_dimension = [1,1,1,1];
-finger_r = Finger('finger_example','type','R_RRRR','l_links', finger_dimension);
-finger_r.kin_use_T = 1;
-mdh_default_struct = finger_r.mdh_ori;
-mdh_matrix = mdh_struct_to_matrix(mdh_default_struct, 1);
-finger_r.set_mdh_parameters(mdh_matrix);
-
-for i = 1:finger_r.nl
-    finger_r.set_par_T_link(i, [eul2rotm(rand(1,3),'XYZ'),rand(3,1);0 0 0 1]);
-end
-q_r = 0*rand(finger_r.nj,1);
-finger_r.update_finger(q_r);
-rst_model = finger_r.update_rst_model;
-finger_r.plot_finger(plot_par);
-show(rst_model,q_r,'Frames','on');
-axis equal
-grid on
 
 
 

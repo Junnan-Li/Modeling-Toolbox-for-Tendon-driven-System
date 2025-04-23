@@ -28,8 +28,8 @@ if obj.kin_use_T
         b_R_i = base_T_i(1:3,1:3);
         i_T_end = base_T_i\base_T_end;
         i_p_end = i_T_end(1:3,4);
-        J_tmp_p = obj.get_w_R_b*cross(b_R_i*[0;0;1],b_R_i*i_p_end);
-        J_tmp_w = obj.get_w_R_b*b_R_i*[0;0;1];
+        J_tmp_p = obj.get_w_R_b_inhand*cross(b_R_i*[0;0;1],b_R_i*i_p_end);
+        J_tmp_w = obj.get_w_R_b_inhand*b_R_i*[0;0;1];
         w_J_end(:,i) = [J_tmp_p;J_tmp_w];
     end
 
@@ -49,8 +49,8 @@ else
         b_R_i = base_T_i(1:3,1:3);
         i_T_end = base_T_i\base_T_end;
         i_p_end = i_T_end(1:3,4);
-        J_tmp_p = obj.get_w_R_b*cross(b_R_i*[0;0;1],b_R_i*i_p_end);
-        J_tmp_w = obj.get_w_R_b*b_R_i*[0;0;1];
+        J_tmp_p = obj.get_w_R_b_inhand*cross(b_R_i*[0;0;1],b_R_i*i_p_end);
+        J_tmp_w = obj.get_w_R_b_inhand*b_R_i*[0;0;1];
         w_J_end(:,i) = [J_tmp_p;J_tmp_w];
     end
 end

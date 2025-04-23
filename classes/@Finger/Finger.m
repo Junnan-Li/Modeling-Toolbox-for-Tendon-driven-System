@@ -401,7 +401,7 @@ classdef Finger < handle & matlab.mixin.Copyable
             % sequence: alpha, a theta, d
             assert(index_link <= obj.nl, 'dimension of index_link is incorrect!')
 %             assert(size(T_link,2) == 4, 'dimension of mdh_matrix is incorrect!')
-            
+            obj.kin_use_T = 1;
             obj.par_T_link(4*index_link-3:4*index_link,:) = T_link;
             obj.update_finger;
         end
@@ -431,62 +431,6 @@ classdef Finger < handle & matlab.mixin.Copyable
                 obj.par_T_link(4*i-3:4*i,:) = inv(b_T_pre)*b_T_i;
                 b_T_pre = b_T_i;
             end
-        end
-
-        function update_finger_from_T(obj,varargin)
-            % NEW
-            if nargin == 1
-                q_new = obj.q;
-            elseif nargin == 2
-                q_new = varargin{1};
-                assert(length(q_new)== obj.nja, '[update_finger]: dinput dimension is incorrect!')
-                q_new = reshape(q_new,[obj.nj,1]);
-            end
-            
-            if obj.limit_joint_on
-                % saturate q with joint limits
-                q_sat = vec_saturation(q_new,obj.limits_q);
-                obj.q = q_sat; 
-                obj.q_a = q_sat;
-            else
-                obj.q = q_new; % update joint angle
-                obj.q_a = q_new;
-            end
-
-            b_T_pre = eye(4); % init homogeous transformation matrix
-            for i = 1:obj.nl
-                % icalculate b_T_i from par_T_link 
-                b_T_i_wtR = b_T_pre*obj.par_T_link(4*i-3:4*i,:);
-                R_q = eul2rotm([0,0,obj.q(i)],'XYZ');
-                % default rotation around z axis
-                T_q = [R_q,zeros(3,1);[0,0,0,1]];
-                b_T_i = b_T_i_wtR*T_q;
-                b_T_pre = b_T_i; 
-                % update link properties
-                base_p_link_i = b_T_i(1:3,4);
-                base_R_link_i = b_T_i(1:3,1:3);
-                obj.list_links(i).update(base_p_link_i,base_R_link_i);
-                % Link.update
-                obj.list_links(i).update_w_T_Link(obj.w_T_base*b_T_i);
-                obj.list_links(i).update_w_T_Link_inhand(obj.w_T_base_inhand*b_T_i);
-            end
-            obj.base.update_w_T_Link(obj.w_T_base);
-            obj.base.update_w_T_Link_inhand(obj.w_T_base_inhand);
-            % update viapoints
-            obj.update_viapoints;
-            % update joints info
-%             obj.update_joints_info;
-            % update the list of tendons
-            obj.update_M_coupling(obj.q_a); 
-            
-            % update the obstacle
-            obj.update_obstacles;
-            % update tendon force limits
-%             obj.update_tendon_force_limits;
-            % update dynamic parameters
-%             obj.update_finger_par_dyn;    
-            % update rsi model
-%             obj.update_rst_model;
         end
 
         function update_finger(obj, varargin)
@@ -902,7 +846,7 @@ classdef Finger < handle & matlab.mixin.Copyable
             % get all transformation matrix of all links
             % b_T_all: [4,4,obj.nl+1] the last matrix is EE
 
-            b_T_all = zeros(4,4,obj.nl+1); % base, link1, ... linkn, ee
+            b_T_all = zeros(4,4,obj.nl+1); % link1, ... linkn, ee
             for i = 1:obj.nl
                 b_T_all(:,:,i) = obj.list_links(i).get_base_T_link;
             end
@@ -995,6 +939,12 @@ classdef Finger < handle & matlab.mixin.Copyable
             % in a hand object
             w_T_base_inhand = obj.w_T_base_inhand;
         end
+        
+        function w_R_base_inhand = get_w_R_b_inhand(obj)
+            % get the position and orientation of the base in the world
+            % frame
+            w_R_base_inhand = obj.w_T_base_inhand(1:3,1:3);
+        end
 
         function w_T_ee_inhand = get_w_T_ee_inhand(obj)
             % get the Cartesian position of the base and link ends
@@ -1071,32 +1021,6 @@ classdef Finger < handle & matlab.mixin.Copyable
 
 
         %% Visualization
-%         function print_finger(obj,varargin) % not used 
-%             % plot 3d contact points 
-%             % [06.09.2023] new version of plot is avaible: plot_finger
-%             if nargin == 1
-%                 color = 'r';
-%                 linewidth = 3;
-%                 markersize = 5;
-%             elseif  nargin == 2
-%                 color = varargin{1};
-%                 linewidth = 3;
-%                 markersize = 5;
-%             elseif  nargin == 3
-%                 color = varargin{1};
-%                 linewidth = varargin{2};
-%                 markersize = 5;
-%             elseif  nargin == 4
-%                 color = varargin{1};
-%                 linewidth = varargin{2};
-%                 markersize = varargin{3};
-%             end
-%             p_link_all_w_r = obj.get_p_all_links;
-%             plot3(p_link_all_w_r(1,:)',p_link_all_w_r(2,:)',p_link_all_w_r(3,:)','o-','Color',color,...
-%                                     'LineWidth',linewidth,'MarkerSize',markersize);
-%             hold on
-%         end
-
         function plot_finger(obj,varargin) 
             % [06.09.2023] plot the finger with paramter structures
             % parameters

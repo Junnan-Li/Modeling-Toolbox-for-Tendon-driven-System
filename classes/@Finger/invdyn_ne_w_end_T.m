@@ -1,5 +1,8 @@
 % inverse dynamic of the finger with the endeffector interaction to the
 % environment with respect to the world frame
+% 
+% Using Finger.kin_T_par parameters to calculate instead of mdh parameter 
+% 
 % Fixed base
 % 
 % input:
@@ -13,10 +16,6 @@
 % output:
 %           Tau: [obj.nj] 
 % 
-% Source: 
-%   "Robotics: Modeling, Planning, and Control" P111 - P113
-% 
-% TODO: need to adapt to the passive joint mode
 
 function Tau = invdyn_ne_w_end_T(obj, varargin)
 

@@ -78,9 +78,21 @@ Floating-based inverse dynamic of the Finger. Link to *invdyn_ne_xq_mdh_all_fext
 + *Finger.invdyn_ne_xq_fb_wt_fext_sub_sym*: Floating-based inverse dynamic with individual terms. Link to *invdyn_ne_xq_mdh_wt_fext_sub_sym.m*
 + *Finger.invdyn_ne_xq_fb_wt_fext_sub_sym_par*: Floating-based inverse dynamic with individual terms calculated with *parfor*.
 
-+ 
 
-
+#### Finger.kin_T_par
+Kinematics
++ get_T_all_links
++ get_T_ee_w
++ get_b_T_all_links
++ Jacobian_geom_w_end: 
++ Jacobian_geom_b_end: 
++ Jacobian_analytic_b_end: not compatible
++ Jacobian_geom_b_contact: not compatible
+Dynamics
++ invdyn_ne_w_end: 
++ invdyn_ne_w_end_T: individual version for kin_T_par
++ invdyn_ne_xq_fb_all_fext: not compatible
++ invdyn_ne_xq_fb_wt_fext_sub: not compatible
 
 
 
