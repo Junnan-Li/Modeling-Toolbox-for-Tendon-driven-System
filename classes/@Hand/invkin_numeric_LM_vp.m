@@ -31,8 +31,8 @@ else
 end
 num_vp = length(vp_list);
 x_vp_des_vec = reshape(x_vp_des,3*num_vp,1);
-assert(all(size(x_vp_des) == [3,num_vp]), '[invkin_numeric_LM_vp]: wrong dimension of X_des_all')
-
+assert(length(x_vp_des(:) == 3*num_vp), '[invkin_numeric_LM_vp]: wrong dimension of X_des_all')
+x_vp_des = reshape(x_vp_des,3,num_vp);
 par = ikpar.ikpar_LM;
 W_e = eye(3*num_vp);
 W_d = par.W_d*eye(obj.nj);
@@ -79,6 +79,11 @@ for retry_i = 0:retry_num
             
             g_i = J'* W_e *delta_x_i;
             delta_q = inv(J'*W_e*J + W_d) * g_i;
+            if max(abs(delta_q)) < par.tol_q
+                info.status = 10;
+                break
+            end
+
             q_i_new = q_i + delta_q;
             obj.update_hand(q_i_new);
         end
@@ -86,7 +91,7 @@ for retry_i = 0:retry_num
         disp('[Hand.invkin_numeric_LM_vp]: catch error!')
         %         obj.update_hand();
     end
-    if info.status % IK solved
+    if info.status == 1 % IK solved
         break
     end
 end
