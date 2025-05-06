@@ -229,7 +229,8 @@ classdef Finger < handle & matlab.mixin.Copyable
         par_dyn_f           % [nj+1x1]mass_all, [3xnj+1]com_all, [6xNJ+1] inertial regarding com, [3x1] g 
         M_coupling          % [njxnt] coupling matrix of the finger
 
-        par_T_link          % [nl+1,6] for each link to replace mdh parameters (include end)
+        par_T_link          % [4*(nl+1),4] for each link to replace mdh parameters (include end)
+                            % pre_T_i: from b_T_1 to nl_T_ee
         
     end
     
@@ -397,8 +398,8 @@ classdef Finger < handle & matlab.mixin.Copyable
         end
 
         function set_par_T_link(obj, index_link,T_link)
-            % set the mdh parameters with the given values 
-            % sequence: alpha, a theta, d
+            % set the par_T_link, use transformation matrix define
+            % kinematics
             assert(index_link <= obj.nl, 'dimension of index_link is incorrect!')
 %             assert(size(T_link,2) == 4, 'dimension of mdh_matrix is incorrect!')
             obj.kin_use_T = 1;
@@ -1053,7 +1054,7 @@ classdef Finger < handle & matlab.mixin.Copyable
 
             [~,p_link_all_b_r] = obj.get_p_all_links;
             p_link_all_w_r = w_p_b + w_R_b * p_link_all_b_r;
-
+            w_p_links = obj.get_p_all_links;
             plot3(p_link_all_w_r(1,:)',p_link_all_w_r(2,:)',p_link_all_w_r(3,:)','o-','Color',color,...
                                     'LineWidth',linewidth,'MarkerSize',markersize);
             hold on
