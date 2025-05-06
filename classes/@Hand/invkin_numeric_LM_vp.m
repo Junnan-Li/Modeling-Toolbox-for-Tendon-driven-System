@@ -1,4 +1,5 @@
-% Numeric inverse kinematic method for a hand (Newton Raphson)
+% Numeric inverse kinematic method for a hand (Levenburg Marquadt) for
+% given viapoints
 %
 % input:
 %           x_vp_des: [3,N] desired position in world frame of one fingertips [3,1]

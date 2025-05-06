@@ -1,4 +1,20 @@
 % finger class function test
+% test the feature of Finger.par_T_link
+% 
+% Functions to be tested:
+%   update_finger
+%   update_rst_model
+%   get_p_all_links
+%   get_T_all_links
+%   
+%   Jacobian_geom_b_end
+%   Jacobian_geom_w_end
+% 
+%   invdyn_ne_w_end
+%   fordyn_ne_w_end
+%   invdyn_lag_T_M
+% 
+%   invkin_trans_numeric
 % 
 
 
@@ -10,15 +26,8 @@ clc
 symbolic_test = 0;
 
 %% create random finger
-finger_T = create_finger_random('finger_example', 4);
-plot_par = finger_T.plot_parameter_init();
-plot_par.axis_len = 0.5;
-q = rand(finger_T.nj,1);
-finger_T.update_finger(q)
-finger_T.plot_finger(plot_par);
-for i = 1:finger_T.nl
-    finger_T.set_par_T_link(i, [eul2rotm(rand(1,3),'XYZ'),rand(3,1);0 0 0 1]);
-end
+
+finger_T = create_finger_random_par_T('finger_example', 4);
 q = rand(finger_T.nj,1);
 finger_T.update_finger(q)
 rst_model = finger_T.update_rst_model;
@@ -89,9 +98,9 @@ J_rst = [J_rst(4:6,1:num_nja);J_rst(1:3,1:num_nja)]; % J_rst = [v_x v_y v_z omeg
 % validaiton
 J_error = abs(J_class-J_class_w);
 J_error1 = abs(J_class-J_rst);
-J_error2 = abs(J_geom_func-J_rst);
+J_error2 = abs(J_geom_func-J_rst); % should be error
 
-if max([J_error(:),J_error1(:),J_error2(:)]) > 1e-10
+if max([J_error(:);J_error1(:)]) > 1e-10
     fprintf('Test 2 (geometric Jacobian): failed! \n')
 else
     fprintf('Test 2 (geometric Jacobian): pass! \n')
@@ -136,7 +145,7 @@ for t3 = 1:20
         error_T1 = T_rst_link_i - w_T_link_i;
         error_T2 = T_rst_link_i - w_T_link_i_2;
         error_T3 = T_rst_link_i - w_T_all(:,:,i+1); 
-        if max(abs([error_T1(:),error_T2(:),error_T3(:)])) > 1e-10
+        if max(abs([error_T1(:);error_T2(:);error_T3(:)])) > 1e-10
             test_3_error = 1;
         end
     end
@@ -235,37 +244,43 @@ else
     fprintf('Test 6 (forward dynamic): pass! \n')
 end
 
-return
 
 %% Test 8: inverse kinematic
 % move to test_IK
 
-p_link_all_w_r = finger_T.get_p_all_links;
-figure(1)
-plot3(finger_T.w_p_base(1),finger_T.w_p_base(2),finger_T.w_p_base(3),'x','MarkerSize',15);
-hold on
-plot3(p_link_all_w_r(1,:)',p_link_all_w_r(2,:)',p_link_all_w_r(3,:)','o-','Color','r');
-hold on
-grid on
-axis equal
+plot_par = finger_T.plot_parameter_init();
+plot_par.axis_len = 0.5;
+test_failed = 0;
+for i = 1:20
+    q = rand(finger_T.nj,1);
+    finger_T.update_finger(q);
+    p_link_all_w_r = finger_T.get_p_all_links;
+    x_des = p_link_all_w_r(:,end);
 
+    q = rand(finger_T.nj,1);
+    finger_T.update_finger(q);
 
-x_init = p_link_all_w_r(:,end);
-x_des = x_init - 0.5*rand(3,1);
-plot3(x_des(1),x_des(2),x_des(3),'*','Color','b','MarkerSize',20);
-hold on
+    iter_max = 100;
+    alpha = 0.3;
+    tol = 1e-9;
+    [q,q_all,x_res,phi_x,iter] = finger_T.invkin_trans_numeric(x_des,iter_max,tol,alpha);
 
+    
+    figure(1)
+    plot3(x_des(1),x_des(2),x_des(3),'*','Color','b','MarkerSize',20);
+    hold on
+    grid on
+    axis equal
+    finger_T.plot_finger(plot_par);
 
-iter_max = 100;
-alpha = 0.9;
-color_plot = [1,0,0];
-tol = 1e-9;
-[q,q_all,x_res,phi_x,iter] = finger_T.invkin_trans_numeric(x_des,iter_max,tol,alpha);
-
-p_link_all_w_r = finger_T.get_p_all_links;
-plot3(p_link_all_w_r(1,:)',p_link_all_w_r(2,:)',p_link_all_w_r(3,:)','o-','Color','c');
-
-
-
+    if max(abs(phi_x(:))) > tol
+        test_failed = 1;
+    end
+end
+if test_failed
+    fprintf('Test 7 (Inverse kinematic): failed! \n')
+else
+    fprintf('Test 7 (Inverse kinematic): pass! \n')
+end
 
 

@@ -28,6 +28,13 @@ Classes:
     d. The way of defining the kinematic chain is limited. maybe define links and associated frame and then
         define the joint axes within the frame
 
+    e.finger.w_T_base is used for definition and finger.w_T_base_inhand is used for finger object in hand class.
+        normally, if Finger is used as a individual object, the w_T_base should be equal to w_T_base_inhand and 
+        thus, w_T_base_inhand is always used. 
+        w_T_base is only necessary to used if Finger is integrated into a Hand object and you want to use that Finger 
+        as individual object. 
+        When the Finger.set_base is called, both w_T_base and w_T_base_inhand are updated. 
+
 
 6. muscle class
     muscle object comprises the properties of name and via points. all via points are summarized in a list.

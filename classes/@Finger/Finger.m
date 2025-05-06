@@ -400,7 +400,8 @@ classdef Finger < handle & matlab.mixin.Copyable
         function set_par_T_link(obj, index_link,T_link)
             % set the par_T_link, use transformation matrix define
             % kinematics
-            assert(index_link <= obj.nl, 'dimension of index_link is incorrect!')
+            % par_T_link(4*i-3:4*i) describes the T from i-1 to i link
+            assert(index_link <= obj.nl+1, 'dimension of index_link is incorrect!')
 %             assert(size(T_link,2) == 4, 'dimension of mdh_matrix is incorrect!')
             obj.kin_use_T = 1;
             obj.par_T_link(4*index_link-3:4*index_link,:) = T_link;
@@ -996,7 +997,7 @@ classdef Finger < handle & matlab.mixin.Copyable
         end
         
         function [w_p_contacts_all,b_p_contacts_all] = get_p_all_contacts(obj)
-            % plot 3d contact points
+            % 
             w_R_b = obj.w_R_base;
             w_p_b = obj.w_p_base;
             %             w_T_b = get_W_T_B(obj);
