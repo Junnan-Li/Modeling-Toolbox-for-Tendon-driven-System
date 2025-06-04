@@ -36,7 +36,7 @@ assert(length(x_vp_des(:) == 3*num_vp), '[invkin_numeric_LM_vp]: wrong dimension
 x_vp_des = reshape(x_vp_des,3,num_vp);
 par = ikpar.ikpar_LM;
 W_e = eye(3*num_vp);
-W_d = par.W_d*eye(obj.nj);
+W_d = 0.1*par.W_d*eye(obj.nj);
 iter_max = par.iter_max;
 tol = par.tol;
 retry_num = par.retry_num;

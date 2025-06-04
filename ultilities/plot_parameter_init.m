@@ -16,6 +16,7 @@ parstr.linewidth = 3;
 parstr.markersize = 5;
 parstr.markercolor= 'g';
 parstr.axis_show = 1;
+parstr.axis_color = 'b';
 parstr.axis_len = 0.1;
 parstr.linecolor = 'r';
 
