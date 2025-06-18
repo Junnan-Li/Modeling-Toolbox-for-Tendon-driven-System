@@ -19,7 +19,7 @@ assert(length(qD)== obj.nj, 'dimension of joint vector is incorrect!')
 assert(length(Tau)== obj.nj, 'dimension of joint vector is incorrect!')
 
 if nargin == 5
-    mex = 1;
+    mex = 0;
 elseif nargin == 6
     mex = varargin{1};
 end

@@ -84,6 +84,20 @@ Dynamics:
 *3. symbolic inverse dynamics
 4. regressor form for identification
 
+################################
+Symbolic generation:
+General: 
+    Mass matrix:
+        invdyn_lag_mdh_M_sym: mdh+q as input 
+        invdyn_lag_T_M_sym: T as input 
+
+
+        invdyn_ne_xq_mdh_wt_fext_sub_sym: using invdyn_ne_xq_mdh_all_fext_sym.m 
+                                to calculate each colomn of M.
+    
+
+
+
 
 
 Optimization:
