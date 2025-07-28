@@ -44,6 +44,8 @@
 %           Finger.mdh: alpha, a, theta (q), d 
 %           Finger.mdha_all: same as Finger.mdh (current version)
 %           Finger.mdh_ori: alpha, a, theta (without q), d 
+% 
+%       kin_use_T: use T matrix for kinematic descriptions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %       Dynamic parameters (Finger.par_dyn_f)
 %           .g: [3x1] gravity vector ([0;0;-9.81] by default)
