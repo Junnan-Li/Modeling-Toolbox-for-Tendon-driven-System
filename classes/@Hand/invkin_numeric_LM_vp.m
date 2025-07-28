@@ -35,8 +35,8 @@ x_vp_des_vec = reshape(x_vp_des,3*num_vp,1);
 assert(length(x_vp_des(:) == 3*num_vp), '[invkin_numeric_LM_vp]: wrong dimension of X_des_all')
 x_vp_des = reshape(x_vp_des,3,num_vp);
 par = ikpar.ikpar_LM;
-W_e = eye(3*num_vp);
-W_d = 0.1*par.W_d*eye(obj.nj);
+W_e = par.W_e*eye(3*num_vp);
+W_d = par.W_d*eye(obj.nj);
 iter_max = par.iter_max;
 tol = par.tol;
 retry_num = par.retry_num;
@@ -84,9 +84,10 @@ for retry_i = 0:retry_num
                 info.status = 10;
                 break
             end
-
+            
             q_i_new = q_i + delta_q;
-            obj.update_hand(q_i_new);
+            q_i_new_wrapped = mod(q_i_new + pi, 2*pi) - pi;
+            obj.update_hand(q_i_new_wrapped);
         end
     catch ME
         disp('[Hand.invkin_numeric_LM_vp]: catch error!')
