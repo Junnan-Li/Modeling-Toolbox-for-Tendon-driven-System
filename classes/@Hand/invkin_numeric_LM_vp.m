@@ -86,8 +86,11 @@ for retry_i = 0:retry_num
             end
             
             q_i_new = q_i + delta_q;
-            q_i_new_wrapped = mod(q_i_new + pi, 2*pi) - pi;
-            obj.update_hand(q_i_new_wrapped);
+            % q_i_new_wrapped = mod(q_i_new + pi, 2*pi) - pi;
+
+            % check q limits
+
+            obj.update_hand(q_i_new);
         end
     catch ME
         disp('[Hand.invkin_numeric_LM_vp]: catch error!')
