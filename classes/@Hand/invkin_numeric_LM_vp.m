@@ -42,8 +42,10 @@ tol = par.tol;
 retry_num = par.retry_num;
 
 
-q_all = zeros(iter_max,obj.nj);
-q_res = zeros(size(obj.nj));
+q_all = zeros(obj.nj,retry_num+1);
+phi_x_mean_min = inf;
+phi_x_mean_i = 0;
+q_res = zeros(size(obj.q));
 
 info = struct();
 info.status = 0;
@@ -55,14 +57,17 @@ info.retry_iter = 0;
 if par.visual % visualization
     figure()
 end
-
 for retry_i = 0:retry_num
+    % if retry_i > 0
+        q_i = zeros(size(obj.q));
+        obj.update_hand(q_i);
+    % end
     try
         for i = 1:iter_max
             x_vp_all_i = obj.get_p_all_viapoints_inhand();
             x_i_vec = reshape(x_vp_all_i(:,vp_list),3*num_vp,1);
             q_i = obj.q;
-            q_all(i,:) = q_i;
+
            
             if par.visual % visualization
                 obj.plot_hand;
@@ -91,19 +96,35 @@ for retry_i = 0:retry_num
             % check q limits
 
             obj.update_hand(q_i_new);
+               
+            delta_q_sat = obj.q - q_i;
+            if max(abs(delta_q_sat)) < par.tol_q
+                info.status = 10;
+                break
+            end
         end
     catch ME
         disp('[Hand.invkin_numeric_LM_vp]: catch error!')
         %         obj.update_hand();
     end
+    
+    phi_x_mean_i = mean(vecnorm(reshape(delta_x_i,3,num_vp),2,1));
+    if phi_x_mean_i < phi_x_mean_min
+        q_res = q_i;
+        info.x_res = x_vp_all_i(:,vp_list);
+        info.phi_x = reshape(delta_x_i,3,num_vp);
+        info.iter = i;
+        info.retry_iter = retry_i;
+        phi_x_mean_min = phi_x_mean_i;
+    end
     if info.status == 1 % IK solved
         break
     end
 end
-q_res = q_i;
-info.x_res = x_vp_all_i(:,vp_list);
-info.phi_x = reshape(delta_x_i,3,num_vp);
-info.iter = i;
-info.retry_iter = retry_i;
+% q_res = q_i;
+% info.x_res = x_vp_all_i(:,vp_list);
+% info.phi_x = reshape(delta_x_i,3,num_vp);
+% info.iter = i;
+% info.retry_iter = retry_i;
 end
 

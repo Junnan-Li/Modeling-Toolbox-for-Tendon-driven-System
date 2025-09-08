@@ -37,7 +37,7 @@ classdef IK_par < handle
             obj.ikpar_LM.retry_num = 10;% maximal tries
             obj.ikpar_LM.tol = [1e-6*ones(3,1);1e-5*ones(3,1)];
             obj.ikpar_LM.tol_q = [1e-5];
-            obj.ikpar_LM.W_e = 1;
+            obj.ikpar_LM.W_e = 1e-3;
             obj.ikpar_LM.W_d = 1e-6;
             obj.ikpar_LM.visual = 0;% if visualizing results
         end
