@@ -176,9 +176,9 @@ hand.plot_hand(par_plot)
 hand.plot_hand_viapoints(par_plot)
 
 %%
-hand.Jacobian_geom_w_vp()
-hand.get_p_all_viapoints_inhand
-hand.Jacobian_geom_w_vp([vp1;vp2])
+hand.Jacobian_geom_w_vp();
+hand.get_p_all_viapoints_inhand;
+hand.Jacobian_geom_w_vp([vp1;vp2]);
 %% 
 q_hand_des = rand(hand.nj,1);
 hand.update_hand(q_hand_des);

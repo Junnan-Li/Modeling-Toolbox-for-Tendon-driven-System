@@ -49,6 +49,7 @@ assert(length(q)== obj.nj, '[invdyn_ne_hand_w_end] dimension of q is incorrect!'
 assert(length(qD)== obj.nj, '[invdyn_ne_hand_w_end] dimension of qd is incorrect!')
 assert(length(qDD)== obj.nj, '[invdyn_ne_hand_w_end] dimension of qdd is incorrect!')
 
+obj.update_hand(q);
 T = obj.get_w_T_all();
 % Mass = [];
 % CoM = [];

@@ -1,7 +1,8 @@
 % Simulation of a Finger
-
-
-
+% 
+% 
+% Old version of example!! not functional
+% 
 
 
 clear all 
@@ -22,8 +23,8 @@ mdh_matrix(2,1) = -pi/2;
 finger_r.set_mdh_parameters(mdh_matrix);
 %% set states
 % set base position and orientation
-finger_r.w_p_base = 4*zeros(3,1);
-finger_r.w_R_base = euler2R_XYZ(zeros(1,3));
+finger_r.set_base_p(4*zeros(3,1));
+finger_r.set_base_R(euler2R_XYZ(zeros(1,3)));
 
 % init joint configurations
 q_0 = [0;0.1;0.1;0.1];

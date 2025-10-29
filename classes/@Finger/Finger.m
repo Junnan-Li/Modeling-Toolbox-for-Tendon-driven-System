@@ -1218,7 +1218,7 @@ classdef Finger < handle & matlab.mixin.Copyable
             obj.list_tendons = [obj.list_tendons;tendon_tmp];
             obj.update_tendon_ma_limits_from_joints;
             obj.update_M_coupling(obj.q_a);
-%             obj.update_tendon_force_limits;
+            obj.update_tendon_force_limits;
         end
 
         function set_tendon_par_MA_poly3(obj, tendon_index, joint_index, par)

@@ -50,8 +50,8 @@ end
 %% floating base test
 % generate symbolic function
 
-% [FTau_sym] = finger_3dof.invdyn_ne_xq_fb_all_fext_sym(1, 1);
-% [FTau_G,FTau_C,M_xq,FTau_M,FTau_wt_fext] = finger_3dof.invdyn_ne_xq_fb_wt_fext_sub_sym_par(1,1);
+[FTau_sym] = finger_3dof.invdyn_ne_xq_fb_all_fext_sym(1, 1);
+[FTau_G,FTau_C,M_xq,FTau_M,FTau_wt_fext] = finger_3dof.invdyn_ne_xq_fb_wt_fext_sub_sym_par(1,1);
 
 %
 xq = rand(6+finger_3dof.nj,1);
@@ -61,9 +61,9 @@ xqdd = rand(6+finger_3dof.nj,1);
 tic 
 Tau_fb_num = finger_3dof.invdyn_ne_xq_fb_all_fext(xq, xqd, xqdd, zeros(6,2+finger_3dof.nj));
 t1 = toc;
-% tic
-% Tau_fb_sym_res = double(subs(FTau_wt_fext,symvar(FTau_wt_fext), [xq(4:end) ;xqd(4:end) ;xqdd]')); 
-% t2 = toc;
+tic
+Tau_fb_sym_res = double(subs(FTau_wt_fext,symvar(FTau_wt_fext), [xq(4:end) ;xqd(4:end) ;xqdd]')); 
+t2 = toc;
 tic
 FTau_fb_sym = tau_xq_fb_sym_finger_3dof_FTau_wt_fext(xq,xqd,xqdd);
 t3 = toc;

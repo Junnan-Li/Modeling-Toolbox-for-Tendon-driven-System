@@ -55,9 +55,17 @@ end
 figure(1)
 
 plot(f(:,2),f(:,1))
+xlabel('Velocity (m/s)');
+ylabel('Friction Force (N)');
+title('total friction')
 figure(2)
 subplot(2,1,1)
 plot(T(1:i),f(:,1))
+ylabel('Velocity (m/s)');
+title('individual terms')
 subplot(2,1,2)
 plot(T(1:i),f(:,2))
+ylabel('Friction Force (N)');
+xlabel('Time ');
+
 

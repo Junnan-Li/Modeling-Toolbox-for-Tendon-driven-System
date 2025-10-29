@@ -15,8 +15,8 @@ mdh_default_struct = robot_2dof.mdh_ori;
 mdh_matrix = mdh_struct_to_matrix(mdh_default_struct, 1); % alpha,a,theta,d
 %% set states
 % set base position and orientation
-robot_2dof.w_p_base = 4*zeros(3,1);
-robot_2dof.w_R_base = euler2R_XYZ([-pi/2;0;0]);
+robot_2dof.set_base_p(4*zeros(3,1));
+robot_2dof.set_base_R(euler2R_XYZ([-pi/2;0;0]));
 
 % init joint configurations
 q_0 = zeros(2,1);

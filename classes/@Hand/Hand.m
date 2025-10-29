@@ -342,7 +342,7 @@ classdef Hand < handle & matlab.mixin.Copyable
                     nj_i = base_i.nj;
                     q_i = q_b(q_i_start:q_i_start+nj_i-1);
                     base_i.update_finger(q_i);
-                    obj.q(q_i_start:q_i_start+nj_i-1) = base_i.q;
+                    % obj.q(q_i_start:q_i_start+nj_i-1) = base_i.q;
                     W_T_b_prior = base_i.get_w_T_ee_inhand;
                     q_i_start = q_i_start + nj_i;
                 end
@@ -358,7 +358,7 @@ classdef Hand < handle & matlab.mixin.Copyable
                     nj_i = finger_i.nj;
                     q_i = q_f(q_i_start:q_i_start+nj_i-1);
                     finger_i.update_finger(q_i);
-                    obj.q(q_i_start:q_i_start+nj_i-1) = finger_i.q;
+                    % obj.q(q_i_start:q_i_start+nj_i-1) = finger_i.q;
                     q_i_start = q_i_start + nj_i;
                 end
             end

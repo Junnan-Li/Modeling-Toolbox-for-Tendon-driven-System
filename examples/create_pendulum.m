@@ -25,8 +25,8 @@ mdh_matrix = mdh_struct_to_matrix(mdh_default_struct, 1);
 
 %% basic settings
 % set base position and orientation
-finger_r.w_p_base = 4*rand(3,1);
-finger_r.w_R_base = euler2R_XYZ(zeros(1,3));
+finger_r.set_base_p(4*rand(3,1));
+finger_r.set_base_R(euler2R_XYZ(zeros(1,3)));
 % init joint configurations
 q_0 = [1,1]';
 

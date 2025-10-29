@@ -26,8 +26,8 @@ mdh_matrix(2,1) = -pi/2;
 Dexmart_index.set_mdh_parameters(mdh_matrix);
 % 
 % T = T_dh([0.04075,0*pi/180,0.082,-95*pi/180]);
-Dexmart_index.w_p_base = zeros(3,1);
-Dexmart_index.w_R_base = euler2R_XYZ([0;0;0]);
+% Dexmart_index.w_p_base = zeros(3,1);
+% Dexmart_index.w_R_base = euler2R_XYZ([0;0;0]);
 
 
 q_0 = [0.1,0.3,0.3,0.1]';

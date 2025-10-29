@@ -70,6 +70,9 @@ for func_index = 1:length(template_func_list)
         func_char = strrep(func_char, str_old{i}, str_new{i});
     end
     %% save function
+    if ~exist('./output', 'dir')
+       mkdir('./output');
+    end
     fid2 = fopen(strcat('./output/',fun_name,'.m'),'wt');
     fwrite(fid2,func_char);
     fclose (fid2);

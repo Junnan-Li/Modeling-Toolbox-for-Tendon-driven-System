@@ -132,9 +132,9 @@ for i = 1:step
     drawnow
 
 %     export as gif
-    if mod(i,10) == 0
-        exportgraphics(gcf,'testAnimated.gif','Append',true);
-    end 
+    % if mod(i,10) == 0
+    %     exportgraphics(gcf,'testAnimated.gif','Append',true);
+    % end 
     Computation_Cost(i) = toc;
 
 end
