@@ -1,4 +1,4 @@
-# hand_modeling_toolbox
+# Modeling-Toolbox-for-Tendon-driven-System
 
 ## descriptions
 This toolbox provides a mathematic framework and tools to simulate the kinematics and dynamics for the tendon-driven robotic hand and muscle-driven human hand (musculoskeletal model).
