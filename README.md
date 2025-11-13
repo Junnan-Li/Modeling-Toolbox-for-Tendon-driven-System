@@ -9,7 +9,10 @@ Beyond joint space, muscle/tendon class is implemented to the model as actuators
 This toolbox is developed initially for dynamic modeling the tendon-driven hand & arm (both robotic and human hands) in Matlab and Simulink for identification and realtime control.
 But it is not limited to this. It is able to model the system which does not have complicated structure (parallel or complex hybrid). 
 
-The toolbox is functional to use but still under development for further features. 
+The toolbox is functional to use but still under development for further features.   
+For a detailed documentation please check [Documentation](./doc/Documentation.md)
+
+
 ## features
 + kinematic definition using MDH parameters or transformation matrix 
 + dynamic computation with different methods, such as Lagrangian and Newton-Euler. 
@@ -87,6 +90,10 @@ Transformation matrix `Finger.par_T_link` with `Finger.kin_use_T` on.
 + `test_viapoint.m`: example of defining muscles and viapoints
 + `test_simulink_functions.m`: test `Hand.create_sim_functions_hand` that generates .m functions that can be applied in Simulink applications 
 avoiding problem of calling Class function as Sfunction.
+
+
+## Other information
+Toolbox is under development, any interest or question about this toolbox please contact Junnan Li (<junnan.li@tum.de>).
 
 
 

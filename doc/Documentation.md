@@ -153,9 +153,28 @@ Inverse Dynamic
 #### Symbolic computation of dynamics
 
 
-#### Simulink implementation
-+ `Hand.create_sim_functions_hand`: 
+#### Simulink implementations
+Two ways of using class functions in the simulink realtime computations are implemented to 
+bypass the limitations of directly integrate matlab class function in the simulink.
+
+A. `Hand.create_sim_functions_hand`:    
 create functions for simulink application with individual Hand model parameters for static memory allocation
+The template function are stored in the `kinematics/` and `dynamics/` folder. 
+In the template functions, the model related variables are highlighted with symbol % %, and will be replaced 
+by the individual model parameters. 
+
+Functions to be generated: 
++ `sim_w_T_all_frames_from_q`: forward kinematic with q input 
++ `invdyn_ne_T`: inverse dynamic with T (output of `sim_w_T_all_frames_from_q`) as input
++ `sim_w_Jacobian_geom_from_T_links`: Jacobian of all links 
++ `invdyn_lag_T_M_Hand`: Mass matrix with T as input 
++ `invdyn_lag_T_G_Hand`: Gravity vector with T as input 
++ `invdyn_ne_T_C`: Coriolis and centrifigul vector with T as input 
+
+Check test script `test/test_simulink_functions.m`
+
+B. A masked simulink library is implemented in `Simulink_lib/` including foundamental kinematics 
+and forward/inverse dynamics
 
 
 #### Visualization
@@ -176,6 +195,8 @@ Test scripts for testing functions while development stored in the **/test** fol
 + **test_simulink_functions.m**
 
 ...
+
+
 
 
 ## Example scripts

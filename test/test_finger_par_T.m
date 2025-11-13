@@ -1,5 +1,10 @@
 % finger class function test
 % test the feature of Finger.par_T_link
+% % define Finger kinematic using par_T_link instead of mdh
+% 
+% For mdh-defined Finger, generate a corresponding Finger.par_T_link 
+% 
+% 
 % 
 % Functions to be tested:
 %   update_finger
@@ -15,7 +20,6 @@
 %   invdyn_lag_T_M
 % 
 %   invkin_trans_numeric
-% 
 
 
 clear all
