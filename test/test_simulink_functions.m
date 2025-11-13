@@ -61,12 +61,19 @@ for iter = 1:100
     hand.update_hand(q);
     w_T_all_frames = sim_w_T_all_frames_from_q(hand.sim.mdh,hand.sim.mdh_index,...
         hand.sim.q_index,hand.sim.w_T_b,hand.sim.n_links,q);
-    
+    w_T_all_frames_fun = hand_function_test_sim_w_T_all_frames_from_q(q);
+    w_T_all_frames_par_T = sim_w_T_all_frames_from_q_par_T(hand.sim.par_T,hand.sim.par_T_index,...
+        hand.sim.q_index,hand.sim.w_T_b,hand.sim.n_links,q);
+    w_T_all_frames_par_T_fun = hand_function_test_sim_w_T_all_frames_from_q_par_T(q);
+
     T = hand.get_w_T_all();
     w_T_links_inhand = hand.get_w_T_links_inhand;
 
-    T_f_error = w_T_all_frames-T;
-    if max(abs([T_f_error(:)])) > 1e-8
+    T_f_error_1 = w_T_all_frames-T;
+    T_f_error_2 = w_T_all_frames-w_T_all_frames_par_T;
+    T_f_error_3 = w_T_all_frames-w_T_all_frames_fun;
+    T_f_error_4 = w_T_all_frames_par_T-w_T_all_frames_par_T_fun;
+    if max(abs([T_f_error_1(:);T_f_error_2(:);T_f_error_3(:);T_f_error_4(:)])) > 1e-8
         test_failed = 1;
     end
 end

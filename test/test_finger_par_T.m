@@ -29,11 +29,49 @@ clc
 
 symbolic_test = 0;
 
-%% create random finger
+%% create random finger using mdh 
+
+finger_mdh = create_finger_random('finger_example', 4);
+
+
+%% Test 1: Forward kinematics 
+% use mdh define the Finger and 
+% test forward kinematic results with Finger.use_kin_T on and off
+Test_1_failed = 0;
+
+for i = 1:100
+    q_r = rand(finger_mdh.nj,1);
+    finger_mdh.update_finger(q_r);
+    
+
+    % mdh:transformnation matrix of each frame test
+    finger_mdh.kin_use_T = 0;
+    finger_mdh.update_finger(q_r);
+    w_T_all_mdh = finger_mdh.get_T_all_links;
+
+    % par_T:transformnation matrix of each frame test
+    finger_mdh.kin_use_T = 1;
+    finger_mdh.update_finger(q_r);
+    w_T_all_T = finger_mdh.get_T_all_links;
+
+
+    % validaiton
+    T_error_all = max(abs(w_T_all_mdh-w_T_all_T));
+    if max(T_error_all(:))> 1e-10
+        Test_1_failed = 1;
+    end
+end
+if Test_1_failed
+    fprintf('Test 1 (Transformation matrix): failed! \n')
+else
+    fprintf('Test 1 (Transformation matrix): pass! \n')
+end
+
+%% create random finger using par_T
 
 finger_T = create_finger_random_par_T('finger_example', 4);
 q = rand(finger_T.nj,1);
-finger_T.update_finger(q)
+finger_T.update_finger(q);
 rst_model = finger_T.update_rst_model;
 plot_par = finger_T.plot_parameter_init();
 plot_par.axis_len = 0.5;
@@ -42,73 +80,87 @@ show(rst_model,q,'Frames','on');
 axis equal
 grid on
 
-fprintf('Test Finger.kin_use_T: %d \n', finger_T.kin_use_T)
+fprintf('Test 2 Finger.kin_use_T: %d \n', finger_T.kin_use_T)
 
-%% Test 1:  Transformation matrix test with respect to mdh parameters 
+%% Test 2:  Transformation matrix test with respect to mdh parameters 
 % 
-q_r = rand(finger_T.nj,1);
-finger_T.update_finger(q_r);
 
-% transformnation matrix of each frame test
-w_T_all = finger_T.get_T_all_links;
-w_T_all_rst = zeros(4,4,finger_T.nj+2);
-w_T_all_rst(:,:,1) = rst_model.Bodies{1}.Joint.JointToParentTransform;
-for i = 1:finger_T.nj+1
-    w_T_all_rst(:,:,i+1) = getTransform(rst_model,q_r,rst_model.BodyNames{i+1});
-end 
+Test_2_failed = 0;
 
-% validaiton
-T_error_all = max(abs(w_T_all_rst-w_T_all));
-if max(T_error_all(:))> 1e-10
-    fprintf('Test 1 (Transformation matrix): failed! \n')
-else
-    fprintf('Test 1 (Transformation matrix): pass! \n')
+for i = 1:100
+    q_r = rand(finger_T.nj,1);
+    finger_T.update_finger(q_r);
+
+    % transformnation matrix of each frame test
+    w_T_all = finger_T.get_T_all_links;
+    w_T_all_rst = zeros(4,4,finger_T.nj+2);
+    w_T_all_rst(:,:,1) = rst_model.Bodies{1}.Joint.JointToParentTransform;
+    for i = 1:finger_T.nj+1
+        w_T_all_rst(:,:,i+1) = getTransform(rst_model,q_r,rst_model.BodyNames{i+1});
+    end
+
+    % validaiton
+    T_error_all = max(abs(w_T_all_rst-w_T_all));
+    if max(T_error_all(:))> 1e-10
+        Test_2_failed = 1;
+    end
 end
-
-%% Test 2: Jacobian test
+if Test_2_failed
+    fprintf('Test 2 (Transformation matrix): failed! \n')
+else
+    fprintf('Test 2 (Transformation matrix): pass! \n')
+end
+%% Test 3: Jacobian test
 % test the geometric Jacobian matrix of the endeffector
 % Jacobian_geom_b_end.m
 % Jacobian_geom_w_end.m
+Test_3_failed = 0;
 
-% set variable randomly
-finger_T.set_base(rand(3,1), euler2R_XYZ(rand(3,1)));
-finger_T.update_rst_model;
-% joint configurations
-q_r = rand(finger_T.nj,1);
-finger_T.update_finger(q_r);
+for i = 1:100
+    % set variable randomly
+    finger_T.set_base(rand(3,1), euler2R_XYZ(rand(3,1)));
+    finger_T.update_rst_model;
+    % joint configurations
+    q_r = rand(finger_T.nj,1);
+    finger_T.update_finger(q_r);
 
-% load rst model from finger class
-rst_model = finger_T.rst_model;
+    % load rst model from finger class
+    rst_model = finger_T.rst_model;
 
-% number of active joints
-num_nja = finger_T.nja;
+    % number of active joints
+    num_nja = finger_T.nja;
 
-% geometric Jacobian computed by the class function 'Jacobian_geom_b_end'
-J_class_b = finger_T.Jacobian_geom_b_end(q_r);% with respect to the base frame
-W_R_b = finger_T.w_R_base();
-J_class = blkdiag(W_R_b,W_R_b)*J_class_b;
+    % geometric Jacobian computed by the class function 'Jacobian_geom_b_end'
+    J_class_b = finger_T.Jacobian_geom_b_end(q_r);% with respect to the base frame
+    W_R_b = finger_T.w_R_base();
+    J_class = blkdiag(W_R_b,W_R_b)*J_class_b;
 
-% geometric Jacobian computed by the class function 'Jacobian_geom_b_end'
-J_class_w = finger_T.Jacobian_geom_w_end(q_r);% with respect to the base frame
+    % geometric Jacobian computed by the class function 'Jacobian_geom_b_end'
+    J_class_w = finger_T.Jacobian_geom_w_end(q_r);% with respect to the base frame
 
-% geometrical Jacobian using Jacobian_geom_mdh.m function
-J_geom_func_b = Jacobian_geom_mdh(mdh_struct_to_matrix(finger_T.mdh_ori,1),q_r);
-J_geom_func = blkdiag(W_R_b,W_R_b)*J_geom_func_b;
+    % geometrical Jacobian using Jacobian_geom_mdh.m function
+    J_geom_func_b = Jacobian_geom_mdh(mdh_struct_to_matrix(finger_T.mdh_ori,1),q_r);
+    J_geom_func = blkdiag(W_R_b,W_R_b)*J_geom_func_b;
 
-% geometric Jacobian computed by the rst toolbox
-J_rst = geometricJacobian(rst_model,q_r,rst_model.BodyNames{end}); % J_rst = [omega_x omega_y omega_z v_x v_y v_z]' 
-J_rst = [J_rst(4:6,1:num_nja);J_rst(1:3,1:num_nja)]; % J_rst = [v_x v_y v_z omega_x omega_y omega_z]'
+    % geometric Jacobian computed by the rst toolbox
+    J_rst = geometricJacobian(rst_model,q_r,rst_model.BodyNames{end}); % J_rst = [omega_x omega_y omega_z v_x v_y v_z]'
+    J_rst = [J_rst(4:6,1:num_nja);J_rst(1:3,1:num_nja)]; % J_rst = [v_x v_y v_z omega_x omega_y omega_z]'
 
-% validaiton
-J_error = abs(J_class-J_class_w);
-J_error1 = abs(J_class-J_rst);
-J_error2 = abs(J_geom_func-J_rst); % should be error
+    % validaiton
+    J_error = abs(J_class-J_class_w);
+    J_error1 = abs(J_class-J_rst);
+    J_error2 = abs(J_geom_func-J_rst); % should be error
 
-if max([J_error(:);J_error1(:)]) > 1e-10
-    fprintf('Test 2 (geometric Jacobian): failed! \n')
-else
-    fprintf('Test 2 (geometric Jacobian): pass! \n')
+    if max([J_error(:);J_error1(:)]) > 1e-10
+        Test_3_failed = 1;
+    end
 end
+if Test_3_failed
+    fprintf('Test 3 (geometric Jacobian): failed! \n')
+else
+    fprintf('Test 3 (geometric Jacobian): pass! \n')
+end
+
 
 % analytical Jacobian
 J_analytic_end_b = finger_T.Jacobian_analytic_b_end(q_r);
@@ -156,9 +208,9 @@ for t3 = 1:20
 end
 % validaiton
 if test_3_error == 1
-    fprintf('Test 3 (Frame position): failed! \n')
+    fprintf('Test 4 (Frame position): failed! \n')
 else
-    fprintf('Test 3 (Frame position): pass! \n')
+    fprintf('Test 4 (Frame position): pass! \n')
 end
 %% Test 5_1 inverse dynamic test (fixed base)
 % method 1: 

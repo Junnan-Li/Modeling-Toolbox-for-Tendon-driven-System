@@ -143,11 +143,13 @@ classdef Hand < handle & matlab.mixin.Copyable
         index_q_b           % [njb,2] start and end index of base joint in q
         index_q_f           % [njf,2] start and end index of base joint in q
         sim
-%         sim_mdh
-%         sim_mdh_index
-%         sim_q_index
-%         sim_n_links
-%         sim_w_T_b
+%         sim.mdh           % [nl+nb+nf,4] all mdh parameters 
+%         sim.mdh_index
+%         sim.par_T         % [(nl+nb+nf)x4,4] all par_T parameters
+%         sim.par_T_index
+%         sim.q_index
+%         sim.n_links
+%         sim.w_T_b
     end
     
     properties (SetAccess = private)
@@ -969,9 +971,15 @@ classdef Hand < handle & matlab.mixin.Copyable
 
         %% simulation functions
         function update_sim_par(obj)
+            % For kinematics, using par_T representation instead of mdh
             % update the simulation dataset for Simulink function
-            obj.sim.mdh = [];
+            % kinematic definitions of mdh (replaced by using T)
+            obj.sim.mdh = []; 
             obj.sim.mdh_index = [];
+            % kinematic definitions of par_T 
+            obj.sim.par_T = []; 
+            obj.sim.par_T_index = [];
+            % structure information
             obj.sim.n_links = [obj.nb,obj.nf];
             obj.sim.w_T_b = [];
             obj.sim.q_index = [obj.index_q_b;obj.index_q_f];
@@ -988,17 +996,28 @@ classdef Hand < handle & matlab.mixin.Copyable
             link_index_in_frame_start = 1;
             q_index_in_frame_start = 1;
             mdh_index_start = 1;
+            par_T_index_start = 1;
             if obj.nb ~= 0
                 for i = 1:obj.nb
                     base_i = obj.base(i);
                     mdh_i = mdh_struct_to_matrix(base_i.mdh_ori,1);
+                    par_T_i = base_i.par_T_link;
+                    % update mdh related variables
                     obj.sim.mdh = [obj.sim.mdh; ...
                         mdh_i];
                     obj.sim.mdh_index = [obj.sim.mdh_index;
                         mdh_index_start,mdh_index_start+size(mdh_i,1)-1];
+                    mdh_index_start = obj.sim.mdh_index(end,2)+1;
+                    % update par_T related variables
+                    obj.sim.par_T = [obj.sim.par_T; ...
+                        par_T_i];
+                    obj.sim.par_T_index = [obj.sim.par_T_index;
+                        par_T_index_start,par_T_index_start+size(par_T_i,1)-1];
+                    par_T_index_start = obj.sim.par_T_index(end,2)+1;
+
                     obj.sim.w_T_b = [obj.sim.w_T_b; ...
                         base_i.w_T_base];
-                    mdh_index_start = obj.sim.mdh_index(end,2)+1;
+                    
                     
                     obj.sim.l_index = [obj.sim.l_index;link_index_start, ...
                             link_index_start+base_i.nl];
@@ -1021,10 +1040,19 @@ classdef Hand < handle & matlab.mixin.Copyable
                for i = 1:obj.nf
                     finger_i = obj.list_fingers(i);
                     mdh_i = mdh_struct_to_matrix(finger_i.mdh_ori,1);
+                    par_T_i = finger_i.par_T_link;
+                    % update mdh related variables
                     obj.sim.mdh = [obj.sim.mdh; ...
                         mdh_i];
                     obj.sim.mdh_index = [obj.sim.mdh_index;
                         mdh_index_start,mdh_index_start+size(mdh_i,1)-1];
+                    % update par_T related variables
+                    obj.sim.par_T = [obj.sim.par_T; ...
+                        par_T_i];
+                    obj.sim.par_T_index = [obj.sim.par_T_index;
+                        par_T_index_start,par_T_index_start+size(par_T_i,1)-1];
+                    par_T_index_start = obj.sim.par_T_index(end,2)+1;
+
                     obj.sim.w_T_b = [obj.sim.w_T_b; ...
                         finger_i.w_T_base];
                     mdh_index_start = obj.sim.mdh_index(end,2)+1;
