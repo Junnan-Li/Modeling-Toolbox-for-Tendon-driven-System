@@ -1,9 +1,9 @@
-% generate the symbolic expression of transformation matrices of all frames
-% with q as input.
+% generate an individual function to compute transformation matrix of all frames
+% with q as input using par_T representations
 % 
 % input:
-%           mdh:        [nx4]   mdh parameters of all links
-%           mdh_index:  [nlx2]  index of start and end row of each finger
+%           par_T:        [4*(nl+nb+nf),4]   par_T parameters of all links
+%           par_T_index:  [nb+nf,2]  index of start and end row of each finger
 %                               in mdh matrix
 %           q_index:    
 %           w_T_b:      [4x(nb+nf),4] transformation matrix of each finger base
@@ -11,23 +11,33 @@
 %           q:          [nj]    joint angle
 % 
 % Output:   
-%           w_vp: 
-%           w_J_vp
+%           w_T_all_frames: [4,4,nframes] transformation matrix for all frames
+%           w_T_all_links:  [4,4,nl]      transformation matrix for all links
 % 
 % 
 
-function [w_vp, w_J_vp] = sim_w_vp_from_T_links(w_T_all_links, n_links, q_index,sim_vp_index, sim_vp_pos)
+function [w_vp, w_J_vp] = %HandName%_sim_w_vp_from_T_links(w_T_all_links)
 %#codegen
 
-n_q = size(w_T_all_links,3);
-n_b = n_links(1);
-nvia = length(sim_vp_index);
+% initialization
+nl = %nl%;
+nb = %nb%;
+nf = %nf%;
+q_index = %q_index%;
+vp_index = %vp_index%;
+vp_pos = %sim_vp_pos%;
+
+nvia = length(vp_index);
+p_pos = %p_pos%;
+
+
+
 w_vp = zeros(nvia,3);
 w_J_vp = zeros(3,n_q,nvia);
 
 for i = 1:nvia
-    vp_index_i = sim_vp_index(i);
-    i_vp_pos_i = sim_vp_pos(i,:)';
+    vp_index_i = vp_index(i);
+    i_vp_pos_i = vp_pos(i,:)';
     w_T_link_i = w_T_all_links(:,:,vp_index_i); 
     w_vp(i,:) = T_p31(w_T_link_i, i_vp_pos_i)';
     % Jacobian
@@ -57,4 +67,5 @@ for i = 1:nvia
         end
     end
 end
+
 end

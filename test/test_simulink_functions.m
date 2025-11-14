@@ -14,7 +14,7 @@ hand = create_hand_random('hand_function_test', [2,2,4,4] );
 
 
 hand.create_sim_functions_hand
-% addpath('output\');
+addpath('output\');
 %% transformation matrix of each links
 %  sim_w_T_all_links_from_q.m
 test_failed = 0;
@@ -186,6 +186,37 @@ if test_failed
 else
     fprintf('Test (sim transformation function): PASS!!! \n')
 end
+fprintf('------------------------ \n')
+
+%% test viapoints 
+test_failed = 0;
+t1 = 0;
+for iter = 1:100
+    q = rand(hand.nj,1);
+    hand.update_hand(q);
+    w_vp_class = hand.get_p_all_viapoints_inhand;
+    w_J_via_class = hand.get_J_all_viapoints_inhand;
+    
+    tic
+    [~,w_T_all_links] = sim_w_T_all_frames_from_q_par_T(hand.sim.par_T,hand.sim.par_T_index,...
+        hand.sim.q_index,hand.sim.w_T_b,hand.sim.n_links,q);
+    [w_vp, w_J_vp] = sim_w_vp_from_T_links(w_T_all_links, hand.sim.n_links, ...
+        hand.sim.q_index,hand.sim.vp_index, hand.sim.vp_pos);
+    t1 = t1+toc;
+    
+    T_p_via_error = w_vp_class-w_vp';
+    T_J_via_error = w_J_via_class-w_J_vp;
+    if max(abs([T_p_via_error(:);T_J_via_error(:)])) > 1e-8
+        test_failed = 1;
+    end
+end
+if test_failed
+    fprintf('Test (sim viapoints function): FAILED!!! \n')
+else
+    fprintf('Test (sim viapoints function): PASS!!! \n')
+end
+fprintf('Time cost: \n')
+fprintf('sim_w_vp_from_T_links:             %f \n',t1/iter)
 fprintf('------------------------ \n')
 
 %% sim func inverse dynamic 
