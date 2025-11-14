@@ -150,6 +150,9 @@ classdef Hand < handle & matlab.mixin.Copyable
 %         sim.q_index
 %         sim.n_links
 %         sim.w_T_b
+%         sim.vp_index
+%         sim.vp_pos 
+% 
     end
     
     properties (SetAccess = private)
@@ -1072,6 +1075,16 @@ classdef Hand < handle & matlab.mixin.Copyable
                     obj.sim.Mass = [obj.sim.Mass;obj.par_dyn_h.mass_all{i,2}];
                     obj.sim.CoM = [obj.sim.CoM,obj.par_dyn_h.com_all{i,2}];
                     obj.sim.I = [obj.sim.I,obj.par_dyn_h.inertia_all{i,2}];
+                end
+            end
+            
+            if obj.nvia ~= 0
+                obj.sim.vp_index = nan(obj.nvia,1);
+                obj.sim.vp_pos = nan(obj.nvia,3);
+                for i = 1:obj.nvia
+                    vp_i = obj.list_viapoints(i);
+                    obj.sim.vp_index(i) = vp_i.index_link_inhand;
+                    obj.sim.vp_pos(i,:) = vp_i.link_p';
                 end
             end
         end

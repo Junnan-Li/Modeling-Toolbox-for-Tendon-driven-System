@@ -44,6 +44,7 @@ end
 q_hand = rand(hand_obj.nj,1);
 hand_obj.update_hand(q_hand);
 
+hand_obj.update_list_viapoints;
 hand_obj.update_hand_par_dyn;
 hand_obj.update_sim_par;
 

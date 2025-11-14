@@ -37,4 +37,10 @@ for i = 1:finger_obj.nl
 end
 finger_obj.update_finger_par_dyn;
 
+%% add random viapoints
+for i = 1:finger_obj.nl
+    finger_obj.add_ViaPoint('vp_random',i,0.5*rand(3,1));
+end
+finger_obj.update_list_viapoints;
+
 end

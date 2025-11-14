@@ -10,9 +10,11 @@ clc
 
 %% generate hand 
 hand = create_hand_random('hand_function_test', [2,2,4,4] );
+% add some viapoints
+
 
 hand.create_sim_functions_hand
-addpath('output\');
+% addpath('output\');
 %% transformation matrix of each links
 %  sim_w_T_all_links_from_q.m
 test_failed = 0;
