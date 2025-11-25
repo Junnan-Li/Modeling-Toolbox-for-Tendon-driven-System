@@ -619,82 +619,20 @@ classdef Finger < handle & matlab.mixin.Copyable
         end
 
  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%               
-
-%         function rst_model_tmp = update_rst_model(obj)
-%             % build/update the rst model of the finger based on the mdh
-%             % parameters
-%             %
-%                          
-%             mdh_matrix = mdh_struct_to_matrix(obj.mdh_ori,2); % mdh order: a,alpha,d,theta
-% %             mdh_matrix_order_1 = mdh_struct_to_matrix(obj.mdh_ori,1);
-%             % create rigid body tree
-%             rst_model_tmp = rigidBodyTree;
-%             rst_model_tmp.DataFormat = 'column';
-%             rst_model_tmp.Gravity = obj.par_dyn_f.g;
-%             
-%             % convert inertia format to rst format
-%             
-%             inertia_all = obj.par_dyn_f.inertia_all;
-%             mass_all = obj.par_dyn_f.mass_all;
-%             com_all = obj.par_dyn_f.com_all;
-%             
-%             inertia_all_rst = zeros(size(obj.par_dyn_f.inertia_all)); % [xx yy zz yz xz xy]
-%             for i = 1:obj.nj
-%                 % transfer inertia into bodyframe
-%                 inertia_all_rst(:,i+1) = inertia_all(:,i+1) + ...
-%                     mass_all(i+1)*[com_all(2,i+1).^2+com_all(3,i+1).^2;com_all(1,i+1).^2+com_all(3,i+1).^2;com_all(1,i+1).^2+com_all(2,i+1).^2;...
-%                     -com_all(2,i+1)*com_all(3,i+1);-com_all(1,i+1)*com_all(3,i+1);-com_all(1,i+1)*com_all(2,i+1)];
-%             end
-% 
-%             % virtual first body:  from CS.base to CS.1
-%             bodyname = obj.list_links(1).name;
-%             body1 = rigidBody(bodyname);
-%             jointname = strcat(obj.name,'_virtual_Base_joints');
-%             jnt1 = rigidBodyJoint(jointname,'revolute');          
-%             W_T_base = obj.get_W_T_B(); % World to Base 
-% %             T = T_mdh_multi(mdh_matrix_order_1(1,:));
-%             setFixedTransform(jnt1,W_T_base);
-%             body1.Joint = jnt1;
-%             body1.Mass = mass_all(2); % first body (virtual)
-%             body1.Inertia = inertia_all_rst(:,2);
-%             body1.CenterOfMass = com_all(:,2);          
-%             addBody(rst_model_tmp,body1,'base');
-%             bodyname_last = bodyname;
-% %             bodyname_last = 'base';
-%             for j = 2:obj.nl
-%                 bodyname = obj.list_links(j).name;
-%                 body1 = rigidBody(bodyname);
-%                 jointname = strcat(obj.name,'_',obj.list_joints(j).name);
-%                 jnt1 = rigidBodyJoint(jointname,'revolute');
-%                 setFixedTransform(jnt1,mdh_matrix(j,:),'mdh');
-%                 body1.Joint = jnt1;
-%                 body1.Mass = mass_all(j+1); % first body (virtual)
-%                 body1.Inertia = inertia_all_rst(:,j+1);
-%                 body1.CenterOfMass = com_all(:,j+1);
-%                 addBody(rst_model_tmp,body1,bodyname_last);
-%                 bodyname_last = bodyname;
-%             end
-%             
-%             % virtual last body:  fingertip
-%             bodyname = strcat(obj.name,'_endeffector');
-%             body1 = rigidBody(bodyname);
-%             jointname = strcat(obj.name,'Virtual_fingertip');
-%             jnt1 = rigidBodyJoint(jointname,'fixed');          
-%             setFixedTransform(jnt1,mdh_matrix(end,:),'mdh');
-%             body1.Joint = jnt1;
-%             body1.Mass = 0;
-%             body1.Inertia = [0,0,0,0,0,0];
-%             body1.CenterOfMass = [0,0,0];
-%             addBody(rst_model_tmp,body1,bodyname_last);
-%             obj.rst_model = rst_model_tmp;
-%         end
         
         function rst_model_tmp = update_rst_model(obj)
             % new version of rst model with a vitural base body
             % build/update the rst model of the finger based on the mdh
             % parameters
             %
-                         
+            
+            % check MATLAB version 
+            % if the verison is earlier than 2022a, feature not activated
+            Matlab_version = version('-release');
+            if str2double(Matlab_version(1:4)) <= 2022
+                fprintf("[info][Finger]: MATLAB version earlier than 2022, RST model feature not activated!! \n")
+                return
+            end
             mdh_matrix = mdh_struct_to_matrix(obj.mdh_ori,2); % mdh order: a,alpha,d,theta
 %             mdh_matrix_order_1 = mdh_struct_to_matrix(obj.mdh_ori,1);
             % create rigid body tree

@@ -150,8 +150,8 @@ classdef Hand < handle & matlab.mixin.Copyable
 %         sim.q_index
 %         sim.n_links
 %         sim.w_T_b
-%         sim.vp_index
-%         sim.vp_pos 
+%         sim.vp_index      % index of attached link of each vp
+%         sim.vp_pos        % local position of each vp
 % 
     end
     
@@ -162,6 +162,7 @@ classdef Hand < handle & matlab.mixin.Copyable
         w_R_base            % rotation of the base in world frame. Default: non rotation
         par_dyn_h           % Dynamic parameters from all bases and fingers
         limit_joint_on      % [1] activate the joint limits
+        rst_model           % Robotic System Toolbox model
         state               % state for simulation: q, qd, l_mus, alpha
                             %   [obj.nj] q; [obj.nj] qd; [obj.nmus] l_mus; [obj.nmus] alpha;
     end
@@ -209,8 +210,6 @@ classdef Hand < handle & matlab.mixin.Copyable
             
             obj.par_dyn_h = struct();
             
-            % generate matrix for simulink 
-%             obj.sim_mdh = [];
         end
 
 
@@ -333,7 +332,7 @@ classdef Hand < handle & matlab.mixin.Copyable
             % and update the w_p_base_inhand & w_R_base_inhand for all 
             % bases and fingers
             assert(length(q(:)) == obj.nj, '[update_hand] dimension of q is incorrect!');
-            assert(~anynan(q), '[update_hand] q has NaN value!');
+            assert(~any(isnan(q)), '[update_hand] q has NaN value!');
             obj.q = reshape(q,obj.nj,1);
             W_T_b_prior = eye(4);
             if obj.njb ~= 0
@@ -424,6 +423,15 @@ classdef Hand < handle & matlab.mixin.Copyable
         %% rst model
 
         function rst_model_hand = update_rst_model(obj)
+            % check MATLAB version 
+            % if the verison is earlier than 2022a, feature not activated
+            Matlab_version = version('-release');
+            if str2double(Matlab_version(1:4)) <= 2022
+                fprintf("[info][Finger]: MATLAB version earlier than 2022, RST model feature not activated!! \n")
+                return
+            end
+            
+            
             % update the rst model of hand and construct to one robotictree
             if obj.nb == 0
                 disp('Hand has no base element!!')
@@ -448,7 +456,7 @@ classdef Hand < handle & matlab.mixin.Copyable
                     rst_model_hand.addSubtree(merge_bodyname,rst_finger_i);
                 end
             end
-
+            obj.rst_model = rst_model_hand;
         end
 
         %% kinematics

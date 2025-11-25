@@ -14,7 +14,7 @@ hand = create_hand_random('hand_function_test', [2,2,4,4] );
 
 
 hand.create_sim_functions_hand
-addpath('output\');
+addpath('output');
 %% transformation matrix of each links
 %  sim_w_T_all_links_from_q.m
 test_failed = 0;
@@ -124,47 +124,7 @@ fprintf('Time cost: \n')
 fprintf('sim_w_Jacobian_geom_from_T_links:            %f \n',t1/iter)
 fprintf('sim_w_Jacobian_geom_from_T_links.t:          %f \n',t2/iter)
 fprintf('------------------------ \n')
-%% Inverse dynamic 
-% test invdyn_ne_T.m with rst.inverseDynamics
 
-test_failed = 0;
-t1 = 0;
-for iter = 1:100
-    q = rand(hand.nj,1);
-    qd = rand(hand.nj,1);
-    qdd = rand(hand.nj,1);
-    hand.update_hand(q);
-    hand.update_sim_par;
-    hand.update_hand_par_dyn;
-    hand_rst = hand.update_rst_model;
-    w_T_all_frames = sim_w_T_all_frames_from_q(hand.sim.mdh,hand.sim.mdh_index,...
-        hand.sim.q_index,hand.sim.w_T_b,hand.sim.n_links,q);
-
-    X_base = zeros(6,1);
-    X_base(1:3) = hand.w_p_base;
-    X_base(4:6) = R2euler_XYZ(hand.w_R_base);
-    XD_base = zeros(6,1);
-    XDD_base = zeros(6,1);
-    F_ext = zeros(6,hand.nf);
-    tic
-    tau_obj =  invdyn_ne_T(w_T_all_frames,qd,qdd, hand.sim.n_links, hand.sim.q_index, ...
-        hand.sim.Mass, XD_base,XDD_base, F_ext, hand.sim.CoM, hand.sim.I, hand.sim.g);
-    t1 = t1 + toc;
-    tau_rst = hand_rst.inverseDynamics(q,qd,qdd);
-    error_tau = max(abs(tau_obj - tau_rst));
-
-    if max(abs(error_tau)) > 1e-8
-        test_failed = 1;
-    end
-end
-if test_failed
-    fprintf('Test (invdyn_ne_T.m): FAILED!!! \n')
-else
-    fprintf('Test (invdyn_ne_T.m): PASS!!! \n')
-end
-fprintf('Time cost: \n')
-fprintf('invdyn_ne_T:                  %f \n',t1/iter)
-fprintf('------------------------ \n')
 %%
 % test hand_function_test_sim_w_T_all_frames_from_q.m 
 % with sim_w_T_all_frames_from_q.m
@@ -219,8 +179,49 @@ fprintf('Time cost: \n')
 fprintf('sim_w_vp_from_T_links:             %f \n',t1/iter)
 fprintf('------------------------ \n')
 
-%% sim func inverse dynamic 
+%% Inverse dynamic 
+% test invdyn_ne_T.m with rst.inverseDynamics
 
+test_failed = 0;
+t1 = 0;
+for iter = 1:100
+    q = rand(hand.nj,1);
+    qd = rand(hand.nj,1);
+    qdd = rand(hand.nj,1);
+    hand.update_hand(q);
+    hand.update_sim_par;
+    hand.update_hand_par_dyn;
+    hand_rst = hand.update_rst_model;
+    w_T_all_frames = sim_w_T_all_frames_from_q(hand.sim.mdh,hand.sim.mdh_index,...
+        hand.sim.q_index,hand.sim.w_T_b,hand.sim.n_links,q);
+
+    X_base = zeros(6,1);
+    X_base(1:3) = hand.w_p_base;
+    X_base(4:6) = R2euler_XYZ(hand.w_R_base);
+    XD_base = zeros(6,1);
+    XDD_base = zeros(6,1);
+    F_ext = zeros(6,hand.nf);
+    tic
+    tau_obj =  invdyn_ne_T(w_T_all_frames,qd,qdd, hand.sim.n_links, hand.sim.q_index, ...
+        hand.sim.Mass, XD_base,XDD_base, F_ext, hand.sim.CoM, hand.sim.I, hand.sim.g);
+    t1 = t1 + toc;
+    tau_rst = hand_rst.inverseDynamics(q,qd,qdd);
+    error_tau = max(abs(tau_obj - tau_rst));
+
+    if max(abs(error_tau)) > 1e-8
+        test_failed = 1;
+    end
+end
+if test_failed
+    fprintf('Test (invdyn_ne_T.m): FAILED!!! \n')
+else
+    fprintf('Test (invdyn_ne_T.m): PASS!!! \n')
+end
+fprintf('Time cost: \n')
+fprintf('invdyn_ne_T:                  %f \n',t1/iter)
+fprintf('------------------------ \n')
+
+%% sim func inverse dynamic 
 test_failed = 0;
 t1 = 0;
 t2 = 0;
