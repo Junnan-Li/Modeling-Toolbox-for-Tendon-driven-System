@@ -20,7 +20,7 @@ For a detailed documentation please check [Documentation](./doc/Documentation.md
 + generalized version of kinematic and dynamic functions
 + a Robotic System Toolbox model is converted from this model for testing of implemented functions. 
 + symbolic function generation to compute each dynamic term 
-+ muscle/tendon path computation and associated Jacobian [4]
++ muscle/tendon path computation with obstacles and associated muscle Jacobian [4]
 + implementation of inverse kinematic algorithms (Newton-raphson, Levenberg-Marquardt) with multiple target points/markers. 
 + implementation of solvers (Euler, Runge-Kutta) for MATLAB simulation.  
 + a masked Simulink library with model object as input for realtime Simulink applications.
@@ -35,8 +35,13 @@ modeling of the hand and wrist," International Biomechanics, vol. 3,
 no. 1, pp. 1–10, 2016, doi: 10.1080/23335432.2016.1191373.
 
 ### The Shadow hand model
-`examples\Shadow hand\create_shadow_hand.m`: model contains the kinematic and dynamic information of the shadow hand.  
-![](examples/Shadow hand/pic_shadow_hand.PNG)
+`examples\Shadow_hand\create_shadow_hand.m`: model contains the kinematic and dynamic information of the shadow hand.  
+<img src="examples/Shadow_hand/pic_shadow_hand.PNG" width="30%">
+
+### Franka panda
+`examples\Franka\create_franka_robot.m`: parameters are derived from the Peter Corke robotic toolbox. A comparison is made with a random prescribed motion. (Peter Corke toolbox installation required)
+![](examples/Franka/panda_gif.gif)
+
 
 ## structure of classes
 There are several concatenated classes defined in this toolbox
@@ -56,36 +61,32 @@ For detailed information, please check test or example scripts and **doc/Documen
 
 ## Basic usage
 ### How to create a Finger object: 
-+ `finger = Finger(finger_name, 'mdh',mdh_struct)`;
-create a finger object with name and mdh parameter structure as input 
-+ `create_finger_random(finger_name, finger_dof)`;
-Create a random finger with name and number of DoFs. Normally used for initializing a finger with random parameters and then modifying the mdh parameters.
++ `finger = Finger(finger_name, 'mdh',mdh_struct)`  
+creates a finger object with name and mdh parameter structure as input 
++ `create_finger_random(finger_name, finger_dof)`  
+creates a random finger with name and number of DoFs. Normally used for initializing a finger with random parameters and then modifying the mdh parameters.
 
 ### create Hand model
-+ `hand_obj = create_hand_random(hand_name, varargin )`
-
-create a hand object with random mdh, base configuration, and dynamic parameters. 
++ `hand_obj = create_hand_random(hand_name, varargin )`  
+creates a hand object with random mdh, base configuration, and dynamic parameters. 
 For example, create_hand_random("hand_example", [2,3,4,3] ): create a hand with 2
 bases, each of which has 3 DoFs, and 4 fingers, each of which has 3 DoFs
 
-+ `hand_obj = Hand('Hand_name')` + `hand_obj.add_base(base_1)` + `hand_obj.add_finger(finger_1)`
-
-initialize a Hand object and manually add pre-defined base and fingers to the Hand object 
++ `hand_obj = Hand('Hand_name')` + `hand_obj.add_base(base_1)` + `hand_obj.add_finger(finger_1)`   
+initializes a Hand object and manually add pre-defined base and fingers to the Hand object 
 ## Examples
-`create_Dexmart_index.m`:
-create a model of Index finger of the Dexmart Hand.   
-`create_finger_random(finger_name, finger_dof)`: create a random finger object with desired DoFs   
-`create_finger_random_par_T(finger_name, finger_dof)`: create a random finger object using transformation matrix 
-for defining kinemtics    
-`create_hand_random(hand_name, varargin)`: create a random Hand object   
-`create_shadow_hand.m`: create a dynamic model of the **Shadow Hand** with customized 2N full actuated tendon routing   
-`example_shadowhand_simulation.m`: a simple dynamic simulation of the **Shadow Hand** with 2N tendon routing for a pose reaching task.
+`create_Dexmart_index.m`: creates a model of Index finger of the Dexmart Hand.   
+`create_finger_random(finger_name, finger_dof)`: creates a random finger object with desired DoFs   
+`create_finger_random_par_T(finger_name, finger_dof)`: creates a random finger object using transformation matrix 
+to define kinemtic    
+`create_hand_random(hand_name, varargin)`: creates a random Hand object   
+`/Shadow_hand`: a simple dynamic simulation of the **Shadow Hand** with 2N tendon routing for a pose reaching task.
 A impedance joint torque control is implemented and the required tendon forces are computed.    
 `lugre_example.m`: example of **LuGre** friction model for tendon-driven system.   
-`/Mojtaba_hand_model`: generate a kinematic musculoskeletal model from literature [4] of a cadaver hand    
-`/Franka`: an example of dynamic **Franka** robot model and associated symbolic functions to calculate individual 
+`/Mojtaba_hand_model`: generates a kinematic musculoskeletal model from literature [4] of a cadaver hand    
+`/Franka`: an example of the dynamic **Franka** robot model and associated symbolic functions to calculate individual 
 dynamic terms (Mass matrix, Coriolis, and Gravity vectors) for other applications
-`/ARMS_hand`: transfer a OpenSim hand/wrist model [5] (not finished)
+`/ARMS_hand`: transfer an OpenSim hand/wrist model [5] (not finished)
 
 ## Test scripts
 Test scripts for testing functions while development stored in the **/test** folder
