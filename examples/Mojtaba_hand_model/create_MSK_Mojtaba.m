@@ -144,6 +144,7 @@ finger_l.update_finger(q_little)
 thumb.update_finger(q_thumb)
 %
 plot_par = finger_m.plot_parameter_init;
+plot_par.axis_len = 0.05;
 finger_m.plot_finger(plot_par)
 finger_i.plot_finger(plot_par)
 finger_r.plot_finger(plot_par)
@@ -326,34 +327,36 @@ Mojtaba_hand.muscle_init_list_constr;
 % Mojtaba_hand.update_hand(q0);
 % muscle{1}.add_Muscle_Obstacles(obs2);
 % muscle{1}.init_list_constr;
-
+%% plot hand
 plot_hand_par = Mojtaba_hand.plot_parameter_init;
 % plot_hand_par.muscle_linewidth = 2;
-% plot_hand_par.muscle_linecolor = 'g';
-% plot_hand_par.axis_len = 0.02;
-% plot_hand_par.viapoint_markersize = 10;
-% plot_hand_par.viapoint_markercolor = 'b';
-figure(5)
+plot_hand_par.muscle_linecolor = "#49DB40";
+plot_hand_par.axis_len = 0.02;
+plot_hand_par.viapoint_markersize = 20;
+plot_hand_par.viapoint_markercolor = "#8516D1";
+h = figure(5);
+set(0,'defaultfigurecolor','w') 
+set(groot,'defaulttextinterpreter','none');
+set(h,'units','normalized','outerposition',[0 0 1 1])
+set(h, 'Units', 'centimeters')
+pos = get(h,'Position');
+set(h,'PaperPositionMode','Auto','PaperUnits','centimeters','PaperSize',[pos(3), pos(4)]);%
+set(h, 'Units', 'centimeters')
 Mojtaba_hand.plot_hand(plot_hand_par)
 axis equal
 Mojtaba_hand.plot_hand_viapoints(plot_hand_par)
 Mojtaba_hand.plot_hand_obstacles(plot_hand_par)
 Mojtaba_hand.plot_hand_muscles(plot_hand_par)
-
-%% 
+xticks([])
+yticks([])
+zticks([])
+%% dynamic computation with given system state
 Mojtaba_hand.update_sim_par;
 [qDD,M,C,G] = Mojtaba_hand.fordyn_ne_hand_w_end(q0);
 Tau = Mojtaba_hand.invdyn_ne_hand_w_end(q0);
 
-%% moment arm
+%% calculate muscle length and moment arm with given system state
 [length1,J1, wrap_status1,w_PS_p1] = Mojtaba_hand.cal_hand_Muscle_l_J_Garner(Mojtaba_hand.get_w_T_links_inhand);
 
-%%
-% % % q = sym('q',[1 finger_m.nj])
-% % % 
-% % % mdh_sym = sym(mdh_struct_to_matrix(finger_m.mdh_ori,1))
-% % % f_sym = create_Mojtaba_finger_from_csv(3, 'sym');
-% % % f_sym.set_mdh_parameters(mdh_sym);  
-% % % f_sym.update_finger(q)
-% % % f_sym.set_base(sym(f_sym.get_base_p),sym(f_sym.get_base_R))
-% % % f_sym.get_p_all_links
+
+

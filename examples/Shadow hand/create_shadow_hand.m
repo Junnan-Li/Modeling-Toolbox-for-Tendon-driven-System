@@ -325,109 +325,26 @@ plot_par.axis_len = 0.05;
 plot_par.com_markersize = 20;
 
 shadow_hand.update_hand(zeros(shadow_hand.nj,1))
-figure(1)
+
+%% plot hand 
+h = figure(1);
+set(0,'defaultfigurecolor','w')
+set(groot,'defaulttextinterpreter','none');
+set(h,'units','normalized','outerposition',[0 0 1 1])
+set(h, 'Units', 'centimeters')
+pos = get(h,'Position');
+set(h,'PaperPositionMode','Auto','PaperUnits','centimeters','PaperSize',[pos(3), pos(4)]);%
+set(h, 'Units', 'centimeters')
+set(groot,'defaulttextinterpreter','latex');
+set(groot, 'defaultAxesTickLabelInterpreter','latex');
+set(groot, 'defaultLegendInterpreter','latex');
+
 shadow_hand.plot_hand(plot_par)
 shadow_hand.plot_hand_com(plot_par)
 axis equal
 
+xticks([])
+yticks([])
+zticks([])
 
 return
-%% plot 2 fingers
-
-h = figure(2);
-set(0,'defaultfigurecolor','w')
-set(groot,'defaulttextinterpreter','none');
-set(h,'units','normalized','outerposition',[0 0 1 1])
-set(h, 'Units', 'centimeters')
-pos = get(h,'Position');
-set(h,'PaperPositionMode','Auto','PaperUnits','centimeters','PaperSize',[pos(3), pos(4)]);%
-set(h, 'Units', 'centimeters')
-set(groot,'defaulttextinterpreter','latex');
-set(groot, 'defaultAxesTickLabelInterpreter','latex');
-set(groot, 'defaultLegendInterpreter','latex');
-
-finger_index.update_finger([0,pi/6,pi/6,pi/10]);
-finger_index.print_finger('g',5,8)
-finger_thumb.update_finger([0,pi/3,0,pi/10,pi/10]);
-finger_thumb.print_finger('k',5,8)
-finger_middle.update_finger([0,pi/8,pi/10,pi/20])
-finger_middle.print_finger('g',5,8)
-finger_ring.update_finger([0,0.3,0.1,0.1])
-finger_ring.print_finger('g',5,8)
-finger_little.update_finger([0.2,0,0.2,0.1,0.1])
-finger_little.print_finger('c',5,8)
-
-plot3(0,0,0,'.','Color','k','MarkerSize',50 )
-
-% xlim([0 .2])
-% ylim([-0.02 .06])
-% zlim([-0.02 .12])
-% xticks([0 0.05 0.1 0.15 0.2])
-% yticks([-0 0.05 0.1])
-% zticks([0 0.05 0.1])
-xlabel('x')
-ylabel('y')
-zlabel('z')
-axis equal
-grid on
-
-% 
-% figure
-[X,Y,Z] = sphere(30);
-X = 0.04*X + 0.15;
-Y = 0.04*Y + 0.02;
-Z = 0.04*Z + 0.02;
-surf(X,Y,Z,'FaceColor','b','FaceAlpha',1)
-axis equal
-grid off
-
-return
-
-%% plot hand 
-
-h = figure(2);
-set(0,'defaultfigurecolor','w')
-set(groot,'defaulttextinterpreter','none');
-set(h,'units','normalized','outerposition',[0 0 1 1])
-set(h, 'Units', 'centimeters')
-pos = get(h,'Position');
-set(h,'PaperPositionMode','Auto','PaperUnits','centimeters','PaperSize',[pos(3), pos(4)]);%
-set(h, 'Units', 'centimeters')
-set(groot,'defaulttextinterpreter','latex');
-set(groot, 'defaultAxesTickLabelInterpreter','latex');
-set(groot, 'defaultLegendInterpreter','latex');
-
-% parameter of com plot
-plot_par_com = finger_index.plot_parameter_init;
-plot_par_com.markercolor = 'k';
-plot_par_com.markersize = 20;
-
-
-finger_index.update_finger([0,0,0,0]);
-finger_index.print_finger('r',5,8)
-finger_index.plot_com(plot_par_com);
-finger_thumb.update_finger([0,0,0,0,0]);
-finger_thumb.print_finger('r',5,8)
-finger_thumb.plot_com(plot_par_com);
-finger_middle.update_finger([0,0,0,0])
-finger_middle.print_finger('r',5,8)
-finger_middle.plot_com(plot_par_com);
-finger_ring.update_finger([0,0,0,0])
-finger_ring.print_finger('r',5,8)
-finger_ring.plot_com(plot_par_com);
-finger_little.update_finger([0,0,0,0,0])
-finger_little.print_finger('r',5,8)
-finger_little.plot_com(plot_par_com);
-
-plot3(0,0,0,'.','Color','k','MarkerSize',50 )
-
-% xlim([0 .2])
-% ylim([-0.02 .06])
-% zlim([-0.02 .12])
-% xticks([0 0.05 0.1 0.15 0.2])
-% yticks([-0 0.05 0.1])
-% zticks([0 0.05 0.1])
-xlabel('x')
-ylabel('y')
-zlabel('z')
-axis equal

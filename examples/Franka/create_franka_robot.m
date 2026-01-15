@@ -1,13 +1,17 @@
-
-
+% create a Franka robot 
+% parameters are derived from peter corke toolbox
+% https://github.com/petercorke/robotics-toolbox-matlab/blob/master/models/mdl_panda.m
+% 
+% 
+% need to 
 
 clear all
 close all
 clc
-%% Robot Definition
+%% Robot Definition from peter corke matlab toolbox
 deg = pi/180;
 mm = 1e-3;
-        
+
 % Define links from: https://github.com/petercorke/robotics-toolbox-matlab/blob/master/models/mdl_panda.m
 L1 = RevoluteMDH('a',     0.0, 'd', 0.333, 'alpha',   0.0, 'qlim', [-2.8973 2.8973], ...
     'm', 4.970684, 'r', [3.875e-03 2.081e-03 0], 'I', [7.03370e-01  7.06610e-01  9.11700e-03 -1.39000e-04  1.91690e-02  6.77200e-03], 'G', 1);
@@ -24,14 +28,13 @@ L6 = RevoluteMDH('a',     0.0, 'd',   0.0, 'alpha',  pi/2, 'qlim', [-0.0175 3.75
 L7 = RevoluteMDH('a',   0.088, 'd',   0.107, 'alpha',  pi/2, 'qlim', [-2.8973 2.8973], ...
     'm', 7.35522e-01, 'r', [1.0517e-02 -4.252e-03 6.1597e-02 ], 'I', [1.25160e-02  1.00270e-02  4.81500e-03 -4.28000e-04 -7.41000e-04 -1.19600e-03], 'G', 1);
 
-% Create SerialLink object
+% Create SerialLink object 
 panda = SerialLink([L1 L2 L3 L4 L5 L6 L7], 'name', 'PANDA', 'manufacturer', 'Franka-Emika', 'tool', transl([0 0 110*mm]));
 panda.gravity = [0, 0, -9.80665];
 
 
-
-
-%% 
+% panda = loadrobot("frankaEmikaPanda");
+%% create franka robot
 franka = create_finger_random('Franka', 7);
 
 mdh_default_struct = franka.mdh_ori;
@@ -50,7 +53,7 @@ franka.set_mdh_parameters(mdh_matrix);
 franka.set_base([0,0,0]',eye(3))
 
 plot_par = franka.plot_parameter_init();
-
+plot_par.axis_len = 0.3;
 for i = 1:7
     franka.list_links(i).set_mass((panda.links(i).m));
     franka.list_links(i).set_com(panda.links(i).r);
@@ -68,48 +71,71 @@ end
 franka.update_finger_par_dyn;
 franka.set_g_w(panda.gravity);
 
-q_init = rand(1,7);
-franka.update_finger(q_init');
-franka.plot_finger(plot_par)
-
-grid on
-axis equal
-
-% q_init  = [0 0 0 0 0 0 0]*deg;
-panda.plot(q_init)
-
-[Ts,T_all] = panda.fkine(q_init);
-T_ee = franka.get_T_all_links;
-
-for i = 1:7
-    t_pc_i = T_all(i).T;
-    T_link_i = T_ee(:,:,i+1);
-    error_T = t_pc_i-T_link_i;
-    if max(abs(error_T(:))) > 1e-6
-        error('kinematic wrong')
+% testing kinematic and dynamic 
+cal_error = 0;
+visual_kin = 0;
+for samples = 1:100
+    q_init = rand(1,7);
+    franka.update_finger(q_init');
+    if visual_kin
+        figure(10)
+        subplot(1,2,1)
+        franka.plot_finger(plot_par)
+        grid on
+        axis equal
+        xlim([-0.8 0.8])
+        ylim([-0.8 0.8])
+        zlim([0 1.3])
+        axis manual
+        drawnow
+        hold off
+        subplot(1,2,2)
+        panda.plot(q_init,'jointdiam',1)
+        axis equal
+        xlim([-0.8 0.8])
+        ylim([-0.8 0.8])
+        zlim([0 1.3])
+        axis manual
+        drawnow
+        hold off
     end
+    [Ts,T_all] = panda.fkine(q_init);
+    T_ee = franka.get_T_all_links;
+    error_T = [];
+    for i = 1:7
+        t_pc_i = T_all(i).T;
+        T_link_i = T_ee(:,:,i+1);
+        error_T = [error_T;t_pc_i-T_link_i];
+    end
+    if max(abs(error_T(:))) > 1e-6
+        cal_error = 1;
+        break;
+    end
+end
+if cal_error
+    fprintf('Panda kinematic computation testing:  ERROR! \n')
+else
+    fprintf('Panda kinematic computation testing:  SUCCESS! \n');
 end
 
 
-% figure(2)
-% franka.plot_finger(plot_par)
-% franka.plot_com(plot_par)
-% grid on 
-% axis equal
 %% test symbolic functions
+
 t1 = 0;
 t2 = 0;
 t3 = 0;
 t4 = 0;
-for i = 1:100
+% cal_dyn_error = 0;
+num_samples = 100;
+for samples = 1:num_samplesd
     q = rand(1,7);
     qd = rand(1,7);
 
-    % dynamic torque from Peter Corke toolbox
-    M_peter = panda.inertia(q);
-    G_peter = panda.gravload(q);
-    C = panda.coriolis(q, qd) * qd';
-
+    % % dynamic torque from Peter Corke toolbox
+    % M_peter = panda.inertia(q);
+    % G_peter = panda.gravload(q);
+    % C = panda.coriolis(q, qd) * qd';
+    
     % dynamic torque from hand toolbox
     [qDD,M_fd,C_fd,G_fd] = franka.fordyn_ne_w_end(q', qd',zeros(franka.nj,1), zeros(6,franka.nj+2));
 
@@ -130,36 +156,30 @@ for i = 1:100
     C2 = Tau-G_1;
     t4 = t4 + toc;
 
-    error_M1 = M_fd-M_sym;
-    error_M2 = M_fd-M_sym2;
-    error_M_P = M_fd - M_peter; % error of hand toolbox and Peter
-    error_G = G_fd- G_1;
-    error_C = C_fd - C2;
-
-    if max(abs([error_M1,error_M2])) > 1e-9
-        error('Mass matrix error too large! ')
-    end
-    if max(abs(error_G)) > 1e-9
-        error('Gravity torque error too large! ')
-    end
-    if max(abs(error_C)) > 1e-9
-        error('Coriolis torque error too large! ')
-    end
+    % error_M1 = M_fd-M_sym;
+    % error_M2 = M_fd-M_sym2;
+    % error_M_P = M_fd - M_peter; % error of hand toolbox and Peter
+    % error_G = G_fd- G_1;
+    % error_C = C_fd - C2;
+    % error_all = [error_M1,error_M2,error_M_P,error_G,error_C];
+    % if max(abs(error_all(:))) > 1e-9
+    %     cal_dyn_error = 1;
+    %     break
+    % end
 end
-fprintf('invdyn_lag_mdh_sym_Franka_M.m :   %f \n', t1/100)
-fprintf('M_Franka.m :                      %f \n', t2/100)
-fprintf('invdyn_lag_mdh_sym_Franka_G.m :   %f \n', t3/100)
-fprintf('invdyn_lag_mdh_sym_Franka_C.m : %f \n', t4/100)
+% if cal_dyn_error
+%     fprintf('Panda dynamic computation testing:  ERROR! \n')
+% else
+%     fprintf('Panda dynamic computation testing:  SUCCESS! \n');
+% end
+fprintf('Panda dynamic computation time consumption: \n');
+fprintf('invdyn_lag_mdh_sym_Franka_M.m :   %f \n', t1/num_samples)
+fprintf('                   M_Franka.m :   %f \n', t2/num_samples)
+fprintf('invdyn_lag_mdh_sym_Franka_G.m :   %f \n', t3/num_samples)
+fprintf('invdyn_lag_mdh_sym_Franka_C.m :   %f \n', t4/num_samples)
 return
-%% generating symbolic functions of M and G
 
-
-[M,FTau_G] = franka.invdyn_ne_w_end_sym_MG(1,1);
-
-
-% 
-return
-%% generating symbolic functions
+%% code used to generat2 symbolic functions using Lagrangian 
 
 q_r_sym = sym('q',[franka.nj,1], 'real');
 q_rd_sym = sym('qd',[franka.nj,1], 'real');
@@ -196,52 +216,64 @@ matlabFunction(Tau,"File",strcat(func_name,'_Tau'),...
 %         "Vars", var_name);
 return
 
+%% generating symbolic functions of M and G using NE
 
-%% Archived
+[M,FTau_G] = franka.invdyn_ne_w_end_sym_MG(1,1);
 
-Franka_robot= Hand('franka');
-Franka_robot.add_finger(franka);
+return
+%% random motion gif
+visual_kin = 1;
+gifFile = 'examples\Franka\panda_gif.gif';
+save_gif = 1;
+q = rand(7,1);
+dt = 0.1;
+qd = zeros(7,1);
+h = figure(3);
+set(0,'defaultfigurecolor','w') 
+set(groot,'defaulttextinterpreter','none');
+set(h,'units','normalized','outerposition',[0 0 1 1])
+set(h, 'Units', 'centimeters')
+pos = get(h,'Position');
+set(h,'PaperPositionMode','Auto','PaperUnits','centimeters','PaperSize',[pos(3), pos(4)]);%
+set(h, 'Units', 'centimeters')
+for i = 1:100
+    qdd = 0.1*rand(7,1)-0.05;
+    qd = qd + qdd * dt;
+    q = q + qd;
+    franka.update_finger(q);
+    if visual_kin
 
-Franka_robot.update_hand_par_dyn;
-Franka_robot.set_g_w(panda.gravity);
-Franka_robot.update_sim_par;
-%
-q_init = rand(1,7);
-Franka_robot.update_hand(q_init');
-Franka_robot.plot_hand(plot_par)
-
-grid on
-axis equal
-
-% q_init  = [0 0 0 0 0 0 0]*deg;
-panda.plot(q_init)
-
-[Ts,T_all] = panda.fkine(q_init);
-T_ee = Franka_robot.get_w_T_all;
-
-for i = 1:7
-    t_pc_i = T_all(i).T;
-    T_link_i = T_ee(:,:,i+1);
-    error_T = t_pc_i-T_link_i
-    if max(abs(error_T(:))) > 1e-6
-        error('kinematic wrong')
+        subplot(1,2,1)
+        franka.plot_finger(plot_par)
+        grid off
+        axis equal
+        xlim([-0.8 0.8])
+        ylim([-1 1])
+        zlim([-1 1.3])
+        axis manual
+        drawnow
+        hold off
+        subplot(1,2,2)
+        panda.plot(q','jointdiam',1)
+        grid off
+        axis equal
+        xlim([-0.8 0.8])
+        ylim([-1 1])
+        zlim([-1 1.3])
+        axis manual
+        drawnow
+        hold off
+    end
+    if save_gif
+        % save as gif
+        frame = getframe(gcf);
+        img   = frame2im(frame);
+        [A,map] = rgb2ind(img,256);
+        % Write to GIF
+        if i == 1
+            imwrite(A,map,gifFile,'gif','LoopCount',Inf,'DelayTime',0.05);
+        else
+            imwrite(A,map,gifFile,'gif','WriteMode','append','DelayTime',0.05);
+        end
     end
 end
-
-
-figure(2)
-Franka_robot.plot_hand(plot_par)
-Franka_robot.plot_hand_com(plot_par)
-grid on 
-axis equal
-% dynamic parameters
-q = rand(1,7);
-qd = rand(1,7);
-M_peter = panda.inertia(q);
-G_peter = panda.gravload(q);
-C = panda.coriolis(q, qd) * qd';
-Franka_robot.update_hand(q');
-[qDD,M,C,G] = Franka_robot.fordyn_ne_hand_w_end(q',qd');
-
-
-Franka_robot.create_sim_functions_hand

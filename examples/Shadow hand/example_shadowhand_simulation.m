@@ -17,7 +17,7 @@ clc
 %% load model
 
 
-run examples\create_shadow_hand.m
+run create_shadow_hand.m
 
 close all
 
