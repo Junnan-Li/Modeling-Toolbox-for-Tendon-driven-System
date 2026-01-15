@@ -25,6 +25,19 @@ For a detailed documentation please check [Documentation](./doc/Documentation.md
 + implementation of solvers (Euler, Runge-Kutta) for MATLAB simulation.  
 + a masked Simulink library with model object as input for realtime Simulink applications.
 
+## Examples
+### Mojtaba musculoskeletal hand model
+`examples\Mojtaba_hand_model\create_MSK_Mojtaba.m`: The kinematics, dynamics and muscle path information are derived from the reference. Enabling muscle length and moment arm computation.
+![](examples/Mojtaba_hand_model/pic_msk_hand.PNG)
+Reference:   
+[1] M. Mirakhorlo et al., "Anatomical parameters for musculoskeletal
+modeling of the hand and wrist," International Biomechanics, vol. 3,
+no. 1, pp. 1–10, 2016, doi: 10.1080/23335432.2016.1191373.
+
+### The Shadow hand model
+`examples\Shadow hand\create_shadow_hand.m`: model contains the kinematic and dynamic information of the shadow hand.  
+![](examples/Shadow hand/pic_shadow_hand.PNG)
+
 ## structure of classes
 There are several concatenated classes defined in this toolbox
 + **Hand**: highest level of class integrates all other class objects
