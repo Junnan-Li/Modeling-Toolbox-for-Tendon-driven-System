@@ -1,13 +1,12 @@
 # Modeling-Toolbox-for-Tendon-driven-System
 
 ## descriptions
-This toolbox provides a mathematic framework and tools to simulate the kinematics and dynamics for the tendon-driven robotic hand and muscle-driven human hand (musculoskeletal model).
-It is able to simulate serial articulated structure robot, or hybrid structure that multiple serial articulated robots connected to one serial robot, such as five fingers connect to arm/wrist.  
-Beyond joint space, muscle/tendon class is implemented to the model as actuators to simulate musculotendon or tendon-driven robots.  
+This toolbox provides a mathematic tools to simulate the kinematics and dynamics for the tendon-driven robotic hand and muscle-driven human hand (musculoskeletal model).
+It can model system with serial articulated structure, or tree structure (such as the hand/wrist).  
+The muscle/tendon related functions are implemented such as defining the muscle viapoints, calculating the moment arm, and etc. 
 
-
-This toolbox is developed initially for dynamic modeling the tendon-driven hand & arm (both robotic and human hands) in Matlab and Simulink for identification and realtime control.
-But it is not limited to this. It is able to model the system which does not have complicated structure (parallel or complex hybrid). 
+This toolbox is developed specifically for dynamic modeling of the tendon-driven hand & arm (both robotic and human hands) in Matlab/Simulink for identification and realtime control.
+It can generate individual symbolic functions that can be called and compiled in the external mode in Simulink.  
 
 The toolbox is functional to use but still under development for further features.   
 For a detailed documentation please check [Documentation](./doc/Documentation.md)
